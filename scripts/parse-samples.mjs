@@ -4,8 +4,8 @@ import { readFile } from "node:fs/promises";
 import { parseE3d } from "../packages/e3d-core/dist/index.js";
 
 const samples = [
-  "apps/web/public/demo/pilz_pnoz_3d.e3d",
-  "ejemplo/packages/installationspaces/items/installationspacee3d/3899.E3d",
+  "samples/pilz_pnoz_3d.e3d",
+  "samples/ejemplo/packages/installationspaces/items/installationspacee3d/3899.E3d",
 ];
 
 let failed = false;

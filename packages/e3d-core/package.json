@@ -2,7 +2,14 @@
   "name": "@byndr/e3d-core",
   "version": "0.1.0",
   "type": "module",
-  "description": "Parser del formato binario EPLAN E3D (v1-v4), extractor de .epdz y constructor de escenas three.js",
+  "description": "EPLAN E3D binary format parser (v1-v4), .epdz extraction, manifest.db (SQLite) reader and three.js scene builder",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/covagashi/Byndr-ECAD-Project-Viewer.git",
+    "directory": "packages/e3d-core"
+  },
+  "keywords": ["eplan", "e3d", "epdz", "ecad", "viewer", "threejs"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
