@@ -9,7 +9,11 @@ export interface EpdzEntry {
 export interface EpdzContents {
   /** Modelos 3D encontrados (ficheros .e3d). */
   models: EpdzEntry[];
-  /** Resto de entradas (SVG de páginas, manifest.db, AML...), solo rutas. */
+  /** Páginas de esquemas (SVG), en orden natural por nombre. */
+  pages: EpdzEntry[];
+  /** Imágenes referenciadas por las páginas (png/jpg...). */
+  images: EpdzEntry[];
+  /** Resto de entradas (manifest.db, AML, scripts...), solo rutas. */
   otherPaths: string[];
 }
 
@@ -43,6 +47,8 @@ export async function extractEpdz(
   seven.callMain(["x", "/in/archive.epdz", "-o/out", "-y", "-bso0", "-bsp0"]);
 
   const models: EpdzEntry[] = [];
+  const pages: EpdzEntry[] = [];
+  const images: EpdzEntry[] = [];
   const otherPaths: string[] = [];
 
   const walk = (dir: string) => {
@@ -54,8 +60,13 @@ export async function extractEpdz(
         walk(full);
       } else {
         const relative = full.slice("/out/".length);
-        if (name.toLowerCase().endsWith(".e3d")) {
+        const lower = name.toLowerCase();
+        if (lower.endsWith(".e3d")) {
           models.push({ path: relative, data: seven.FS.readFile(full) });
+        } else if (lower.endsWith(".svg")) {
+          pages.push({ path: relative, data: seven.FS.readFile(full) });
+        } else if (/\.(png|jpe?g|gif|bmp)$/.test(lower)) {
+          images.push({ path: relative, data: seven.FS.readFile(full) });
         } else {
           otherPaths.push(relative);
         }
@@ -64,5 +75,10 @@ export async function extractEpdz(
   };
   walk("/out");
 
-  return { models, otherPaths };
+  const naturalByPath = (a: EpdzEntry, b: EpdzEntry) =>
+    a.path.localeCompare(b.path, undefined, { numeric: true });
+  pages.sort(naturalByPath);
+  models.sort(naturalByPath);
+
+  return { models, pages, images, otherPaths };
 }

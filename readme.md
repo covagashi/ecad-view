@@ -10,7 +10,8 @@ PC y Capacitor para iOS/Android.
 packages/e3d-core/   Intérprete del formato binario E3D (v1-v4), extractor de
                      .epdz (7z-wasm) y constructor de escenas three.js.
 apps/web/            Visor web (Vite + React + three.js). Drag & drop de
-                     ficheros .e3d / .epdz, órbita, picking de partes.
+                     ficheros .e3d / .epdz, órbita, picking de partes, y
+                     pestaña de esquemas 2D (páginas SVG con pan/zoom).
 scripts/             parse-samples.mjs: smoke test del parser con los E3D del repo.
 ```
 
