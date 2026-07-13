@@ -7,10 +7,25 @@ import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import { Viewer } from "./viewer/Viewer";
 import { SchematicViewer, pageTitle } from "./viewer/SchematicViewer";
 import { ProjectPanel } from "./ProjectPanel";
+import {
+  LOCALES,
+  LOCALE_NAMES,
+  useI18n,
+  type Locale,
+  type TranslateParams,
+  type TranslationKey,
+} from "./i18n";
 
 interface LoadedModel {
   name: string;
   scene: E3dScene;
+}
+
+/** Estado mostrado en la barra inferior; se guarda como clave + parámetros
+ * para que el texto cambie de idioma sin recargar. */
+interface StatusMessage {
+  key: TranslationKey;
+  params?: TranslateParams;
 }
 
 export interface LoadedPage {
@@ -25,6 +40,7 @@ export interface LoadedPage {
 type ViewMode = "3d" | "pages" | "project";
 
 export function App() {
+  const { t, locale, setLocale } = useI18n();
   const [model, setModel] = useState<LoadedModel | null>(null);
   const [epdzModels, setEpdzModels] = useState<EpdzEntry[]>([]);
   const [pages, setPages] = useState<LoadedPage[]>([]);
@@ -32,7 +48,7 @@ export function App() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("3d");
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<StatusMessage | null>(null);
   const [picked, setPicked] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -59,7 +75,7 @@ export function App() {
       imageUrlsRef.current = new Map();
       try {
         if (name.toLowerCase().endsWith(".epdz")) {
-          setStatus("Extrayendo archivo…");
+          setStatus({ key: "status.extracting" });
           const contents = await extractEpdz(buffer, { wasmUrl });
 
           let projectManifest: EplanManifest | null = null;
@@ -67,7 +83,7 @@ export function App() {
             d.path.toLowerCase().endsWith("manifest.db")
           );
           if (manifestEntry) {
-            setStatus("Leyendo manifest.db…");
+            setStatus({ key: "status.readingManifest" });
             try {
               // El visor no debe quedarse bloqueado si sql.js no inicializa.
               projectManifest = await withTimeout(
@@ -101,7 +117,7 @@ export function App() {
             setStatus(null);
           } else {
             setModel(null);
-            setStatus("El archivo no contiene modelos 3D ni páginas.");
+            setStatus({ key: "status.noContent" });
           }
         } else {
           loadE3dBuffer(name, buffer);
@@ -111,7 +127,10 @@ export function App() {
         setFileName(name);
       } catch (error) {
         console.error(error);
-        setStatus(`Error al cargar ${name}: ${error instanceof Error ? error.message : error}`);
+        setStatus({
+          key: "status.loadError",
+          params: { name, message: error instanceof Error ? error.message : String(error) },
+        });
       } finally {
         setBusy(false);
       }
@@ -131,13 +150,16 @@ export function App() {
   const loadDemo = useCallback(
     async (url: string) => {
       setBusy(true);
-      setStatus("Descargando demo…");
+      setStatus({ key: "status.downloadingDemo" });
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         await loadFile(url.split("/").pop() ?? url, await response.arrayBuffer());
       } catch (error) {
-        setStatus(`Error al cargar la demo: ${error instanceof Error ? error.message : error}`);
+        setStatus({
+          key: "status.demoError",
+          params: { message: error instanceof Error ? error.message : String(error) },
+        });
         setBusy(false);
       }
     },
@@ -159,7 +181,7 @@ export function App() {
 
   const openFileInput = (
     <label className="btn primary" style={{ cursor: "pointer" }}>
-      Abrir fichero
+      {t("app.openFile")}
       <input
         type="file"
         accept=".e3d,.E3d,.epdz"
@@ -203,21 +225,21 @@ export function App() {
               disabled={pages.length === 0}
               onClick={() => setViewMode("pages")}
             >
-              Esquemas
+              {t("tabs.schematics")}
             </button>
             <button
               className={viewMode === "project" ? "active" : ""}
               disabled={!manifest}
               onClick={() => setViewMode("project")}
             >
-              Proyecto
+              {t("tabs.project")}
             </button>
           </nav>
         )}
 
         {viewMode === "pages" && pages.length > 0 && (
           <button className="btn quiet sidebar-toggle" onClick={() => setSidebarOpen((v) => !v)}>
-            Páginas
+            {t("app.pages")}
           </button>
         )}
 
@@ -238,6 +260,18 @@ export function App() {
             ))}
           </select>
         )}
+        <select
+          className="btn lang-select"
+          aria-label="Language"
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as Locale)}
+        >
+          {LOCALES.map((code) => (
+            <option key={code} value={code}>
+              {LOCALE_NAMES[code]}
+            </option>
+          ))}
+        </select>
         {hasContent && openFileInput}
       </header>
 
@@ -245,8 +279,8 @@ export function App() {
         {!hasContent && (
           <div className="empty">
             <div className={`dropzone${dragging ? " dragging" : ""}`}>
-              <h1>Visor de proyectos EPLAN</h1>
-              <p>Arrastra aquí un fichero .e3d o .epdz para abrirlo.</p>
+              <h1>{t("drop.title")}</h1>
+              <p>{t("drop.hint")}</p>
               <div className="actions">
                 {openFileInput}
                 <button
@@ -254,19 +288,17 @@ export function App() {
                   disabled={busy}
                   onClick={() => void loadDemo("/demo/ejemplo.epdz")}
                 >
-                  Proyecto de ejemplo
+                  {t("drop.demoProject")}
                 </button>
                 <button
                   className="btn demo-btn"
                   disabled={busy}
                   onClick={() => void loadDemo("/demo/pilz_pnoz_3d.e3d")}
                 >
-                  Pieza 3D de ejemplo
+                  {t("drop.demoPart")}
                 </button>
               </div>
-              <div className="hint">
-                Los ficheros se procesan localmente en tu dispositivo; no se suben a ningún servidor.
-              </div>
+              <div className="hint">{t("drop.privacy")}</div>
             </div>
           </div>
         )}
@@ -284,7 +316,7 @@ export function App() {
               <div className="search">
                 <input
                   type="search"
-                  placeholder={`Filtrar ${pages.length} páginas…`}
+                  placeholder={t("filter.placeholder", { count: pages.length })}
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                 />
@@ -323,17 +355,20 @@ export function App() {
 
       <footer className="statusbar">
         <span className="grow">
-          {status ??
-            (fileName
+          {status
+            ? t(status.key, status.params)
+            : fileName
               ? [
                   fileName,
                   model &&
-                    `E3D v${model.scene.formatVersion} · ${model.scene.parts.length} partes · ${model.scene.meshes.length} meshes`,
-                  pages.length > 0 && `${pages.length} páginas`,
+                    `E3D v${model.scene.formatVersion} · ${t("status.parts", {
+                      count: model.scene.parts.length,
+                    })} · ${t("status.meshes", { count: model.scene.meshes.length })}`,
+                  pages.length > 0 && t("status.pages", { count: pages.length }),
                 ]
                   .filter(Boolean)
                   .join("  ·  ")
-              : "Ningún fichero abierto")}
+              : t("status.noFile")}
         </span>
         {viewMode === "pages" && currentPage && (
           <span className="optional">{currentPage.name}</span>

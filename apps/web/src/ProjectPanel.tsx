@@ -1,5 +1,6 @@
 import type { EplanManifest } from "@byndr/e3d-core/manifest";
-import { EPLAN_PROPERTY_LABELS } from "@byndr/e3d-core/manifest";
+import { useI18n, type TranslationKey } from "./i18n";
+import { translations } from "./i18n/translations";
 
 export interface ProjectPanelProps {
   manifest: EplanManifest;
@@ -9,31 +10,36 @@ export interface ProjectPanelProps {
 
 /** Ficha del proyecto construida a partir del manifest.db (SQLite) del .epdz. */
 export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelProps) {
+  const { t } = useI18n();
+
   const stats: [string, number | undefined][] = [
-    ["Páginas", pageCount],
-    ["Modelos 3D", modelCount],
-    ["Funciones", manifest.packageCounts["function"]],
-    ["Ubicaciones", manifest.packageCounts["location"]],
+    [t("project.pages"), pageCount],
+    [t("project.models3d"), modelCount],
+    [t("project.functions"), manifest.packageCounts["function"]],
+    [t("project.locations"), manifest.packageCounts["location"]],
   ];
 
   const properties = manifest.properties
-    .map((prop) => ({
-      label:
-        (prop.propId != null && EPLAN_PROPERTY_LABELS[prop.propId]) ||
-        prop.name ||
-        (prop.propId != null ? `ep.${prop.propId}` : null),
-      value: prop.value,
-    }))
+    .map((prop) => {
+      const key = prop.propId != null ? (`prop.${prop.propId}` as TranslationKey) : null;
+      return {
+        label:
+          (key && key in translations.en ? t(key) : null) ||
+          prop.name ||
+          (prop.propId != null ? `ep.${prop.propId}` : null),
+        value: prop.value,
+      };
+    })
     .filter((p): p is { label: string; value: string } => p.label !== null);
 
   return (
     <div className="project-panel">
       <div className="inner">
-        <h1>{manifest.projectName ?? "Proyecto sin nombre"}</h1>
+        <h1>{manifest.projectName ?? t("project.unnamed")}</h1>
         <p className="sub">
-          manifest.db · esquema {manifest.schemaVersion ?? "?"}
+          manifest.db · {t("project.schema")} {manifest.schemaVersion ?? "?"}
           {manifest.installationSpaces.length > 0 &&
-            ` · espacios de montaje: ${manifest.installationSpaces
+            ` · ${t("project.installationSpaces")}: ${manifest.installationSpaces
               .map((s) => s.name)
               .join(", ")}`}
         </p>
@@ -49,7 +55,7 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
             ))}
         </div>
 
-        <h2 className="section-title">Propiedades del proyecto</h2>
+        <h2 className="section-title">{t("project.propertiesTitle")}</h2>
         <div className="kv">
           {properties.map((prop, i) => (
             <div key={i}>
@@ -60,7 +66,7 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
           {properties.length === 0 && (
             <div>
               <span className="k">—</span>
-              <span className="v">Sin propiedades registradas</span>
+              <span className="v">{t("project.noProperties")}</span>
             </div>
           )}
         </div>
