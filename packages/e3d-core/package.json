@@ -1,0 +1,32 @@
+{
+  "name": "@byndr/e3d-core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Parser del formato binario EPLAN E3D (v1-v4), extractor de .epdz y constructor de escenas three.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./three": {
+      "types": "./dist/three/builder.d.ts",
+      "default": "./dist/three/builder.js"
+    },
+    "./epdz": {
+      "types": "./dist/epdz.d.ts",
+      "default": "./dist/epdz.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "7z-wasm": "^1.2.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.7.0"
+  }
+}

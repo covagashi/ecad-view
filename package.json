@@ -1,0 +1,15 @@
+{
+  "name": "byndr-ecad-project-viewer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @byndr/e3d-core && npm run build -w @byndr/web",
+    "dev": "npm run build -w @byndr/e3d-core && npm run dev -w @byndr/web",
+    "test:samples": "node scripts/parse-samples.mjs"
+  }
+}
