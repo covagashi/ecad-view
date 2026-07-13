@@ -8,10 +8,13 @@ PC y Capacitor para iOS/Android.
 
 ```
 packages/e3d-core/   Intérprete del formato binario E3D (v1-v4), extractor de
-                     .epdz (7z-wasm) y constructor de escenas three.js.
-apps/web/            Visor web (Vite + React + three.js). Drag & drop de
-                     ficheros .e3d / .epdz, órbita, picking de partes, y
-                     pestaña de esquemas 2D (páginas SVG con pan/zoom).
+                     .epdz (7z-wasm), lector del manifest.db (sql.js/SQLite)
+                     y constructor de escenas three.js.
+apps/web/            Visor web (Vite + React + three.js), responsive para
+                     escritorio y móvil. Drag & drop de .e3d / .epdz, órbita
+                     y picking en 3D, esquemas 2D (SVG con pan/zoom/pinch)
+                     con nombres estructurados desde SQLite, y ficha de
+                     proyecto (propiedades del manifest).
 scripts/             parse-samples.mjs: smoke test del parser con los E3D del repo.
 ```
 
@@ -43,6 +46,14 @@ luces, texturas (BGRA sin comprimir), meshes y partes.
 Archivo **7-zip** (no zip) con `manifest.db` (SQLite), `packages/pages/.../
 *.svg` (páginas 2D), `packages/installationspaces/.../*.E3d` (3D) y
 `packages/automationML/*.aml` (estructura del proyecto).
+
+El `manifest.db` describe el proyecto completo: tabla `package` (jerarquía
+project/page/function/location...), `page_package` (identificadores
+estructurados EPLAN por página: ep.1340/1440/1140/1240/1640/1540),
+`item` (mapeo package -> fichero dentro del archivo, con tamaños),
+`property` (propiedades del proyecto: creador, empresa, versión...) e
+`installationspace_package` (espacios de montaje -> modelos .e3d). El visor
+lo lee con sql.js para nombrar páginas, la ficha de proyecto y los modelos.
 
 ## Material de referencia en el repo
 

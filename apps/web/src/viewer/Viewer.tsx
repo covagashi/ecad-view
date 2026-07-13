@@ -16,6 +16,7 @@ interface ViewerHandles {
   camera: THREE.PerspectiveCamera;
   controls: OrbitControls;
   modelRoot: THREE.Group | null;
+  selectionBox: THREE.Box3Helper | null;
 }
 
 export function Viewer({ scene, onPickPart }: ViewerProps) {
@@ -31,7 +32,7 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
     container.appendChild(renderer.domElement);
 
     const threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x2a2a32);
+    threeScene.background = new THREE.Color(0x202329);
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 10000);
     camera.position.set(200, 200, 200);
@@ -66,13 +67,25 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       raycaster.setFromCamera(pointer, camera);
       const hits = raycaster.intersectObject(handles.modelRoot, true);
       let picked: Record<string, unknown> | null = null;
+      let pickedObject: THREE.Object3D | null = null;
       for (const hit of hits) {
         let obj: THREE.Object3D | null = hit.object;
         while (obj && obj.userData.meshId === undefined) obj = obj.parent;
         if (obj) {
           picked = obj.userData;
+          pickedObject = obj;
           break;
         }
+      }
+
+      if (handles.selectionBox) {
+        threeScene.remove(handles.selectionBox);
+        handles.selectionBox = null;
+      }
+      if (pickedObject) {
+        const box = new THREE.Box3().setFromObject(pickedObject);
+        handles.selectionBox = new THREE.Box3Helper(box, new THREE.Color(0x4d8dff));
+        threeScene.add(handles.selectionBox);
       }
       onPickRef.current(picked);
     };
@@ -83,7 +96,14 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       renderer.render(threeScene, camera);
     });
 
-    handlesRef.current = { renderer, scene: threeScene, camera, controls, modelRoot: null };
+    handlesRef.current = {
+      renderer,
+      scene: threeScene,
+      camera,
+      controls,
+      modelRoot: null,
+      selectionBox: null,
+    };
 
     return () => {
       renderer.setAnimationLoop(null);
@@ -105,10 +125,13 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       disposeTree(handles.modelRoot);
       handles.modelRoot = null;
     }
+    if (handles.selectionBox) {
+      handles.scene.remove(handles.selectionBox);
+      handles.selectionBox = null;
+    }
     if (!scene) return;
 
-    const { root, background } = buildThreeScene(scene);
-    handles.scene.background = background.top;
+    const { root } = buildThreeScene(scene);
     handles.scene.add(root);
     handles.modelRoot = root;
 

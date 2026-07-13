@@ -13,7 +13,9 @@ export interface EpdzContents {
   pages: EpdzEntry[];
   /** Imágenes referenciadas por las páginas (png/jpg...). */
   images: EpdzEntry[];
-  /** Resto de entradas (manifest.db, AML, scripts...), solo rutas. */
+  /** Bases de datos SQLite (manifest.db). */
+  databases: EpdzEntry[];
+  /** Resto de entradas (AML, scripts...), solo rutas. */
   otherPaths: string[];
 }
 
@@ -49,6 +51,7 @@ export async function extractEpdz(
   const models: EpdzEntry[] = [];
   const pages: EpdzEntry[] = [];
   const images: EpdzEntry[] = [];
+  const databases: EpdzEntry[] = [];
   const otherPaths: string[] = [];
 
   const walk = (dir: string) => {
@@ -67,6 +70,8 @@ export async function extractEpdz(
           pages.push({ path: relative, data: seven.FS.readFile(full) });
         } else if (/\.(png|jpe?g|gif|bmp)$/.test(lower)) {
           images.push({ path: relative, data: seven.FS.readFile(full) });
+        } else if (lower.endsWith(".db") || lower.endsWith(".sqlite")) {
+          databases.push({ path: relative, data: seven.FS.readFile(full) });
         } else {
           otherPaths.push(relative);
         }
@@ -80,5 +85,5 @@ export async function extractEpdz(
   pages.sort(naturalByPath);
   models.sort(naturalByPath);
 
-  return { models, pages, images, otherPaths };
+  return { models, pages, images, databases, otherPaths };
 }

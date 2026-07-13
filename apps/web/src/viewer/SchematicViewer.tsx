@@ -17,91 +17,139 @@ interface ViewState {
 const BASE_WIDTH = 1400;
 
 /**
- * Visor de páginas de esquema EPLAN (SVG) con pan (arrastrar) y zoom (rueda).
- * Sanea el SVG del .epdz: quita el SVGScripting.js original y los enlaces
- * javascript:, y resuelve las imágenes relativas contra el contenido del archivo.
+ * Visor de páginas de esquema EPLAN (SVG).
+ * Interacción: arrastrar para desplazar, rueda para zoom, pinch en táctil,
+ * doble clic/tap para reencuadrar.
  */
 export function SchematicViewer({ svgText, imageUrls }: SchematicViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<ViewState>({ x: 0, y: 0, scale: 1 });
-  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; origin: ViewState } | null>(null);
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const gestureRef = useRef<{ origin: ViewState; center: { x: number; y: number }; distance: number } | null>(null);
 
   const page = useMemo(() => preparePage(svgText, imageUrls), [svgText, imageUrls]);
 
-  // Encuadre inicial (y al cambiar de página): ajusta la página al contenedor.
-  useEffect(() => {
+  const fit = () => {
     const container = containerRef.current;
     if (!container) return;
     const { clientWidth, clientHeight } = container;
     const pageHeight = BASE_WIDTH * page.aspect;
-    const scale = Math.min(clientWidth / BASE_WIDTH, clientHeight / pageHeight) * 0.96;
+    const scale = Math.min(clientWidth / BASE_WIDTH, clientHeight / pageHeight) * 0.94;
     setView({
       x: (clientWidth - BASE_WIDTH * scale) / 2,
       y: (clientHeight - pageHeight * scale) / 2,
       scale,
     });
-  }, [page]);
-
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const rect = containerRef.current!.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
-    setView((v) => {
-      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      const scale = Math.min(40, Math.max(0.05, v.scale * factor));
-      const k = scale / v.scale;
-      return { scale, x: px - (px - v.x) * k, y: py - (py - v.y) * k };
-    });
   };
+
+  // Encuadre inicial y al cambiar de página.
+  useEffect(fit, [page]);
+
+  // Zoom con rueda (listener no pasivo para poder hacer preventDefault).
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      setView((v) => zoomAt(v, px, py, e.deltaY < 0 ? 1.15 : 1 / 1.15));
+    };
+    container.addEventListener("wheel", onWheel, { passive: false });
+    return () => container.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const syncGesture = () => {
+    const pointers = [...pointersRef.current.values()];
+    if (pointers.length === 0) {
+      gestureRef.current = null;
+      return;
+    }
+    const center = averagePoint(pointers);
+    gestureRef.current = {
+      origin: viewRef.current,
+      center,
+      distance: pointers.length >= 2 ? distance(pointers[0], pointers[1]) : 0,
+    };
+  };
+
+  // setView es asíncrono; para los gestos se necesita el valor vigente.
+  const viewRef = useRef(view);
+  viewRef.current = view;
 
   const onPointerDown = (e: React.PointerEvent) => {
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, origin: view };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    pointersRef.current.set(e.pointerId, localPoint(e));
+    syncGesture();
   };
+
   const onPointerMove = (e: React.PointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== e.pointerId) return;
-    setView({
-      ...drag.origin,
-      x: drag.origin.x + (e.clientX - drag.startX),
-      y: drag.origin.y + (e.clientY - drag.startY),
-    });
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, localPoint(e));
+    const gesture = gestureRef.current;
+    if (!gesture) return;
+
+    const pointers = [...pointersRef.current.values()];
+    const center = averagePoint(pointers);
+    let next: ViewState = {
+      ...gesture.origin,
+      x: gesture.origin.x + (center.x - gesture.center.x),
+      y: gesture.origin.y + (center.y - gesture.center.y),
+    };
+    if (pointers.length >= 2 && gesture.distance > 0) {
+      const factor = distance(pointers[0], pointers[1]) / gesture.distance;
+      next = zoomAt(next, center.x, center.y, factor);
+    }
+    setView(next);
   };
-  const onPointerUp = () => {
-    dragRef.current = null;
+
+  const onPointerEnd = (e: React.PointerEvent) => {
+    pointersRef.current.delete(e.pointerId);
+    syncGesture();
   };
+
+  function localPoint(e: React.PointerEvent): { x: number; y: number } {
+    const rect = containerRef.current!.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
 
   return (
     <div
       ref={containerRef}
-      style={{
-        position: "absolute",
-        inset: 0,
-        overflow: "hidden",
-        cursor: "grab",
-        touchAction: "none",
-        background: "#3a3a42",
-      }}
-      onWheel={onWheel}
+      className="schematic"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+      onDoubleClick={fit}
     >
       <div
+        className="sheet"
         style={{
           width: BASE_WIDTH,
           height: BASE_WIDTH * page.aspect,
           transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-          transformOrigin: "0 0",
-          background: "white",
-          boxShadow: "0 2px 16px rgba(0,0,0,0.5)",
         }}
         dangerouslySetInnerHTML={{ __html: page.html }}
       />
     </div>
   );
+}
+
+function zoomAt(v: ViewState, px: number, py: number, factor: number): ViewState {
+  const scale = Math.min(40, Math.max(0.05, v.scale * factor));
+  const k = scale / v.scale;
+  return { scale, x: px - (px - v.x) * k, y: py - (py - v.y) * k };
+}
+
+function averagePoint(points: { x: number; y: number }[]): { x: number; y: number } {
+  const sum = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+  return { x: sum.x / points.length, y: sum.y / points.length };
+}
+
+function distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
 /** Extrae el título de página de un SVG EPLAN (contenido de <title>). */
