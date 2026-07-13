@@ -5,8 +5,15 @@ import { readManifest, type EplanManifest } from "@byndr/e3d-core/manifest";
 import wasmUrl from "7z-wasm/7zz.wasm?url";
 import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import { Viewer } from "./viewer/Viewer";
-import { SchematicViewer, pageTitle } from "./viewer/SchematicViewer";
+import {
+  SchematicViewer,
+  pageTitle,
+  type SchematicHighlight,
+  type SchematicNavTarget,
+} from "./viewer/SchematicViewer";
 import { ProjectPanel } from "./ProjectPanel";
+import { Sidebar } from "./Sidebar";
+import { buildDeviceIndex, type Device } from "./devices";
 import {
   LOCALES,
   LOCALE_NAMES,
@@ -53,7 +60,10 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [filter, setFilter] = useState("");
+  const [highlight, setHighlight] = useState<SchematicHighlight | null>(null);
+  /** Texto informativo de la última referencia cruzada seguida (barra de estado). */
+  const [xrefInfo, setXrefInfo] = useState<string | null>(null);
+  const nonceRef = useRef(0);
   const imageUrlsRef = useRef<Map<string, string>>(new Map());
 
   const loadE3dBuffer = useCallback((name: string, buffer: ArrayBuffer) => {
@@ -69,7 +79,8 @@ export function App() {
       setPages([]);
       setManifest(null);
       setPageIndex(0);
-      setFilter("");
+      setHighlight(null);
+      setXrefInfo(null);
       setStatus(null);
       for (const url of imageUrlsRef.current.values()) URL.revokeObjectURL(url);
       imageUrlsRef.current = new Map();
@@ -169,15 +180,65 @@ export function App() {
   const hasContent = model !== null || pages.length > 0;
   const currentPage = pages[pageIndex] as LoadedPage | undefined;
   const imageUrls = useMemo(() => imageUrlsRef.current, [pages]);
-  const filteredPages = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return pages.map((page, index) => ({ page, index }));
-    return pages
-      .map((page, index) => ({ page, index }))
-      .filter(({ page }) =>
-        `${page.title} ${page.breadcrumb.join(" ")} ${page.name}`.toLowerCase().includes(q)
+  const deviceIndex = useMemo(() => buildDeviceIndex(pages), [pages]);
+
+  const selectPage = useCallback((index: number) => {
+    setPageIndex(index);
+    setHighlight(null);
+    setXrefInfo(null);
+    setSidebarOpen(false);
+  }, []);
+
+  /** Salta a la siguiente aparición del dispositivo (ciclando entre páginas). */
+  const jumpToDevice = useCallback(
+    (device: Device) => {
+      const occurrences = device.occurrences;
+      if (occurrences.length === 0) return;
+      const current = occurrences.findIndex(
+        (o) => o.pageIndex === pageIndex && o.elementId === highlight?.elementId
       );
-  }, [pages, filter]);
+      const nextIndex = (current + 1) % occurrences.length;
+      const next = occurrences[nextIndex];
+      setPageIndex(next.pageIndex);
+      setHighlight({ elementId: next.elementId, nonce: ++nonceRef.current });
+      setXrefInfo(`${device.label} · ${nextIndex + 1}/${occurrences.length}`);
+      setSidebarOpen(false);
+      setViewMode("pages");
+    },
+    [pageIndex, highlight]
+  );
+
+  /** Resuelve un enlace jumpToFunction: salto a otra página o a un dispositivo. */
+  const onSchematicNavigate = useCallback(
+    (target: SchematicNavTarget) => {
+      if (target.file) {
+        const fileLower = target.file.toLowerCase();
+        const index = pages.findIndex((p) => {
+          const base = (p.path.split("/").pop() ?? "").toLowerCase();
+          return base === fileLower || base === `${fileLower}.svg`;
+        });
+        if (index < 0) {
+          setStatus({ key: "status.xrefNotFound", params: { target: target.file } });
+          return;
+        }
+        setPageIndex(index);
+        setHighlight(
+          target.elementId ? { elementId: target.elementId, nonce: ++nonceRef.current } : null
+        );
+        setXrefInfo(null);
+        return;
+      }
+      if (!target.elementId) return;
+      const device = deviceIndex.byElement.get(`${pageIndex}|${target.elementId}`);
+      if (device) {
+        jumpToDevice(device);
+      } else {
+        // Sin índice de dispositivos: al menos se recuadra el propio elemento.
+        setHighlight({ elementId: target.elementId, nonce: ++nonceRef.current });
+      }
+    },
+    [pages, pageIndex, deviceIndex, jumpToDevice]
+  );
 
   const openFileInput = (
     <label className="btn primary" style={{ cursor: "pointer" }}>
@@ -312,38 +373,21 @@ export function App() {
         {hasContent && viewMode === "pages" && currentPage && (
           <>
             {sidebarOpen && <div className="scrim" onClick={() => setSidebarOpen(false)} />}
-            <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
-              <div className="search">
-                <input
-                  type="search"
-                  placeholder={t("filter.placeholder", { count: pages.length })}
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-              </div>
-              <div className="page-list">
-                {filteredPages.map(({ page, index }) => (
-                  <button
-                    key={page.path}
-                    className={`page-item${index === pageIndex ? " active" : ""}`}
-                    onClick={() => {
-                      setPageIndex(index);
-                      setSidebarOpen(false);
-                    }}
-                  >
-                    <span className="row">
-                      <span className="title">{page.title}</span>
-                      {page.badge && <span className="badge">{page.badge}</span>}
-                    </span>
-                    {page.breadcrumb.length > 1 && (
-                      <span className="crumb">{page.breadcrumb.slice(0, -1).join(" › ")}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </aside>
+            <Sidebar
+              pages={pages}
+              pageIndex={pageIndex}
+              devices={deviceIndex.devices}
+              open={sidebarOpen}
+              onSelectPage={selectPage}
+              onSelectDevice={jumpToDevice}
+            />
             <div className="with-sidebar">
-              <SchematicViewer svgText={currentPage.svgText} imageUrls={imageUrls} />
+              <SchematicViewer
+                svgText={currentPage.svgText}
+                imageUrls={imageUrls}
+                highlight={highlight}
+                onNavigate={onSchematicNavigate}
+              />
             </div>
           </>
         )}
@@ -370,6 +414,7 @@ export function App() {
                   .join("  ·  ")
               : t("status.noFile")}
         </span>
+        {viewMode === "pages" && xrefInfo && <span className="pick">{xrefInfo}</span>}
         {viewMode === "pages" && currentPage && (
           <span className="optional">{currentPage.name}</span>
         )}

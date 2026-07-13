@@ -11,7 +11,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/web"
   ],
   "scripts": {
     "build": "npm run build -w @byndr/e3d-core && npm run build -w @byndr/web",

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icono de Byndr ECAD Viewer: cubo isométrico sobre fondo oscuro -->
+  <rect width="512" height="512" rx="92" fill="#16181d"/>
+  <g>
+    <polygon points="256,117.8 363.5,176.6 256,235.5 148.5,176.6" fill="#7fb0ff"/>
+    <polygon points="148.5,176.6 256,235.5 256,358.4 148.5,299.5" fill="#4d8dff"/>
+    <polygon points="256,235.5 363.5,176.6 363.5,299.5 256,358.4" fill="#2f66cc"/>
+  </g>
+</svg>

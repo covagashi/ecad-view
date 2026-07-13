@@ -1,0 +1,19 @@
+{
+  "name": "@byndr/mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Capacitor shell (iOS/Android) wrapping the Byndr ECAD web viewer",
+  "scripts": {
+    "sync": "cap sync",
+    "android": "cap run android",
+    "ios": "cap run ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}
