@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script>
+        let scene, camera, renderer, mesh;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const light = new THREE.PointLight(0xffffff, 1, 100);
+            light.position.set(0, 0, 10);
+            scene.add(light);
+
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+
+            fetch('/process-e3d')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Received data:', data);
+                    createObject(data);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function createObject(data) {
+            console.log('Creating object with data:', data);
+
+            if (!data.vertices || typeof data.vertices !== 'object') {
+                console.error('Invalid or missing vertices data');
+                return;
+            }
+
+            const vertices = [];
+            for (let i = 0; i < Object.keys(data.vertices).length; i++) {
+                vertices.push(data.vertices[i]);
+            }
+
+            const faces = data.faces && Array.isArray(data.faces) ? data.faces.flat() : [];
+
+            console.log('Processed vertices:', vertices.length);
+            console.log('Processed faces:', faces.length);
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            if (faces.length > 0) {
+                geometry.setIndex(faces);
+            }
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshPhongMaterial({ color: 0xcccccc, wireframe: true });
+            mesh = new THREE.Mesh(geometry, material);
+            
+            scene.add(mesh);
+
+            const box = new THREE.Box3().setFromObject(mesh);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+            camera.position.z = cameraZ * 1.5;
+
+            mesh.position.sub(center);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (mesh) {
+                mesh.rotation.x += 0.01;
+                mesh.rotation.y += 0.01;
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
