@@ -286,30 +286,55 @@ function buildTextLabel(line: E3dTextLine): THREE.Object3D | null {
   if (!line.text || typeof document === "undefined") return null;
 
   const fontPx = 64;
+  const pad = 4; // margen en px para que el antialiasing no se recorte
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
-  ctx.font = `${fontPx}px sans-serif`;
+  const font = `${fontPx}px sans-serif`;
+  ctx.font = font;
   const metrics = ctx.measureText(line.text);
-  canvas.width = Math.max(2, Math.ceil(metrics.width) + 8);
-  canvas.height = Math.ceil(fontPx * 1.5);
+  // Caja de tinta real del texto respecto al origen de escritura (pen) y a la
+  // línea base; los fallbacks cubren entornos sin actualBoundingBox*.
+  const inkLeft = Math.ceil(metrics.actualBoundingBoxLeft ?? 0);
+  const inkRight = Math.ceil(metrics.actualBoundingBoxRight ?? metrics.width);
+  const inkAscent = Math.ceil(metrics.actualBoundingBoxAscent ?? fontPx * 0.8);
+  const inkDescent = Math.ceil(metrics.actualBoundingBoxDescent ?? fontPx * 0.25);
+  canvas.width = Math.max(2, inkLeft + inkRight + pad * 2);
+  canvas.height = Math.max(2, inkAscent + inkDescent + pad * 2);
   const ctx2 = canvas.getContext("2d")!;
-  ctx2.font = `${fontPx}px sans-serif`;
+  ctx2.font = font;
   ctx2.fillStyle = "#003FFF";
-  ctx2.textBaseline = "middle";
-  ctx2.fillText(line.text, 4, canvas.height / 2);
+  ctx2.textBaseline = "alphabetic";
+  ctx2.fillText(line.text, pad + inkLeft, pad + inkAscent);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
 
-  const height = 0.75 * line.height;
-  const width = height * (canvas.width / canvas.height);
+  // La justificación se ancla a la caja de maquetación del texto (avance × em),
+  // no al canvas (que lleva relleno y trazos que sobresalen del avance).
+  const em = 0.75 * line.height; // tamaño de fuente en unidades del modelo
+  const unitsPerPx = em / fontPx;
+  const boxWidth = metrics.width * unitsPerPx;
+
+  // Fracción del em que queda bajo la línea base (descenso de la fuente).
+  const fontAscent = metrics.fontBoundingBoxAscent ?? fontPx * 0.8;
+  const fontDescent = metrics.fontBoundingBoxDescent ?? fontPx * 0.2;
+  const descentFraction = fontDescent / Math.max(1, fontAscent + fontDescent);
+
+  // Posición del origen de escritura (pen) para que la caja quede anclada en
+  // el origen local según el código de justificación: x en {0,-1/2,-1}·ancho,
+  // y en {0,-1/2,-1}·em, con la caja em apoyada en el descenso de la fuente.
+  const penX = line.justification[0] * boxWidth;
+  const penY = (line.justification[1] + descentFraction) * em;
+
+  const width = canvas.width * unitsPerPx;
+  const height = canvas.height * unitsPerPx;
   const geometry = new THREE.PlaneGeometry(width, height);
-  // El plano de three.js está centrado; se desplaza para que el origen
-  // quede en el punto de anclaje indicado por la justificación.
+  // El plano de three.js está centrado; se lleva su centro a la posición del
+  // centro del canvas respecto al pen, y de ahí al punto de anclaje.
   geometry.translate(
-    width / 2 + line.justification[0] * width,
-    height / 2 + line.justification[1] * height,
+    penX + ((inkRight - inkLeft) / 2) * unitsPerPx,
+    penY + ((inkAscent - inkDescent) / 2) * unitsPerPx,
     line.justification[2]
   );
 

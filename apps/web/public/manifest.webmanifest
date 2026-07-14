@@ -1,0 +1,29 @@
+{
+  "name": "Byndr ECAD Viewer",
+  "short_name": "Byndr",
+  "description": "Open-source viewer for EPLAN .epdz project exports and .e3d 3D parts. Everything is parsed locally on your device.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#101216",
+  "theme_color": "#16181d",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -32,6 +32,16 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
     })
     .filter((p): p is { label: string; value: string } => p.label !== null);
 
+  // Ubicaciones agrupadas por categoría de aspecto (las categorías vienen en
+  // el idioma del proyecto, tal cual las guarda manifest.db).
+  const locationGroups = new Map<string, string[]>();
+  for (const location of manifest.locations) {
+    if (!location.name) continue;
+    const list = locationGroups.get(location.category) ?? [];
+    list.push(location.name);
+    locationGroups.set(location.category, list);
+  }
+
   return (
     <div className="project-panel">
       <div className="inner">
@@ -70,6 +80,22 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
             </div>
           )}
         </div>
+
+        {locationGroups.size > 0 && (
+          <>
+            <h2 className="section-title" style={{ marginTop: 24 }}>
+              {t("project.locations")}
+            </h2>
+            <div className="kv">
+              {[...locationGroups].map(([category, names]) => (
+                <div key={category}>
+                  <span className="k">{category}</span>
+                  <span className="v">{names.sort((a, b) => a.localeCompare(b)).join(", ")}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

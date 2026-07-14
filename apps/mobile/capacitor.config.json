@@ -1,0 +1,8 @@
+{
+  "appId": "app.byndr.viewer",
+  "appName": "Byndr ECAD Viewer",
+  "webDir": "../web/dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

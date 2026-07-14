@@ -32,6 +32,31 @@ export interface ManifestInstallationSpace {
   file: string | null;
 }
 
+/** Función (dispositivo) del proyecto según manifest.db. */
+export interface ManifestFunction {
+  packageId: number;
+  /** Nombre bruto del package, p. ej. "==EES=...+#01-K1_SH_17_4180". */
+  name: string;
+  /** Designación completa del dispositivo (propiedad ep.20001), si existe. */
+  designation: string | null;
+  /**
+   * Id del elemento SVG asociado ("Id17_4180"), derivado del sufijo numérico
+   * del nombre. Es el mismo id que usan los enlaces jumpToFunction.
+   */
+  svgElementId: string | null;
+  /** packageIds de las páginas en las que aparece (tabla page_functions). */
+  pageIds: number[];
+}
+
+/** Ubicación/aspecto de estructura (tabla location_package). */
+export interface ManifestLocation {
+  packageId: number;
+  /** Categoría del aspecto, p. ej. "Lugar de instalación" (viene en el idioma del proyecto). */
+  category: string;
+  /** Valor dentro de la categoría, p. ej. "DC10V". */
+  name: string;
+}
+
 export interface EplanManifest {
   schemaVersion: string | null;
   projectName: string | null;
@@ -39,6 +64,8 @@ export interface EplanManifest {
   properties: ManifestProperty[];
   pages: ManifestPage[];
   installationSpaces: ManifestInstallationSpace[];
+  functions: ManifestFunction[];
+  locations: ManifestLocation[];
   /** Recuento de packages por tipo (project, page, function, location...). */
   packageCounts: Record<string, number>;
 }
@@ -149,7 +176,56 @@ export async function readManifest(
         locators.get(Number(packageId))?.find((l) => l.toLowerCase().endsWith(".e3d")) ?? null,
     }));
 
-    return { schemaVersion, projectName, properties, pages, installationSpaces, packageCounts };
+    // Páginas donde aparece cada función (referencias cruzadas).
+    const functionPages = new Map<number, number[]>();
+    for (const [pageId, functionId] of rows(db, "SELECT pageid, functionid FROM page_functions")) {
+      const list = functionPages.get(Number(functionId)) ?? [];
+      list.push(Number(pageId));
+      functionPages.set(Number(functionId), list);
+    }
+
+    const functions: ManifestFunction[] = rows(
+      db,
+      `SELECT k.id, k.name,
+              (SELECT p.value FROM property p WHERE p.packageid = k.id AND p.propid = 20001)
+       FROM package k WHERE k.type = 'function'`
+    ).map(([packageId, name, designation]) => {
+      // El sufijo "_17_4180" del nombre casa con el id "Id17_4180" del SVG.
+      const suffix = /_(\d+)_(\d+)$/.exec(String(name));
+      return {
+        packageId: Number(packageId),
+        name: String(name),
+        designation: designation == null || designation === "" ? null : String(designation),
+        svgElementId: suffix ? `Id${suffix[1]}_${suffix[2]}` : null,
+        pageIds: functionPages.get(Number(packageId)) ?? [],
+      };
+    });
+
+    // location_package.name viene como "<categoría>-<valor>"; la categoría está
+    // en el idioma del proyecto (p. ej. "Lugar de instalación-DC10V").
+    const locations: ManifestLocation[] = rows(
+      db,
+      "SELECT packageid, name FROM location_package"
+    ).map(([packageId, name]) => {
+      const text = String(name);
+      const sep = text.indexOf("-");
+      return {
+        packageId: Number(packageId),
+        category: sep >= 0 ? text.slice(0, sep) : text,
+        name: sep >= 0 ? text.slice(sep + 1) : "",
+      };
+    });
+
+    return {
+      schemaVersion,
+      projectName,
+      properties,
+      pages,
+      installationSpaces,
+      functions,
+      locations,
+      packageCounts,
+    };
   } finally {
     db.close();
   }
