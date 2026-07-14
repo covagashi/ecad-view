@@ -124,6 +124,4 @@ Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE). Sample project data in `samples/` originates from EPLAN's
-publicly distributed demo/template content and is included solely for
-development and testing of the format support.
+[MIT](LICENSE). 
