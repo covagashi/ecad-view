@@ -11,7 +11,7 @@ import {
 export { LOCALES, LOCALE_NAMES };
 export type { Locale, TranslationKey };
 
-const STORAGE_KEY = "byndr.locale";
+const STORAGE_KEY = "covaga.locale";
 
 /** Parámetros a interpolar en la traducción con la sintaxis {nombre}. */
 export type TranslateParams = Record<string, string | number>;

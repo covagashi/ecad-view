@@ -1,0 +1,206 @@
+/* ---------- Vista 3D: UI flotante ---------- */
+
+.model-card {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-size: 12.5px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-float);
+  max-width: min(420px, calc(100% - 32px));
+}
+
+.model-card .accent {
+  color: var(--accent);
+  flex: none;
+}
+
+.model-card select {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-weight: 600;
+  min-width: 0;
+  max-width: 280px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.model-card .count {
+  color: var(--text-faint);
+  font-size: 11px;
+  flex: none;
+}
+
+/* --- Presets de cámara --- */
+
+.view-presets {
+  position: absolute;
+  bottom: 18px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  padding: 4px;
+  backdrop-filter: blur(6px);
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.view-presets .preset {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.view-presets .preset:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.view-presets .preset.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.view-presets .preset.icon {
+  display: grid;
+  place-items: center;
+}
+
+.view-presets .divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-strong);
+  margin: 0 4px;
+}
+
+/* --- Tarjeta de pieza seleccionada --- */
+
+.part-card {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 2;
+  min-width: 240px;
+  max-width: 320px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.part-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.part-card-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.part-card-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  flex: none;
+}
+
+.part-card-close:hover {
+  color: var(--text);
+  background: var(--accent-dim);
+}
+
+.part-card-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.part-card-ids {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.part-card-ids b {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.part-card-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.part-btn {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.part-btn:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.part-btn.primary {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.part-btn.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.part-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.part-card-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}

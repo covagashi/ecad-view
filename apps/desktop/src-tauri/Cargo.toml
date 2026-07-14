@@ -1,7 +1,7 @@
 [package]
-name = "byndr-desktop"
+name = "covaga-desktop"
 version = "0.1.0"
-description = "Tauri desktop shell wrapping the Byndr ECAD web viewer"
+description = "Tauri desktop shell wrapping the Covaga ECAD web viewer"
 license = "MIT"
 edition = "2021"
 

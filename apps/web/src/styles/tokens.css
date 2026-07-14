@@ -1,0 +1,51 @@
+/*
+ * Variables de diseño. El tema oscuro es el de :root; el claro se activa con
+ * data-theme="light" en <html> (lo gestiona useTheme en src/theme.ts).
+ * Los nombres se conservan del CSS original para no romper reglas existentes.
+ */
+:root {
+  --bg: #0b0d11;
+  --panel: #0e1116;
+  --panel-2: #12151b;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text: #e6eaf0;
+  --text-muted: #8b94a3;
+  --text-faint: #5c6470;
+  --accent: #5b9dff;
+  --accent-dim: rgba(91, 157, 255, 0.14);
+  --accent-strong: rgba(91, 157, 255, 0.35);
+  --on-accent: #07090c;
+  --canvas: #1a1e25;
+  --danger: #e5534b;
+  --ok: #4ade80;
+  --radius: 8px;
+  --topbar-h: 42px;
+  --statusbar-h: 28px;
+  --rail-w: 56px;
+  --rail-w-expanded: 220px;
+  --panel-w: 312px;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --shadow-float: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] {
+  --bg: #f5f6f3;
+  --panel: #e9ebe6;
+  --panel-2: #ffffff;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --text: #1a222e;
+  --text-muted: #5b6572;
+  --text-faint: #8a93a0;
+  --accent: #2e6be6;
+  --accent-dim: rgba(46, 107, 230, 0.12);
+  --accent-strong: rgba(46, 107, 230, 0.35);
+  --on-accent: #ffffff;
+  --canvas: #e2e5df;
+  --ok: #16a34a;
+  --shadow-float: 0 2px 10px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 8px 30px rgba(15, 23, 42, 0.12);
+}

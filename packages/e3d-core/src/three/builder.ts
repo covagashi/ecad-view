@@ -71,6 +71,8 @@ export function buildThreeScene(scene: E3dScene, options: BuildOptions = {}): Bu
       typeId: part.typeId,
       objectId: part.objectId,
       meshId: part.meshId,
+      // Textos de la parte (etiquetas), útiles para identificarla en la UI.
+      textLines: part.textLines.map((line) => line.text),
     };
     partGroup.matrixAutoUpdate = false;
     partGroup.matrix.fromArray(part.transform);

@@ -1,12 +1,25 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import type { E3dScene } from "@byndr/e3d-core";
-import { buildThreeScene } from "@byndr/e3d-core/three";
+import type { E3dScene } from "@covaga/e3d-core";
+import { buildThreeScene } from "@covaga/e3d-core/three";
+import { cssVar, onThemeChange } from "../theme";
+
+export type ViewPreset = "iso" | "front" | "side" | "top";
+
+/** Controles imperativos del visor 3D (toolbar y presets externos). */
+export interface ViewerHandle {
+  fit(): void;
+  setPreset(preset: ViewPreset): void;
+  /** Muestra solo la parte con ese objectId; null restaura todas. */
+  isolate(objectId: number | null): void;
+  /** Quita el recuadro de selección. */
+  clearSelection(): void;
+}
 
 export interface ViewerProps {
   scene: E3dScene | null;
-  /** Se llama al hacer clic sobre una parte, con su userData ({ typeId, objectId, meshId }). */
+  /** Se llama al hacer clic sobre una parte, con su userData ({ typeId, objectId, meshId, textLines }). */
   onPickPart?: (info: Record<string, unknown> | null) => void;
 }
 
@@ -19,7 +32,19 @@ interface ViewerHandles {
   selectionBox: THREE.Box3Helper | null;
 }
 
-export function Viewer({ scene, onPickPart }: ViewerProps) {
+/** Dirección de cámara de cada preset (espacio Y-arriba de three.js). */
+const PRESET_DIRECTIONS: Record<ViewPreset, [number, number, number]> = {
+  iso: [0.6, 0.5, 0.6],
+  front: [0, 0, 1],
+  side: [1, 0, 0],
+  // Ligeramente fuera del eje para que OrbitControls no degenere.
+  top: [0.001, 1, 0.001],
+};
+
+export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
+  { scene, onPickPart },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const handlesRef = useRef<ViewerHandles | null>(null);
   const onPickRef = useRef(onPickPart);
@@ -32,7 +57,11 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
     container.appendChild(renderer.domElement);
 
     const threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x202329);
+    // El fondo sigue al tema de la aplicación (variable --canvas).
+    threeScene.background = new THREE.Color(cssVar("--canvas") || "#1a1e25");
+    const disposeThemeWatch = onThemeChange(() => {
+      threeScene.background = new THREE.Color(cssVar("--canvas") || "#1a1e25");
+    });
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 10000);
     camera.position.set(200, 200, 200);
@@ -69,9 +98,10 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       let picked: Record<string, unknown> | null = null;
       let pickedObject: THREE.Object3D | null = null;
       for (const hit of hits) {
+        if (!hit.object.visible) continue;
         let obj: THREE.Object3D | null = hit.object;
         while (obj && obj.userData.meshId === undefined) obj = obj.parent;
-        if (obj) {
+        if (obj && obj.visible) {
           picked = obj.userData;
           pickedObject = obj;
           break;
@@ -84,7 +114,10 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       }
       if (pickedObject) {
         const box = new THREE.Box3().setFromObject(pickedObject);
-        handles.selectionBox = new THREE.Box3Helper(box, new THREE.Color(0x4d8dff));
+        handles.selectionBox = new THREE.Box3Helper(
+          box,
+          new THREE.Color(cssVar("--accent") || "#5b9dff")
+        );
         threeScene.add(handles.selectionBox);
       }
       onPickRef.current(picked);
@@ -106,6 +139,7 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
     };
 
     return () => {
+      disposeThemeWatch();
       renderer.setAnimationLoop(null);
       renderer.domElement.removeEventListener("click", onClick);
       resizeObserver.disconnect();
@@ -115,6 +149,51 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
       handlesRef.current = null;
     };
   }, []);
+
+  /** Encuadra el modelo con la cámara mirando desde `direction`. */
+  const frame = (direction: [number, number, number]) => {
+    const handles = handlesRef.current;
+    if (!handles?.modelRoot) return;
+    const box = new THREE.Box3().setFromObject(handles.modelRoot);
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3()).length();
+    const distance = Math.max(size, 1) * 1.2;
+    handles.controls.target.copy(center);
+    handles.camera.position
+      .copy(center)
+      .addScaledVector(new THREE.Vector3(...direction).normalize(), distance);
+    handles.camera.near = distance / 1000;
+    handles.camera.far = distance * 100;
+    handles.camera.updateProjectionMatrix();
+    handles.controls.update();
+  };
+
+  useImperativeHandle(ref, () => ({
+    fit: () => frame(PRESET_DIRECTIONS.iso),
+    setPreset: (preset) => frame(PRESET_DIRECTIONS[preset]),
+    isolate(objectId) {
+      const handles = handlesRef.current;
+      if (!handles?.modelRoot) return;
+      handles.modelRoot.traverse((obj) => {
+        if (obj.userData.meshId !== undefined) {
+          obj.visible = objectId === null || obj.userData.objectId === objectId;
+        }
+      });
+      // El recuadro de selección deja de tener sentido si la parte se oculta.
+      if (objectId === null && handles.selectionBox) {
+        handles.scene.remove(handles.selectionBox);
+        handles.selectionBox = null;
+      }
+    },
+    clearSelection() {
+      const handles = handlesRef.current;
+      if (handles?.selectionBox) {
+        handles.scene.remove(handles.selectionBox);
+        handles.selectionBox = null;
+      }
+    },
+  }));
 
   useEffect(() => {
     const handles = handlesRef.current;
@@ -136,24 +215,11 @@ export function Viewer({ scene, onPickPart }: ViewerProps) {
     handles.modelRoot = root;
 
     // Encuadra la cámara sobre el modelo.
-    const box = new THREE.Box3().setFromObject(root);
-    if (!box.isEmpty()) {
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3()).length();
-      const distance = Math.max(size, 1) * 1.2;
-      handles.controls.target.copy(center);
-      handles.camera.position
-        .copy(center)
-        .add(new THREE.Vector3(distance * 0.6, distance * 0.5, distance * 0.6));
-      handles.camera.near = distance / 1000;
-      handles.camera.far = distance * 100;
-      handles.camera.updateProjectionMatrix();
-      handles.controls.update();
-    }
+    frame(PRESET_DIRECTIONS.iso);
   }, [scene]);
 
   return <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />;
-}
+});
 
 function disposeTree(root: THREE.Object3D) {
   root.traverse((obj) => {

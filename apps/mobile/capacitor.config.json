@@ -1,6 +1,6 @@
 {
-  "appId": "app.byndr.viewer",
-  "appName": "Byndr ECAD Viewer",
+  "appId": "app.covaga.viewer",
+  "appName": "Covaga ECAD Viewer",
   "webDir": "../web/dist",
   "server": {
     "androidScheme": "https"

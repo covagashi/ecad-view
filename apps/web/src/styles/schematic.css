@@ -1,0 +1,531 @@
+/* ---------- Vista de esquemas: lienzo + panel derecho ---------- */
+
+.schematics-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.schematics-canvas {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ---------- Panel de páginas / dispositivos ---------- */
+
+.pages-panel {
+  width: var(--panel-w);
+  flex: none;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pages-panel.overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  box-shadow: -18px 0 50px rgba(0, 0, 0, 0.35);
+}
+
+.panel-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
+.pages-panel-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 10px 10px 0 12px;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-head > button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 7px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.panel-head > button.active {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.panel-head .grow {
+  flex: 1;
+}
+
+.panel-head .panel-tool {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border-bottom: none;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.panel-head .panel-tool:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.panel-head .panel-tool.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.panel-search {
+  flex: none;
+  margin: 10px 10px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-faint);
+}
+
+.panel-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 12.5px;
+}
+
+.panel-search input::placeholder {
+  color: var(--text-faint);
+}
+
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 6px 6px;
+  min-height: 0;
+}
+
+.panel-foot {
+  flex: none;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+.panel-foot .grow {
+  flex: 1;
+}
+
+.panel-foot .pager {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.panel-foot .pager:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.panel-foot .pager:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ---------- Acordeón de páginas (estilo EPLAN) ---------- */
+
+.acc-node,
+.acc-leaf {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-right: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-muted);
+  position: relative;
+}
+
+.acc-node:hover,
+.acc-leaf:hover {
+  background: var(--panel-2);
+}
+
+.acc-node .twisty {
+  flex: none;
+  width: 10px;
+  color: var(--text-faint);
+  font-size: 9px;
+  transition: transform 0.12s ease-out;
+  display: inline-block;
+}
+
+.acc-node .twisty.open {
+  transform: rotate(90deg);
+}
+
+.acc-icon {
+  flex: none;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.acc-node .title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acc-node .count {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.acc-leaf {
+  padding-left: 12px;
+}
+
+.acc-leaf .title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acc-leaf .badge {
+  flex: none;
+  font-size: 9.5px;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 15px;
+  font-family: var(--font-mono);
+}
+
+.acc-leaf.active {
+  background: var(--accent-dim);
+}
+
+.acc-leaf.active .title {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.acc-leaf.active .badge {
+  color: var(--accent);
+  border-color: var(--accent-strong);
+}
+
+.acc-leaf.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ---------- Lista de dispositivos ---------- */
+
+.device-item {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px 6px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+.device-item:hover {
+  background: var(--panel-2);
+}
+
+.device-item .row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.device-item .title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-item .badge {
+  flex: none;
+  font-size: 10px;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 5px;
+  line-height: 16px;
+}
+
+.device-item .crumb {
+  display: block;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-empty {
+  padding: 14px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* ---------- Pestañas verticales (panel oculto) ---------- */
+
+.edge-tabs {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edge-tab {
+  appearance: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 12px 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.edge-tab.primary {
+  background: var(--panel-2);
+  color: var(--accent);
+  box-shadow: -6px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.edge-tab:hover {
+  color: var(--text);
+}
+
+.edge-label {
+  writing-mode: vertical-rl;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.edge-tab:not(.primary) .edge-label {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.edge-count {
+  writing-mode: vertical-rl;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+/* ---------- Chips flotantes sobre el lienzo ---------- */
+
+.breadcrumb-chip {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  backdrop-filter: blur(6px);
+  max-width: calc(100% - 90px);
+}
+
+.breadcrumb-chip .sep {
+  color: var(--text-faint);
+  margin: 0 6px;
+}
+
+.breadcrumb-chip .leaf {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.zoom-toolbar {
+  position: absolute;
+  bottom: 18px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  padding: 4px;
+  backdrop-filter: blur(6px);
+}
+
+.zoom-toolbar button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 30px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.zoom-toolbar button:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.zoom-toolbar .percent {
+  min-width: 46px;
+  text-align: center;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.zoom-toolbar .divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-strong);
+  margin: 0 4px;
+}
+
+/* ---------- Visor de esquemas (lienzo SVG) ---------- */
+
+.schematic {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: var(--canvas);
+}
+
+.schematic:active {
+  cursor: grabbing;
+}
+
+.schematic .sheet {
+  position: relative;
+  /* Los SVG de EPLAN presuponen papel blanco, también en tema claro. */
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.35);
+  transform-origin: 0 0;
+}
+
+.schematic .sheet-svg {
+  position: absolute;
+  inset: 0;
+}
+
+/* Enlaces de referencia cruzada (antiguos jumpToFunction) */
+.schematic .sheet a[data-jump-id],
+.schematic .sheet a[data-jump-file] {
+  cursor: pointer;
+}
+
+.schematic .sheet a[data-jump-id]:hover,
+.schematic .sheet a[data-jump-file]:hover {
+  opacity: 0.65;
+}
+
+/* Recuadro del elemento resaltado (dispositivo / destino de referencia) */
+.schematic .sheet-highlight {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+  animation: highlight-pulse 1.2s ease-out 2;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-strong);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(91, 157, 255, 0);
+  }
+}

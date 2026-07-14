@@ -4,7 +4,7 @@ Programmatic 3D asset generation for this project: build models from code
 (primitive composition, low-poly flat-shaded) and export them as
 
 - **`.e3d`** — the EPLAN binary format this repo's viewer renders
-  (round-trip compatible with the `@byndr/e3d-core` parser), and
+  (round-trip compatible with the `@covaga/e3d-core` parser), and
 - **`.stl`** — binary STL, for use in CAD/mesh tools.
 
 This is companion tooling; nothing here ships with the web app.

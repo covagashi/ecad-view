@@ -39,7 +39,7 @@ enough for any coding agent that can run shell commands.
       renders PNG(s). Pragmatic first implementation: drive the built web
       viewer with playwright (load file via the `<input type="file">`,
       orbit, screenshot). Later: direct three.js offscreen rendering using
-      `buildThreeScene` from `@byndr/e3d-core`, which drops the app build
+      `buildThreeScene` from `@covaga/e3d-core`, which drops the app build
       dependency and is much faster.
 - [ ] `.claude/skills/asset-creator/SKILL.md` documenting the loop for
       agents working in this repo: spec format, commands, viewer gotchas

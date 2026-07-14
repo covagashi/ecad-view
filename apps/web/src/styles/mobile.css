@@ -1,0 +1,114 @@
+/* ---------- Móvil ---------- */
+
+/* Navegación inferior: solo visible en pantallas estrechas. */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .btn {
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+
+  /* El rail se sustituye por la navegación inferior. */
+  .rail {
+    display: none;
+  }
+
+  .statusbar {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    flex: none;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 max(10px, env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-faint);
+    font-size: 10.5px;
+    cursor: pointer;
+    padding: 2px 0;
+  }
+
+  .bottom-nav button.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .bottom-nav button:disabled {
+    opacity: 0.35;
+  }
+
+  /* El panel de páginas siempre es overlay y ocupa casi todo el ancho. */
+  .pages-panel.overlay {
+    width: min(340px, 92vw);
+  }
+
+  .panel-scrim {
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .library-sidebar {
+    display: none;
+  }
+
+  .library-head {
+    flex-wrap: wrap;
+    padding: 18px 20px 0;
+  }
+
+  .library-search {
+    width: 100%;
+    order: 3;
+  }
+
+  .library-section,
+  .recents-row,
+  .library-fallback-note {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .library-grid {
+    padding: 4px 20px 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .library-foot {
+    padding: 12px 20px 14px;
+  }
+
+  .breadcrumb-chip {
+    max-width: calc(100% - 32px);
+    font-size: 11px;
+  }
+
+  .part-card {
+    left: 16px;
+    right: 16px;
+    max-width: none;
+    top: auto;
+    bottom: 72px;
+  }
+
+  .view-presets {
+    bottom: 18px;
+  }
+
+  .zoom-toolbar {
+    bottom: 66px;
+  }
+}

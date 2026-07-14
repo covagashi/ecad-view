@@ -16,8 +16,8 @@ npm run test:samples   # parser smoke test against the files in samples/
 ```
 
 The core library (`packages/e3d-core`) is built with `tsc`; if you change it
-while `npm run dev` is running, rebuild it (`npm run build -w @byndr/e3d-core`
-or `npm run watch -w @byndr/e3d-core` in a second terminal).
+while `npm run dev` is running, rebuild it (`npm run build -w @covaga/e3d-core`
+or `npm run watch -w @covaga/e3d-core` in a second terminal).
 
 ## Project structure
 

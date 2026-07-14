@@ -1,5 +1,5 @@
 {
-  "name": "@byndr/web",
+  "name": "@covaga/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,7 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@byndr/e3d-core": "*",
+    "@covaga/e3d-core": "*",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "idb-keyval": "^6.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.180.0"

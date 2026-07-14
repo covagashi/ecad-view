@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 /** Destino de un enlace de referencia cruzada (jumpToFunction) de EPLAN. */
 export interface SchematicNavTarget {
@@ -23,6 +30,15 @@ export interface SchematicViewerProps {
   highlight?: SchematicHighlight | null;
   /** Clic en un enlace de referencia cruzada. */
   onNavigate?: (target: SchematicNavTarget) => void;
+  /** Notifica el zoom vigente como % respecto al encuadre de página completa. */
+  onViewChange?: (percentOfFit: number) => void;
+}
+
+/** Controles imperativos del visor (toolbar de zoom externa). */
+export interface SchematicViewerHandle {
+  zoomIn(): void;
+  zoomOut(): void;
+  fit(): void;
 }
 
 interface ViewState {
@@ -48,7 +64,8 @@ const BASE_WIDTH = 1400;
  * convierten en navegación dentro de la aplicación (onNavigate) y el
  * elemento indicado en `highlight` se recuadra y se encuadra con zoom.
  */
-export function SchematicViewer({ svgText, imageUrls, highlight, onNavigate }: SchematicViewerProps) {
+export const SchematicViewer = forwardRef<SchematicViewerHandle, SchematicViewerProps>(
+  function SchematicViewer({ svgText, imageUrls, highlight, onNavigate, onViewChange }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<ViewState>({ x: 0, y: 0, scale: 1 });
@@ -56,6 +73,8 @@ export function SchematicViewer({ svgText, imageUrls, highlight, onNavigate }: S
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const gestureRef = useRef<{ origin: ViewState; center: { x: number; y: number }; distance: number } | null>(null);
   const movedRef = useRef(false);
+  /** Escala del encuadre "página completa" vigente, base del % de zoom. */
+  const fitScaleRef = useRef(1);
 
   const page = useMemo(() => preparePage(svgText, imageUrls), [svgText, imageUrls]);
 
@@ -65,6 +84,7 @@ export function SchematicViewer({ svgText, imageUrls, highlight, onNavigate }: S
     const { clientWidth, clientHeight } = container;
     const pageHeight = BASE_WIDTH * page.aspect;
     const scale = Math.min(clientWidth / BASE_WIDTH, clientHeight / pageHeight) * 0.94;
+    fitScaleRef.current = scale || 1;
     return {
       x: (clientWidth - BASE_WIDTH * scale) / 2,
       y: (clientHeight - pageHeight * scale) / 2,
@@ -76,6 +96,27 @@ export function SchematicViewer({ svgText, imageUrls, highlight, onNavigate }: S
     const v = fitView();
     if (v) setView(v);
   };
+
+  useImperativeHandle(ref, () => ({
+    fit,
+    zoomIn() {
+      const container = containerRef.current;
+      if (!container) return;
+      setView((v) => zoomAt(v, container.clientWidth / 2, container.clientHeight / 2, 1.25));
+    },
+    zoomOut() {
+      const container = containerRef.current;
+      if (!container) return;
+      setView((v) => zoomAt(v, container.clientWidth / 2, container.clientHeight / 2, 1 / 1.25));
+    },
+  }));
+
+  // Notifica el zoom como porcentaje del encuadre de página completa.
+  const onViewChangeRef = useRef(onViewChange);
+  onViewChangeRef.current = onViewChange;
+  useEffect(() => {
+    onViewChangeRef.current?.((view.scale / fitScaleRef.current) * 100);
+  }, [view]);
 
   // Encuadre al cambiar de página; si hay un elemento a resaltar, se mide su
   // caja (en unidades de hoja) y se hace zoom hasta él.
@@ -233,7 +274,7 @@ export function SchematicViewer({ svgText, imageUrls, highlight, onNavigate }: S
       </div>
     </div>
   );
-}
+});
 
 function zoomAt(v: ViewState, px: number, py: number, factor: number): ViewState {
   const scale = Math.min(40, Math.max(0.05, v.scale * factor));

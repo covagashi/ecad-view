@@ -1,12 +1,12 @@
 {
-  "name": "byndr-ecad-project-viewer",
+  "name": "covaga-ecad-project-viewer",
   "private": true,
   "version": "0.1.0",
   "description": "Open-source browser-based viewer for EPLAN .epdz project exports and .e3d 3D parts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/covagashi/Byndr-ECAD-Project-Viewer.git"
+    "url": "https://github.com/covagashi/ecad-view.git"
   },
   "type": "module",
   "workspaces": [
@@ -14,8 +14,8 @@
     "apps/web"
   ],
   "scripts": {
-    "build": "npm run build -w @byndr/e3d-core && npm run build -w @byndr/web",
-    "dev": "npm run build -w @byndr/e3d-core && npm run dev -w @byndr/web",
+    "build": "npm run build -w @covaga/e3d-core && npm run build -w @covaga/web",
+    "dev": "npm run build -w @covaga/e3d-core && npm run dev -w @covaga/web",
     "test:samples": "node scripts/parse-samples.mjs"
   }
 }

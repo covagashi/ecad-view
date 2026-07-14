@@ -1,4 +1,4 @@
-# Byndr ECAD Project Viewer
+# Covaga ECAD Project Viewer
 
 An open-source, browser-based viewer for **EPLAN** electrical CAD projects.
 Open `.epdz` project exports and `.e3d` 3D parts directly in your browser —

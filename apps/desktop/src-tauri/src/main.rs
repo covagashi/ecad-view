@@ -5,5 +5,5 @@
 fn main() {
     tauri::Builder::default()
         .run(tauri::generate_context!())
-        .expect("error al arrancar Byndr ECAD Viewer");
+        .expect("error al arrancar Covaga ECAD Viewer");
 }

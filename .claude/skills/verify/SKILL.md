@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Build, launch and drive the Byndr ECAD web viewer to verify changes end-to-end.
+description: Build, launch and drive the Covaga ECAD web viewer to verify changes end-to-end.
 ---
 
 # Verificar la app web
@@ -9,8 +9,8 @@ description: Build, launch and drive the Byndr ECAD web viewer to verify changes
 
 ```bash
 npm ci                 # si node_modules no existe
-npm run build          # compila @byndr/e3d-core (tsc) y @byndr/web (tsc --noEmit + vite build)
-npm run preview -w @byndr/web -- --port 4173 --strictPort   # sirve dist en http://localhost:4173
+npm run build          # compila @covaga/e3d-core (tsc) y @covaga/web (tsc --noEmit + vite build)
+npm run preview -w @covaga/web -- --port 4173 --strictPort   # sirve dist en http://localhost:4173
 ```
 
 `npm run dev` también funciona (vite dev en el puerto 5173) si se prefiere no compilar.
@@ -28,7 +28,7 @@ npm run preview -w @byndr/web -- --port 4173 --strictPort   # sirve dist en http
   - Pestañas `.tabs button`: 3D / esquemas / proyecto. La vista proyecto (`.project-panel`)
     solo se habilita si el .epdz trae manifest.db.
   - Sidebar de páginas: filtro en `.search input`.
-  - Idioma: selector `.lang-select` en la topbar; preferencia en `localStorage["byndr.locale"]`,
+  - Idioma: selector `.lang-select` en la topbar; preferencia en `localStorage["covaga.locale"]`,
     autodetección por `navigator.languages` (fijar con `browser.newContext({ locale: "de-DE" })`).
 
 ## Gotchas

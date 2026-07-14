@@ -1,6 +1,6 @@
-import { tokenizeStructure } from "@byndr/e3d-core/manifest";
+import { tokenizeStructure } from "@covaga/e3d-core/manifest";
 import { decodeEntities } from "./viewer/SchematicViewer";
-import type { LoadedPage } from "./App";
+import type { LoadedPage } from "./state/types";
 
 /** Aparición de un dispositivo en una página concreta. */
 export interface DeviceOccurrence {

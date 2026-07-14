@@ -1,8 +1,8 @@
 {
-  "name": "@byndr/mobile",
+  "name": "@covaga/mobile",
   "private": true,
   "version": "0.1.0",
-  "description": "Capacitor shell (iOS/Android) wrapping the Byndr ECAD web viewer",
+  "description": "Capacitor shell (iOS/Android) wrapping the Covaga ECAD web viewer",
   "scripts": {
     "sync": "cap sync",
     "android": "cap run android",

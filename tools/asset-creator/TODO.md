@@ -29,7 +29,7 @@ pipeline. Each area has its own document under [`todo/`](todo/).
 - [ ] Smoke test in `scripts/` that runs every example and round-trips the
       `.e3d` output through `parseE3d` (mirror of `parse-samples.mjs`)
 - [ ] Decide whether `lib/` should become an npm workspace package
-      (`@byndr/asset-creator`) so apps can import it; today examples use
+      (`@covaga/asset-creator`) so apps can import it; today examples use
       relative paths on purpose (zero build)
 - [ ] Reuse `lib/e3d-writer.mjs` as the seed for a typed `writer.ts` inside
       `packages/e3d-core` (with round-trip tests against `samples/`)

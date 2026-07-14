@@ -1,20 +1,18 @@
-import type { EplanManifest } from "@byndr/e3d-core/manifest";
-import { useI18n, type TranslationKey } from "./i18n";
-import { translations } from "./i18n/translations";
-
-export interface ProjectPanelProps {
-  manifest: EplanManifest;
-  modelCount: number;
-  pageCount: number;
-}
+import { useI18n, type TranslationKey } from "../i18n";
+import { translations } from "../i18n/translations";
+import { useProjects } from "../state/ProjectsContext";
+import { IconCube } from "../shell/icons";
 
 /** Ficha del proyecto construida a partir del manifest.db (SQLite) del .epdz. */
-export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelProps) {
+export function ProjectView() {
   const { t } = useI18n();
+  const { dispatch, active: doc } = useProjects();
+  const manifest = doc?.manifest;
+  if (!doc || !manifest) return null;
 
   const stats: [string, number | undefined][] = [
-    [t("project.pages"), pageCount],
-    [t("project.models3d"), modelCount],
+    [t("project.pages"), doc.pages.length],
+    [t("project.models3d"), doc.epdzModels.length],
     [t("project.functions"), manifest.packageCounts["function"]],
     [t("project.locations"), manifest.packageCounts["location"]],
   ];
@@ -42,16 +40,32 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
     locationGroups.set(location.category, list);
   }
 
+  // Modelos 3D vinculados: espacios de montaje del manifest cruzados con los
+  // .e3d del archivo; los modelos sin espacio aparecen con su nombre de fichero.
+  const modelBase = (path: string) => (path.split("/").pop() ?? path).toLowerCase();
+  const linkedModels = doc.epdzModels.map((entry, index) => {
+    const space = manifest.installationSpaces.find(
+      (s) => s.file && modelBase(s.file) === modelBase(entry.path)
+    );
+    return {
+      index,
+      label: space ? space.name : (entry.path.split("/").pop() ?? entry.path),
+      file: entry.path.split("/").pop() ?? entry.path,
+    };
+  });
+
+  const activateModel = (index: number) => {
+    dispatch({ type: "SET_MODEL", id: doc.id, modelIndex: index });
+    dispatch({ type: "SET_VIEW", id: doc.id, view: "3d" });
+  };
+
   return (
     <div className="project-panel">
       <div className="inner">
+        <div className="eyebrow">{t("tabs.project")}</div>
         <h1>{manifest.projectName ?? t("project.unnamed")}</h1>
         <p className="sub">
           manifest.db · {t("project.schema")} {manifest.schemaVersion ?? "?"}
-          {manifest.installationSpaces.length > 0 &&
-            ` · ${t("project.installationSpaces")}: ${manifest.installationSpaces
-              .map((s) => s.name)
-              .join(", ")}`}
         </p>
 
         <div className="stat-row">
@@ -80,6 +94,30 @@ export function ProjectPanel({ manifest, modelCount, pageCount }: ProjectPanelPr
             </div>
           )}
         </div>
+
+        {linkedModels.length > 0 && (
+          <>
+            <h2 className="section-title" style={{ marginTop: 24 }}>
+              {t("project.linkedModels")}
+            </h2>
+            <div className="model-list">
+              {linkedModels.map((model) => (
+                <button
+                  key={model.index}
+                  className={`model-link${model.index === doc.modelIndex ? " active" : ""}`}
+                  onClick={() => activateModel(model.index)}
+                >
+                  <IconCube size={14} />
+                  <span className="label">{model.label}</span>
+                  <span className="file mono">{model.file}</span>
+                  {model.index === doc.modelIndex && (
+                    <span className="state mono">{t("project.activeModel")}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {locationGroups.size > 0 && (
           <>
