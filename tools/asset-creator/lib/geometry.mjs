@@ -115,6 +115,64 @@ export function torusTris(majorSeg = 14, minorSeg = 8, r = 0.15) {
   return tris;
 }
 
+/** Ear-clipping de un polígono simple 2D en orden CCW; devuelve triples de índices. */
+function triangulate2d(pts) {
+  const area2 = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const idx = pts.map((_, i) => i);
+  const tris = [];
+  let guard = pts.length * pts.length + 10;
+  while (idx.length > 3 && guard-- > 0) {
+    let clipped = false;
+    for (let i = 0; i < idx.length; i++) {
+      const ia = idx[(i + idx.length - 1) % idx.length];
+      const ib = idx[i];
+      const ic = idx[(i + 1) % idx.length];
+      const [a, b, c] = [pts[ia], pts[ib], pts[ic]];
+      if (area2(a, b, c) <= 1e-9) continue; // vértice reflejo: no es oreja
+      let ear = true;
+      for (const j of idx) {
+        if (j === ia || j === ib || j === ic) continue;
+        const p = pts[j];
+        if (area2(a, b, p) >= 0 && area2(b, c, p) >= 0 && area2(c, a, p) >= 0) {
+          ear = false;
+          break;
+        }
+      }
+      if (ear) {
+        tris.push([ia, ib, ic]);
+        idx.splice(i, 1);
+        clipped = true;
+        break;
+      }
+    }
+    if (!clipped) break; // polígono degenerado: devolver lo que haya
+  }
+  if (idx.length === 3) tris.push([idx[0], idx[1], idx[2]]);
+  return tris;
+}
+
+/**
+ * Prisma extruido: perfil 2D `[[y,z],...]` (polígono simple, CCW) extruido
+ * a lo largo de X con profundidad 1 (x en -0.5..0.5). El perfil admite
+ * concavidades y chaflanes; las tapas se trian por ear-clipping.
+ */
+export function extrudeTris(profile) {
+  const caps = triangulate2d(profile);
+  const P = (x, [y, z]) => [x, y, z];
+  const tris = [];
+  for (const [a, b, c] of caps) {
+    tris.push([P(0.5, profile[a]), P(0.5, profile[b]), P(0.5, profile[c])]); // tapa +X
+    tris.push([P(-0.5, profile[a]), P(-0.5, profile[c]), P(-0.5, profile[b])]); // tapa -X
+  }
+  for (let i = 0; i < profile.length; i++) {
+    const p = profile[i];
+    const q = profile[(i + 1) % profile.length];
+    const A = P(-0.5, p), B = P(0.5, p), C = P(0.5, q), D = P(-0.5, q);
+    tris.push([A, C, B], [A, D, C]);
+  }
+  return tris;
+}
+
 /**
  * Lista de triángulos -> malla flat-shaded {vertexArray, indices}.
  * vertexArray intercala [pos.xyz][normal.xyz] (stride 6); los índices son
@@ -217,6 +275,20 @@ export class Scene {
   box(center, [sx, sy, sz], color, opts) {
     const id = this._primitive("box", boxTris);
     return this.part(id, { x: [sx, 0, 0], y: [0, sy, 0], z: [0, 0, sz], t: center }, color, opts);
+  }
+
+  /**
+   * Prisma extruido a lo largo de X: perfil `[[y,z],...]` en mm (CCW),
+   * desde x = xCenter - width/2 hasta x = xCenter + width/2.
+   */
+  prism(profile, xCenter, width, color, opts) {
+    const id = this.addMesh(extrudeTris(profile));
+    return this.part(
+      id,
+      { x: [width, 0, 0], y: [0, 1, 0], z: [0, 0, 1], t: [xCenter, 0, 0] },
+      color,
+      opts
+    );
   }
 
   /** Anillo (toro) en el plano XY local, escalado por radios. */
