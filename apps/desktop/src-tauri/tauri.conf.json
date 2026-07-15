@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "app.covaga.viewer",
   "build": {
-    "beforeDevCommand": "npm --prefix ../../.. run dev",
+    "beforeDevCommand": "npm --prefix ../.. run dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm --prefix ../../.. run build",
+    "beforeBuildCommand": "npm --prefix ../.. run build",
     "frontendDist": "../../web/dist"
   },
   "app": {
@@ -26,6 +26,12 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/icon.png"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

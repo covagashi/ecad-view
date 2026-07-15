@@ -1,0 +1,150 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - run: npm ci
+      - name: Build Tauri bundles (MSVC → static WebView2 loader)
+        working-directory: apps/desktop/src-tauri
+        run: npx --yes @tauri-apps/cli@latest build
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          # Con toolchain MSVC el exe es autocontenido (loader WebView2 estático)
+          cp "apps/desktop/src-tauri/target/release/covaga-desktop.exe" \
+             "out/Covaga-ECAD-Viewer_${VER}_windows-portable.exe"
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe out/ 2>/dev/null || true
+          cp apps/desktop/src-tauri/target/release/bundle/msi/*.msi out/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: out/*
+
+  android:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+      - name: Generate Android project
+        working-directory: apps/mobile
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+      - name: Apply branded launcher icons
+        run: |
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            cp apps/desktop/src-tauri/icons/android/$d/*.png apps/mobile/android/app/src/main/res/$d/
+          done
+          cp apps/desktop/src-tauri/icons/android/mipmap-anydpi-v26/ic_launcher.xml \
+             apps/mobile/android/app/src/main/res/mipmap-anydpi-v26/
+          cp apps/desktop/src-tauri/icons/android/values/ic_launcher_background.xml \
+             apps/mobile/android/app/src/main/res/values/
+      - name: Build APKs
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
+      - name: Collect APKs
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+             "out/Covaga-ECAD-Viewer_${VER}_android-debug.apk"
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk \
+             "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk"
+      - name: Sign release APK (if keystore secret configured)
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          echo "$KEYSTORE_B64" | base64 -d > covaga.keystore
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BT/apksigner" sign \
+            --ks covaga.keystore \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASS }}" \
+            --out "out/Covaga-ECAD-Viewer_${VER}_android-release.apk" \
+            "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk"
+          rm covaga.keystore "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk" \
+             "out/Covaga-ECAD-Viewer_${VER}_android-release.apk.idsig" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: out/*
+
+  ios-project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Generate iOS Xcode project
+        working-directory: apps/mobile
+        run: |
+          npm install
+          npx cap add ios
+          npx cap sync ios
+      - name: Apply branded app icon
+        run: |
+          cp apps/desktop/src-tauri/icons/ios/AppIcon-512@2x.png \
+             apps/mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+      - name: Zip Xcode project
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          (cd apps/mobile && zip -qr "../../out/Covaga-ECAD-Viewer_${VER}_ios-xcode-project.zip" ios)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: out/*
+
+  release:
+    needs: [windows, android, ios-project]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: assets/*
+          generate_release_notes: true
+          body: |
+            Paquetes generados automáticamente desde el tag.
+
+            - **Windows**: exe portable autocontenido (requiere WebView2, preinstalado en Win 10/11), instalador NSIS y MSI.
+            - **Android**: APK listo para sideload. El APK "release" va firmado con un certificado autofirmado del proyecto (no es de Play Store).
+            - **iOS**: proyecto Xcode generado; compilar y firmar en macOS con Xcode (ver `docs/packaging.md`). Alternativa sin Mac: instalar la PWA desde Safari.
