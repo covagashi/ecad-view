@@ -22,11 +22,32 @@
 
   .bottom-nav {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     flex: none;
     background: var(--panel);
     border-top: 1px solid var(--border);
     padding: 8px 0 max(10px, env(safe-area-inset-bottom));
+  }
+
+  /* Hoja inferior de Ajustes (el rail y su popover no existen en móvil). */
+  .settings-sheet-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .settings-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--panel-2);
+    border-top: 1px solid var(--border-strong);
+    border-radius: 16px 16px 0 0;
+    padding: 18px 20px max(18px, env(safe-area-inset-bottom));
+    max-height: 75vh;
+    overflow-y: auto;
   }
 
   .bottom-nav button {

@@ -77,6 +77,42 @@ export const SchematicViewer = forwardRef<SchematicViewerHandle, SchematicViewer
   const fitScaleRef = useRef(1);
 
   const page = useMemo(() => preparePage(svgText, imageUrls), [svgText, imageUrls]);
+  const svgHostRef = useRef<HTMLDivElement>(null);
+
+  // El SVG de la página se monta imperativamente (no con dangerouslySetInnerHTML):
+  // React re-aplica innerHTML en re-renders y borraría los rects de hit-área.
+  // Debe ser el primer efecto: los siguientes (resaltado) miden este DOM.
+  useEffect(() => {
+    const host = svgHostRef.current;
+    if (!host) return;
+    host.innerHTML = page.html;
+
+    // En SVG solo recibe clics lo pintado (trazos de 1px, texto fino), así que
+    // acertar a un enlace de referencia cruzada era casi imposible. Se inyecta
+    // en cada enlace un rect transparente que cubre su caja y toda el área
+    // pasa a ser clicable.
+    const links = host.querySelectorAll<SVGGraphicsElement>(
+      "a[data-jump-id], a[data-jump-file]"
+    );
+    const HIT_PAD = 1.5; // unidades de usuario del SVG
+    for (const link of links) {
+      try {
+        const box = link.getBBox();
+        if (box.width <= 0 && box.height <= 0) continue;
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("class", "jump-hit");
+        rect.setAttribute("x", String(box.x - HIT_PAD));
+        rect.setAttribute("y", String(box.y - HIT_PAD));
+        rect.setAttribute("width", String(box.width + HIT_PAD * 2));
+        rect.setAttribute("height", String(box.height + HIT_PAD * 2));
+        rect.setAttribute("fill", "none");
+        rect.setAttribute("pointer-events", "fill");
+        link.insertBefore(rect, link.firstChild);
+      } catch {
+        // getBBox falla en elementos aún no renderizados; se ignoran.
+      }
+    }
+  }, [page]);
 
   const fitView = (): ViewState | null => {
     const container = containerRef.current;
@@ -148,10 +184,9 @@ export const SchematicViewer = forwardRef<SchematicViewerHandle, SchematicViewer
 
     const { clientWidth, clientHeight } = container;
     const fitted = fitView();
-    // El recuadro ocupa ~1/3 del lado menor del viewport, entre "página
-    // completa" y un límite razonable de acercamiento.
-    let target = Math.min(clientWidth, clientHeight) / (3 * Math.max(box.w, box.h, 1));
-    target = Math.max(fitted?.scale ?? 0.05, Math.min(target, 8));
+    // Se mantiene el zoom que tenía el usuario (nunca menor que "página
+    // completa") y solo se centra el destino en el viewport.
+    const target = Math.max(viewRef.current.scale, fitted?.scale ?? 0.05);
     setView({
       scale: target,
       x: clientWidth / 2 - (box.x + box.w / 2) * target,
@@ -227,9 +262,25 @@ export const SchematicViewer = forwardRef<SchematicViewerHandle, SchematicViewer
   };
 
   // Un clic (sin arrastre) sobre un enlace de referencia cruzada navega.
+  // Las hit-áreas de enlaces vecinos se solapan; de todos los enlaces bajo el
+  // cursor se elige el de caja más pequeña (el que se quiso pulsar).
   const onClick = (e: React.MouseEvent) => {
     if (movedRef.current || !onNavigate) return;
-    const link = (e.target as Element).closest?.("a[data-jump-id], a[data-jump-file]");
+    const candidates = new Set<Element>();
+    for (const el of document.elementsFromPoint(e.clientX, e.clientY)) {
+      const link = el.closest?.("a[data-jump-id], a[data-jump-file]");
+      if (link) candidates.add(link);
+    }
+    let link: Element | null = null;
+    let bestArea = Infinity;
+    for (const candidate of candidates) {
+      const rect = candidate.getBoundingClientRect();
+      const area = rect.width * rect.height;
+      if (area < bestArea) {
+        bestArea = area;
+        link = candidate;
+      }
+    }
     if (!link) return;
     e.preventDefault();
     onNavigate({
@@ -263,7 +314,7 @@ export const SchematicViewer = forwardRef<SchematicViewerHandle, SchematicViewer
           transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
         }}
       >
-        <div className="sheet-svg" dangerouslySetInnerHTML={{ __html: page.html }} />
+        <div ref={svgHostRef} className="sheet-svg" />
         {hlBox && (
           <div
             key={highlight?.nonce}

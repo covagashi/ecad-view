@@ -45,6 +45,30 @@ export function SchematicsView() {
     return () => media.removeEventListener("change", onChange);
   }, []);
 
+  // Atajos de teclado: RePág/AvPág página anterior/siguiente; Inicio/Fin,
+  // primera/última. Se ignoran cuando el foco está en un campo de texto.
+  const docRef = useRef(doc);
+  docRef.current = doc;
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const current = docRef.current;
+      if (!current || current.pages.length === 0) return;
+      const target = e.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+
+      let next: number | null = null;
+      if (e.key === "PageDown") next = Math.min(current.pageIndex + 1, current.pages.length - 1);
+      else if (e.key === "PageUp") next = Math.max(current.pageIndex - 1, 0);
+      else if (e.key === "Home") next = 0;
+      else if (e.key === "End") next = current.pages.length - 1;
+      if (next === null || next === current.pageIndex) return;
+      e.preventDefault();
+      dispatch({ type: "SET_PAGE", id: current.id, pageIndex: next });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dispatch]);
+
   const setPinnedPersist = useCallback((next: boolean) => {
     setPinned(next);
     try {

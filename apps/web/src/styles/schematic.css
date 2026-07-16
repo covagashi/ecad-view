@@ -280,6 +280,19 @@
 
 /* ---------- Lista de dispositivos ---------- */
 
+.device-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+  padding: 9px 14px 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--border);
+}
+
 .device-item {
   display: block;
   width: 100%;
@@ -494,6 +507,9 @@
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.35);
   transform-origin: 0 0;
+  /* Arrastrar para desplazar no debe seleccionar los textos del SVG. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .schematic .sheet-svg {

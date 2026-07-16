@@ -5,6 +5,9 @@ Open `.epdz` project exports and `.e3d` 3D parts directly in your browser —
 no EPLAN installation, no server, no upload. Everything is parsed and
 rendered locally on your device, on desktop and mobile.
 
+**Website:** [covaga.dev](https://covaga.dev) ·
+**Source:** [github.com/covagashi/ecad-view](https://github.com/covagashi/ecad-view)
+
 > **Disclaimer:** this is an independent community project. It is not
 > affiliated with, endorsed by, or supported by EPLAN GmbH & Co. KG.
 > EPLAN is a trademark of its respective owner.
@@ -58,8 +61,8 @@ npm install
 npm run dev            # build the core and start the viewer (Vite dev server)
 ```
 
-Then open the printed URL and drag in a `.epdz` or `.e3d` file, or use the
-bundled demo files.
+Then open the printed URL and drag in a `.epdz` or `.e3d` file, or open the
+bundled demo files from **Settings → Sample files**.
 
 Other commands:
 
@@ -67,6 +70,26 @@ Other commands:
 npm run build          # full production build (packages/e3d-core + apps/web)
 npm run test:samples   # parse the sample E3D files and validate the interpreter
 ```
+
+## Getting a `.epdz` out of EPLAN
+
+The viewer opens the **Smart Production** publication of a project
+(a `.epdz` file). There are two ways to produce one from EPLAN Electric P8
+(2022 or newer):
+
+- **From the EPLAN UI** — with the project open, use *File → Publish* and
+  choose **Smart Production Collection**. The published `.epdz` is written to
+  the selected output folder and can be opened directly in this viewer.
+- **By script** — load [`tools/eplan/PublishEpdz.cs`](tools/eplan/PublishEpdz.cs)
+  (*Tools → Scripts → Load*), edit the two path constants at the top
+  (project `.elk` and output folder) and run it. It calls the same
+  `projectmanagement` action (`PUBLISHSMARTPRODUCTION`) that the UI uses,
+  so the result is identical.
+
+The export contains only what EPLAN publishes: the SVG schematic pages, the
+3D installation spaces (E3D) and the `manifest.db` project database. Report
+pages (parts lists / BOM, terminal diagrams, cable plans…) are included only
+if they were generated as pages in the project before publishing.
 
 ## Repository layout
 
@@ -84,6 +107,8 @@ samples/             Sample files: a .epdz project export (EPLAN demo
                      content) and a standalone .e3d part.
 docs/                Format documentation and screenshots.
 scripts/             Development scripts (parser smoke test).
+tools/eplan/         EPLAN-side helper scripts (publish a project as .epdz).
+tools/asset-creator/ Tooling to author .e3d parts (geometry lib, writers).
 reference/           Historical reverse-engineering material and early
                      prototypes. Not part of the build. See reference/README.md.
 ```

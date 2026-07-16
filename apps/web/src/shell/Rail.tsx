@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { HOME_ID, useProjects } from "../state/ProjectsContext";
-import { useI18n, LOCALES, LOCALE_NAMES, type Locale } from "../i18n";
+import { useI18n } from "../i18n";
 import { useTheme } from "../theme";
 import type { ProjectView } from "../state/types";
+import { SettingsPanel } from "./SettingsPanel";
 import { IconBolt, IconCube, IconGear, IconHome, IconInfo, IconMoon, IconSchematic, IconSun } from "./icons";
 
 /**
@@ -12,7 +13,7 @@ import { IconBolt, IconCube, IconGear, IconHome, IconInfo, IconMoon, IconSchemat
  */
 export function Rail() {
   const { state, dispatch, active: doc } = useProjects();
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const railRef = useRef<HTMLElement>(null);
@@ -104,16 +105,7 @@ export function Rail() {
         <div className="rail-settings">
           {settingsOpen && (
             <div className="rail-pop">
-              <label className="rail-pop-row">
-                <span>{t("rail.language")}</span>
-                <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
-                  {LOCALES.map((code) => (
-                    <option key={code} value={code}>
-                      {LOCALE_NAMES[code]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SettingsPanel onClose={() => setSettingsOpen(false)} />
             </div>
           )}
           <button

@@ -206,3 +206,34 @@ export function IconIsolate(props: IconProps) {
     </svg>
   );
 }
+
+/** Ojo abierto (pieza visible). */
+export function IconEye(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M1.8 8S4.3 3.8 8 3.8 14.2 8 14.2 8 11.7 12.2 8 12.2 1.8 8 1.8 8z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="8" r="1.9" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+/** Ojo tachado (pieza oculta). */
+export function IconEyeOff(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M1.8 8S4.3 3.8 8 3.8 14.2 8 14.2 8 11.7 12.2 8 12.2 1.8 8 1.8 8z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+        opacity="0.45"
+      />
+      <path d="M2.5 13.5l11-11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}

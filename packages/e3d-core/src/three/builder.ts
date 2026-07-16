@@ -263,6 +263,11 @@ function getFaceMaterial(
       flatShading: !hasNormals,
       transparent: opacity < 1,
       opacity,
+      // Las aristas comparten vértices con las caras: sin este empuje de
+      // profundidad las líneas hacen z-fighting (parpadeo al mover la cámara).
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
     cache.set(key, mat);
   }

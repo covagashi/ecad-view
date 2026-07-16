@@ -19,12 +19,11 @@ export interface LibraryViewProps {
  */
 export function LibraryView({ dragging }: LibraryViewProps) {
   const { t } = useI18n();
-  const { state, openFiles, openDemo } = useProjects();
+  const { state, openFiles } = useProjects();
   const library = useLibrary();
   const [scope, setScope] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  const busy = state.projects.some((p) => p.loading);
   const openKeys = useMemo(
     () =>
       new Set(state.projects.map((doc) => sourceKey(doc.source)).filter(Boolean) as string[]),
@@ -151,20 +150,6 @@ export function LibraryView({ dragging }: LibraryViewProps) {
         )}
 
         <div className="library-foot">
-          <button
-            className="btn demo-btn"
-            disabled={busy}
-            onClick={() => void openDemo("/demo/ejemplo.epdz")}
-          >
-            {t("drop.demoProject")}
-          </button>
-          <button
-            className="btn demo-btn"
-            disabled={busy}
-            onClick={() => void openDemo("/demo/pilz_pnoz_3d.e3d")}
-          >
-            {t("drop.demoPart")}
-          </button>
           <span className="grow" />
           <span className="privacy mono">{t("drop.privacy")}</span>
         </div>

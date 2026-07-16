@@ -11,8 +11,15 @@ export type ViewPreset = "iso" | "front" | "side" | "top";
 export interface ViewerHandle {
   fit(): void;
   setPreset(preset: ViewPreset): void;
-  /** Muestra solo la parte con ese objectId; null restaura todas. */
-  isolate(objectId: number | null): void;
+  /**
+   * Aplica la visibilidad por pieza: con `isolated` solo se muestra esa parte;
+   * si no, se ocultan los objectIds de `hidden`.
+   */
+  applyVisibility(hidden: ReadonlySet<number>, isolated: number | null): void;
+  /** Selecciona la parte (recuadro) y devuelve su userData, o null si no existe. */
+  selectPart(objectId: number): Record<string, unknown> | null;
+  /** Acerca la cámara a la parte manteniendo la dirección de vista. */
+  focusPart(objectId: number): void;
   /** Quita el recuadro de selección. */
   clearSelection(): void;
 }
@@ -73,6 +80,9 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    // Amortiguación corta: con la de serie la cámara sigue derivando ~2 s
+    // tras soltar, alargando cualquier shimmer de las líneas.
+    controls.dampingFactor = 0.12;
 
     const resize = () => {
       const { clientWidth, clientHeight } = container;
@@ -169,22 +179,67 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     handles.controls.update();
   };
 
+  /** Primer grupo de parte con ese objectId, o null. */
+  const findPart = (objectId: number): THREE.Object3D | null => {
+    const handles = handlesRef.current;
+    if (!handles?.modelRoot) return null;
+    let found: THREE.Object3D | null = null;
+    handles.modelRoot.traverse((obj) => {
+      if (!found && obj.userData.meshId !== undefined && obj.userData.objectId === objectId) {
+        found = obj;
+      }
+    });
+    return found;
+  };
+
   useImperativeHandle(ref, () => ({
     fit: () => frame(PRESET_DIRECTIONS.iso),
     setPreset: (preset) => frame(PRESET_DIRECTIONS[preset]),
-    isolate(objectId) {
+    applyVisibility(hidden, isolated) {
       const handles = handlesRef.current;
       if (!handles?.modelRoot) return;
       handles.modelRoot.traverse((obj) => {
         if (obj.userData.meshId !== undefined) {
-          obj.visible = objectId === null || obj.userData.objectId === objectId;
+          const objectId = obj.userData.objectId as number | undefined;
+          obj.visible =
+            isolated !== null
+              ? objectId === isolated
+              : objectId === undefined || !hidden.has(objectId);
         }
       });
-      // El recuadro de selección deja de tener sentido si la parte se oculta.
-      if (objectId === null && handles.selectionBox) {
+    },
+    selectPart(objectId) {
+      const handles = handlesRef.current;
+      if (!handles) return null;
+      if (handles.selectionBox) {
         handles.scene.remove(handles.selectionBox);
         handles.selectionBox = null;
       }
+      const part = findPart(objectId);
+      if (!part) return null;
+      const box = new THREE.Box3().setFromObject(part);
+      if (!box.isEmpty()) {
+        handles.selectionBox = new THREE.Box3Helper(
+          box,
+          new THREE.Color(cssVar("--accent") || "#5b9dff")
+        );
+        handles.scene.add(handles.selectionBox);
+      }
+      return part.userData;
+    },
+    focusPart(objectId) {
+      const handles = handlesRef.current;
+      const part = findPart(objectId);
+      if (!handles || !part) return;
+      const box = new THREE.Box3().setFromObject(part);
+      if (box.isEmpty()) return;
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3()).length();
+      const distance = Math.max(size * 2.2, 5);
+      const direction = handles.camera.position.clone().sub(handles.controls.target).normalize();
+      handles.controls.target.copy(center);
+      handles.camera.position.copy(center).addScaledVector(direction, distance);
+      handles.controls.update();
     },
     clearSelection() {
       const handles = handlesRef.current;

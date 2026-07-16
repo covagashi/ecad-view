@@ -293,6 +293,63 @@
   outline: none;
 }
 
+.rail-pop-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 10px -12px;
+}
+
+.rail-pop-title {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+
+.rail-pop-action {
+  appearance: none;
+  display: block;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  text-decoration: none;
+  font-size: 12.5px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button.rail-pop-action {
+  width: calc(100% + 16px);
+}
+
+.rail-pop-action:hover:not(:disabled) {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.rail-pop-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rail-pop-action .ext {
+  color: var(--text-faint);
+  font-size: 10.5px;
+  margin-left: 6px;
+}
+
+.rail-pop-version {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
 /* ---------- Área principal ---------- */
 
 .main {

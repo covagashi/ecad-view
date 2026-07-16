@@ -82,6 +82,24 @@ export function PagesPanel({
     return devices.filter((d) => `${d.label} ${d.crumb} ${d.key}`.toLowerCase().includes(q));
   }, [devices, deviceFilter]);
 
+  // Dispositivos agrupados por su estructura (asignación funcional/ubicación),
+  // como el árbol de páginas; los que no tienen estructura van al final.
+  const deviceGroups = useMemo(() => {
+    const byCrumb = new Map<string, Device[]>();
+    for (const device of filteredDevices) {
+      const list = byCrumb.get(device.crumb) ?? [];
+      if (list.length === 0) byCrumb.set(device.crumb, list);
+      list.push(device);
+    }
+    return [...byCrumb.entries()]
+      .sort(([a], [b]) => {
+        if (!a) return 1;
+        if (!b) return -1;
+        return a.localeCompare(b, undefined, { numeric: true });
+      })
+      .map(([crumb, list]) => ({ crumb, devices: list }));
+  }, [filteredDevices]);
+
   const toggleNode = (path: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -234,18 +252,26 @@ export function PagesPanel({
             />
           </div>
           <div className="panel-scroll">
-            {filteredDevices.map((device) => (
-              <button
-                key={device.key}
-                className="device-item"
-                onClick={() => onSelectDevice(device)}
-              >
-                <span className="row">
-                  <span className="title">{device.label}</span>
-                  <span className="badge">{device.occurrences.length}×</span>
-                </span>
-                {device.crumb && <span className="crumb">{device.crumb}</span>}
-              </button>
+            {deviceGroups.map((group) => (
+              <div key={group.crumb || " none"}>
+                {deviceGroups.length > 1 && (
+                  <div className="device-group mono">
+                    {group.crumb || t("devices.noStructure")}
+                  </div>
+                )}
+                {group.devices.map((device) => (
+                  <button
+                    key={device.key}
+                    className="device-item"
+                    onClick={() => onSelectDevice(device)}
+                  >
+                    <span className="row">
+                      <span className="title">{device.label}</span>
+                      <span className="badge">{device.occurrences.length}×</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
             ))}
             {filteredDevices.length === 0 && (
               <div className="list-empty">{t("devices.none")}</div>
