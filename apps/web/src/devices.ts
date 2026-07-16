@@ -48,10 +48,13 @@ export function buildDeviceIndex(pages: LoadedPage[]): DeviceIndex {
       if (!designation) continue;
 
       // La parte tras el último separador de estructura es el nombre del
-      // dispositivo; el sufijo ":X" es el punto de conexión.
-      const key = designation.replace(/:[^:=+&#]*$/, "");
+      // dispositivo; el sufijo ":X" es el punto de conexión (puede contener
+      // "+", p. ej. bornes ":L1/+").
+      const key = designation.replace(/:[^:]*$/, "");
       const tail = key.split(/[+=&]+/).pop() ?? key;
-      const label = tail.replace(/^#/, "") || key;
+      const label = tail.replace(/^#/, "");
+      // Sin nombre de aparato (p. ej. marcadores de potencial "+") no es un dispositivo.
+      if (!label) continue;
 
       let device = byKey.get(key);
       if (!device) {

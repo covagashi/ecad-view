@@ -76,7 +76,7 @@ function matchFunction(doc: ProjectDoc, picked: PickedPart) {
 function findDeviceByDesignation(index: DeviceIndex, designation: string): Device | null {
   // La designación de la función lleva el mismo formato que el <title> de los
   // símbolos; se normaliza igual que en buildDeviceIndex (sin punto de conexión).
-  const key = designation.replace(/:[^:=+&#]*$/, "");
+  const key = designation.replace(/:[^:]*$/, "");
   const direct = index.devices.find((d) => d.key === key);
   if (direct) return direct;
   const tail = key.split(/[+=&]+/).pop()?.replace(/^#/, "");

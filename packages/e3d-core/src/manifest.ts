@@ -9,7 +9,7 @@ export interface ManifestPage {
   file: string | null;
   /** Segmentos del identificador estructurado (==EES, ++Infrastructure, ...) ya limpios. */
   breadcrumb: string[];
-  /** Última parte del identificador: el nombre "humano" de la página. */
+  /** Descripción de página (ep.11011) o, en su defecto, última parte del identificador. */
   title: string;
   /** Tipo de representación (Multi_line, EFS...). */
   pageType: string | null;
@@ -138,19 +138,39 @@ export async function readManifest(
       locators.set(Number(packageId), list);
     }
 
+    // page_package solo tiene las columnas de estructura (epXXXX) que usa la
+    // configuración de árbol del proyecto (propiedad pages.treeconf), así que
+    // la consulta se construye a partir del esquema real de la tabla.
+    const pageColumns = new Set(
+      rows(db, "PRAGMA table_info(page_package)").map((row) => String(row[1]).toLowerCase())
+    );
+    const col = (name: string) => (pageColumns.has(name) ? `COALESCE(${name},'')` : "''");
+    const structureExpr = ["ep1340", "ep1440", "ep1140", "ep1240"].map(col).join(" || ");
+
+    // Propiedades por página: contador (ep.11000) y descripción (ep.11011).
+    const pageProps = new Map<number, { counter?: string; description?: string }>();
+    for (const [packageId, propId, value] of rows(
+      db,
+      `SELECT packageid, propid, value FROM property
+       WHERE propid IN (11000, 11011) AND value IS NOT NULL AND value != ''`
+    )) {
+      const entry = pageProps.get(Number(packageId)) ?? {};
+      if (Number(propId) === 11000) entry.counter = String(value);
+      else entry.description = String(value);
+      pageProps.set(Number(packageId), entry);
+    }
+
     const pages: ManifestPage[] = rows(
       db,
-      `SELECT packageid, name,
-              COALESCE(ep1340,''), COALESCE(ep1440,''), COALESCE(ep1140,''),
-              COALESCE(ep1240,''), COALESCE(ep1640,''), COALESCE(ep1540,'')
+      `SELECT packageid, name, ${structureExpr}, ${col("ep1640")}, ${col("ep1540")}
        FROM page_package`
     ).map((row) => {
       const packageId = Number(row[0]);
       const name = String(row[1]);
-      const structure = `${row[2]}${row[3]}${row[4]}${row[5]}`;
-      const breadcrumb = tokenizeStructure(structure);
-      const counter = String(row[6]).replace(/^#/, "") || null;
-      const pageType = String(row[7]).replace(/^&/, "") || null;
+      const breadcrumb = tokenizeStructure(String(row[2]));
+      const props = pageProps.get(packageId);
+      const counter = String(row[3]).replace(/^#/, "") || props?.counter || null;
+      const pageType = String(row[4]).replace(/^&/, "") || null;
       const file =
         locators.get(packageId)?.find((l) => l.toLowerCase() === `${name.toLowerCase()}.svg`) ??
         locators.get(packageId)?.find((l) => l.toLowerCase().endsWith(".svg")) ??
@@ -160,7 +180,7 @@ export async function readManifest(
         name,
         file,
         breadcrumb,
-        title: breadcrumb[breadcrumb.length - 1] ?? name,
+        title: props?.description || breadcrumb[breadcrumb.length - 1] || name,
         pageType,
         counter,
       };
@@ -237,7 +257,7 @@ export async function readManifest(
  */
 export function tokenizeStructure(structure: string): string[] {
   const tokens: string[] = [];
-  const re = /(?:==|\+\+|\+|&)([^=+&#]+)/g;
+  const re = /(?:==|=|\+\+|\+|&)([^=+&#]+)/g;
   let match: RegExpExecArray | null;
   while ((match = re.exec(structure)) !== null) {
     const value = match[1].replace(/_/g, " ").trim();
