@@ -14,12 +14,147 @@
   overflow: hidden;
 }
 
+/* --- Ficha de la pieza seleccionada (cabecera del panel de desglose) --- */
+
+.part-detail {
+  flex: none;
+  margin: 10px 10px 2px;
+  padding: 11px 12px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--panel-2);
+  box-shadow: var(--shadow-float);
+}
+
+.part-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.part-detail-icon {
+  color: var(--accent);
+  flex: none;
+}
+
+.part-detail-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.part-detail-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 6px;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.part-detail-close:hover {
+  color: var(--text);
+  background: var(--panel);
+}
+
+.part-detail-ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.part-detail-ids .kv {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 11px;
+}
+
+.part-detail-ids .k {
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+}
+
+.part-detail-ids .v {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.part-detail-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* Acciones de la pieza seleccionada. */
+.part-action {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.part-action:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--panel);
+  border-color: var(--accent-strong);
+}
+
+.part-action.primary {
+  width: 100%;
+  margin-top: 10px;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.part-action.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.part-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.part-action-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
 /* --- Filas del desglose de piezas --- */
 
 .part-row {
   display: flex;
   align-items: center;
   width: 100%;
+  border-radius: 7px;
 }
 
 .part-row-main {
@@ -33,7 +168,7 @@
   align-items: center;
   gap: 8px;
   text-align: left;
-  padding: 6px 4px 6px 14px;
+  padding: 7px 4px 7px 10px;
   font-size: 12px;
   cursor: pointer;
 }
@@ -61,6 +196,10 @@
   color: var(--text);
 }
 
+.part-row.active {
+  background: var(--accent-dim);
+}
+
 .part-row.active .part-row-main {
   color: var(--accent);
   font-weight: 600;
@@ -85,6 +224,20 @@
   cursor: pointer;
   border-radius: 6px;
   margin-right: 6px;
+  transition: opacity 0.12s ease;
+}
+
+/* Con puntero (escritorio) el ojo aparece al pasar por encima o si la fila está
+   activa/oculta; en táctil siempre visible (no hay hover). */
+@media (hover: hover) {
+  .part-row-eye {
+    opacity: 0;
+  }
+  .part-row:hover .part-row-eye,
+  .part-row.active .part-row-eye,
+  .part-row.off .part-row-eye {
+    opacity: 1;
+  }
 }
 
 .part-row-eye:hover {
@@ -98,6 +251,22 @@
 
 /* El pie del panel de desglose reutiliza .panel-foot; el botón "mostrar todo"
    hereda .part-btn. */
+.part-btn {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.part-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent-strong);
+}
+
 .pages-panel .panel-foot .part-btn {
   padding: 3px 8px;
 }
@@ -125,56 +294,6 @@
 .parts-fab-count {
   font-size: 11px;
   color: var(--text-faint);
-}
-
-/* Píldora flotante de la pieza seleccionada (modo compacto/móvil). */
-.part-chip {
-  position: absolute;
-  left: 16px;
-  bottom: 72px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: min(70vw, 320px);
-  appearance: none;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 9px 12px 9px 14px;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-float);
-}
-
-.part-chip .accent {
-  color: var(--accent);
-  flex: none;
-}
-
-.part-chip-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.part-chip-close {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  color: var(--text-faint);
-}
-
-.part-chip-close:hover {
-  color: var(--text);
-  background: var(--accent-dim);
 }
 
 /* ---------- Vista 3D: UI flotante ---------- */
@@ -272,114 +391,4 @@
   height: 18px;
   background: var(--border-strong);
   margin: 0 4px;
-}
-
-/* --- Tarjeta de pieza seleccionada --- */
-
-.part-card {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  z-index: 2;
-  min-width: 240px;
-  max-width: 320px;
-  background: var(--panel-2);
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  padding: 12px 16px;
-  box-shadow: var(--shadow-card);
-}
-
-.part-card-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.part-card-title {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 700;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.part-card-close {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--text-faint);
-  cursor: pointer;
-  padding: 2px;
-  border-radius: 4px;
-  flex: none;
-}
-
-.part-card-close:hover {
-  color: var(--text);
-  background: var(--accent-dim);
-}
-
-.part-card-sub {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  margin-top: 2px;
-  overflow-wrap: anywhere;
-}
-
-.part-card-ids {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.part-card-ids b {
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.part-card-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.part-btn {
-  appearance: none;
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 11.5px;
-  cursor: pointer;
-}
-
-.part-btn:hover:not(:disabled) {
-  color: var(--text);
-}
-
-.part-btn.primary {
-  color: var(--accent);
-  background: var(--accent-dim);
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.part-btn.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-.part-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.part-card-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--text-faint);
 }

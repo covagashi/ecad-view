@@ -2,12 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { E3dScene } from "@covaga/e3d-core";
 import { Viewer, type ViewerHandle } from "../viewer/Viewer";
 import { useProjects } from "../state/ProjectsContext";
-import { resolvePickedToSchematic } from "../state/bridge";
+import { pickedLabel, resolvePickedToSchematic } from "../state/bridge";
 import type { PickedPart } from "../state/types";
 import { useI18n } from "../i18n";
 import { IconCube } from "../shell/icons";
 import { ModelSelectorCard } from "./ModelSelectorCard";
-import { PartInfoCard } from "./PartInfoCard";
 import { PartsPanel } from "./PartsPanel";
 import { ViewPresets } from "./ViewPresets";
 import { buildPartList, type PartEntry } from "./parts";
@@ -84,6 +83,9 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
 
   const onPick = (info: Record<string, unknown> | null) => {
     dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart | null });
+    // La ficha de la pieza vive en el panel: al elegir en el lienzo desde móvil
+    // (panel cerrado por defecto) lo abrimos para que se vea la selección.
+    if (info && isMobile) setPanelOpenPersist(true);
   };
 
   const viewInSchematics = () => {
@@ -149,8 +151,8 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
   const selectFromPanel = (entry: PartEntry) => {
     const info = viewerRef.current?.selectPart(entry.objectIds[0]);
     if (info) dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart });
-    // En móvil el panel es un overlay: se cierra para ver la pieza.
-    if (isMobile) setPanelOpenPersist(false);
+    // La ficha de la pieza (y sus acciones) se muestra en este mismo panel, así
+    // que no se cierra en móvil: la selección queda visible arriba del listado.
   };
 
   const focusPicked = () => {
@@ -159,16 +161,42 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
 
   const showPanel = parts.length > 0 && panelOpen;
 
+  const selectedLabel = doc.picked
+    ? pickedLabel(doc, doc.picked) ??
+      t("part.part", { id: String(doc.picked.objectId ?? doc.picked.meshId ?? "?") })
+    : null;
+
+  const selected =
+    doc.picked && selectedLabel
+      ? {
+          label: selectedLabel,
+          typeId: String(doc.picked.typeId ?? "–"),
+          objectId: String(doc.picked.objectId ?? "–"),
+          hasObject: doc.picked.objectId !== undefined,
+          hasBridge: !!bridgeTarget,
+          isolated: isolated !== null && isolated === pickedId,
+          hidden: !!pickedEntry && hiddenKeys.has(pickedEntry.key),
+        }
+      : null;
+
   const partsPanel = (
     <PartsPanel
       parts={parts}
       hiddenKeys={hiddenKeys}
       isolated={isolated}
       selectedKey={pickedEntry?.key ?? null}
+      selected={selected}
       onSelect={selectFromPanel}
       onToggleHidden={toggleEntryHidden}
       onShowAll={showAll}
       onHide={() => setPanelOpenPersist(false)}
+      onViewInSchematics={viewInSchematics}
+      onToggleIsolate={toggleIsolate}
+      onToggleSelectedHidden={() => {
+        if (pickedEntry) toggleEntryHidden(pickedEntry);
+      }}
+      onFocusSelected={focusPicked}
+      onDeselect={closeCard}
     />
   );
 
@@ -186,24 +214,6 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
         />
 
         <ViewPresets onPreset={(preset) => viewerRef.current?.setPreset(preset)} />
-
-        {doc.picked && (
-          <PartInfoCard
-            doc={doc}
-            picked={doc.picked}
-            bridgeTarget={bridgeTarget}
-            isolated={isolated !== null && isolated === pickedId}
-            hidden={!!pickedEntry && hiddenKeys.has(pickedEntry.key)}
-            compact={isMobile}
-            onViewInSchematics={viewInSchematics}
-            onToggleIsolate={toggleIsolate}
-            onToggleHidden={() => {
-              if (pickedEntry) toggleEntryHidden(pickedEntry);
-            }}
-            onFocus={focusPicked}
-            onClose={closeCard}
-          />
-        )}
 
         {parts.length > 0 && !panelOpen && !isMobile && (
           <div className="edge-tabs">

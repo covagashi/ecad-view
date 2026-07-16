@@ -1,6 +1,7 @@
 import { useI18n, LOCALES, LOCALE_NAMES, type Locale } from "../i18n";
 import { useProjects } from "../state/ProjectsContext";
 import { useTheme } from "../theme";
+import { useWakeLock } from "../wakeLock";
 import { IconMoon, IconSun } from "./icons";
 
 export interface SettingsPanelProps {
@@ -19,6 +20,7 @@ export function SettingsPanel({ onClose, showTheme = false }: SettingsPanelProps
   const { t, locale, setLocale } = useI18n();
   const { state, openDemo } = useProjects();
   const { theme, toggleTheme } = useTheme();
+  const wakeLock = useWakeLock();
   const busy = state.projects.some((p) => p.loading);
 
   return (
@@ -40,6 +42,24 @@ export function SettingsPanel({ onClose, showTheme = false }: SettingsPanelProps
           <button className="rail-pop-action" onClick={toggleTheme}>
             {theme === "dark" ? <IconSun size={13} /> : <IconMoon size={13} />}{" "}
             {t("rail.theme")}
+          </button>
+        </>
+      )}
+
+      {wakeLock.supported && (
+        <>
+          <div className="rail-pop-sep" />
+          <div className="rail-pop-title">{t("settings.display")}</div>
+          <button
+            className="rail-pop-row toggle-row"
+            role="switch"
+            aria-checked={wakeLock.enabled}
+            onClick={wakeLock.toggle}
+          >
+            <span>{t("settings.keepAwake")}</span>
+            <span className={"switch" + (wakeLock.enabled ? " on" : "")} aria-hidden="true">
+              <span className="switch-knob" />
+            </span>
           </button>
         </>
       )}

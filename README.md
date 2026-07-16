@@ -5,7 +5,13 @@ Open `.epdz` project exports and `.e3d` 3D parts directly in your browser —
 no EPLAN installation, no server, no upload. Everything is parsed and
 rendered locally on your device, on desktop and mobile.
 
-**Website:** [covaga.dev](https://covaga.dev) ·
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/covagashi/ecad-view?sort=semver)](https://github.com/covagashi/ecad-view/releases)
+[![Web app](https://img.shields.io/badge/web%20app-covaga.dev-5b9dff)](https://covaga.dev)
+
+▶ **Try it now — no install:** [covaga.dev](https://covaga.dev) ·
+📥 **Downloads:** [Releases](https://github.com/covagashi/ecad-view/releases) ·
+📖 **User guide:** [Wiki](https://github.com/covagashi/ecad-view/wiki) ·
 **Source:** [github.com/covagashi/ecad-view](https://github.com/covagashi/ecad-view)
 
 > **Disclaimer:** this is an independent community project. It is not
@@ -19,6 +25,30 @@ rendered locally on your device, on desktop and mobile.
 | Project info (SQLite manifest) | Mobile |
 | --- | --- |
 | ![Project info](docs/screenshots/project-info.png) | ![Mobile](docs/screenshots/mobile.png) |
+
+## Install
+
+The easiest way is to **not** install anything: open
+**[covaga.dev](https://covaga.dev)** in any modern browser (desktop or mobile).
+It's a Progressive Web App, so you can also *Install / Add to Home Screen* for an
+app window and **offline** use.
+
+Prefer a native build? Grab one from the
+[**Releases**](https://github.com/covagashi/ecad-view/releases) page:
+
+| Platform | Download | Notes |
+| --- | --- | --- |
+| **Web / PWA** | [covaga.dev](https://covaga.dev) | Recommended. Works everywhere, installable, offline. |
+| **Windows** | `.exe` (portable / NSIS) · `.msi` | Uses the built-in WebView2 (Win 10/11). |
+| **macOS** | PWA, or build from source | No prebuilt `.dmg` yet; install the PWA from Safari or build the Tauri shell locally. |
+| **Android** | `.apk` | Sideload; the release APK is self-signed (not from Play Store). |
+| **iOS** | Xcode project | Build & sign in Xcode, or just install the PWA from Safari. |
+
+See the [**user guide (Wiki)**](https://github.com/covagashi/ecad-view/wiki) for
+how to open a project, navigate the 3D/schematics, and export a `.epdz` from
+EPLAN. Packaging details live in
+[`docs/native-shells.md`](docs/native-shells.md) and
+[`docs/packaging.md`](docs/packaging.md).
 
 ## Features
 
@@ -50,6 +80,9 @@ rendered locally on your device, on desktop and mobile.
   support via service worker), and thin native shells for desktop (Tauri)
   and mobile (Capacitor) wrap the same web core — see
   [`docs/native-shells.md`](docs/native-shells.md).
+- **Made for reviews** — eight UI languages, light/dark themes, session
+  restore, and an optional **keep-screen-awake** toggle so the display won't
+  sleep during a long walkthrough (Settings → Display).
 - **Privacy-friendly** — files never leave your device.
 
 ## Quick start
@@ -106,6 +139,7 @@ apps/mobile/         Capacitor mobile shell wrapping apps/web (own install).
 samples/             Sample files: a .epdz project export (EPLAN demo
                      content) and a standalone .e3d part.
 docs/                Format documentation and screenshots.
+wiki/                User-facing guide (source of the GitHub Wiki).
 scripts/             Development scripts (parser smoke test).
 tools/eplan/         EPLAN-side helper scripts (publish a project as .epdz).
 tools/asset-creator/ Tooling to author .e3d parts (geometry lib, writers).
