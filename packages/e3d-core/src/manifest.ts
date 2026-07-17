@@ -40,6 +40,14 @@ export interface ManifestFunction {
   /** Designación completa del dispositivo (propiedad ep.20001), si existe. */
   designation: string | null;
   /**
+   * Número de artículo/pieza principal (propiedad ep.20100), p. ej.
+   * "SIE.5SY4106-7" o "PXC.3022218" (prefijo de fabricante + referencia).
+   * null si la función no lleva pieza asociada.
+   */
+  partNumber: string | null;
+  /** Descripción/tipo de la pieza (propiedad ep.20193), si existe. */
+  partDescription: string | null;
+  /**
    * Id del elemento SVG asociado ("Id17_4180"), derivado del sufijo numérico
    * del nombre. Es el mismo id que usan los enlaces jumpToFunction.
    */
@@ -204,18 +212,27 @@ export async function readManifest(
       functionPages.set(Number(functionId), list);
     }
 
+    // ep.20001 designación, ep.20100 nº de artículo, ep.20193 descripción de la
+    // pieza. Una función puede llevar varias piezas (propindex 0,1…); se toma la
+    // principal (propindex más bajo, no vacía).
+    const firstProp = (propId: number) =>
+      `(SELECT p.value FROM property p WHERE p.packageid = k.id AND p.propid = ${propId}` +
+      ` AND p.value != '' ORDER BY p.propindex LIMIT 1)`;
     const functions: ManifestFunction[] = rows(
       db,
-      `SELECT k.id, k.name,
-              (SELECT p.value FROM property p WHERE p.packageid = k.id AND p.propid = 20001)
+      `SELECT k.id, k.name, ${firstProp(20001)}, ${firstProp(20100)}, ${firstProp(20193)}
        FROM package k WHERE k.type = 'function'`
-    ).map(([packageId, name, designation]) => {
+    ).map(([packageId, name, designation, partNumber, partDescription]) => {
       // El sufijo "_17_4180" del nombre casa con el id "Id17_4180" del SVG.
       const suffix = /_(\d+)_(\d+)$/.exec(String(name));
+      const clean = (value: (typeof designation)) =>
+        value == null || value === "" ? null : String(value);
       return {
         packageId: Number(packageId),
         name: String(name),
-        designation: designation == null || designation === "" ? null : String(designation),
+        designation: clean(designation),
+        partNumber: clean(partNumber),
+        partDescription: clean(partDescription),
         svgElementId: suffix ? `Id${suffix[1]}_${suffix[2]}` : null,
         pageIds: functionPages.get(Number(packageId)) ?? [],
       };

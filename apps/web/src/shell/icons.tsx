@@ -113,6 +113,31 @@ export function IconPage(props: IconProps) {
   );
 }
 
+/** Lista de piezas (BOM): filas con viñeta. */
+export function IconList(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M6 4h8M6 8h8M6 12h8"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path d="M2.5 4h.01M2.5 8h.01M2.5 12h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Descargar (exportar CSV). */
+export function IconDownload(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2.5 12.5h11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function IconSearch(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -153,6 +178,36 @@ export function IconPlus(props: IconProps) {
   return (
     <svg {...base(props)}>
       <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Enlace / cadena (copiar enlace compartible). */
+export function IconLink(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M6.5 9.5l3-3M7 4.5l1-1a2.8 2.8 0 014 4l-1 1M9 11.5l-1 1a2.8 2.8 0 01-4-4l1-1"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Comprobación (enlace copiado). */
+export function IconCheck(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path
+        d="M3 8.5l3.2 3.2L13 5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

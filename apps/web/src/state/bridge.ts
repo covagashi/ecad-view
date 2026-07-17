@@ -73,7 +73,13 @@ function matchFunction(doc: ProjectDoc, picked: PickedPart) {
   return doc.manifest.functions.find((fn) => fn.svgElementId === candidate) ?? null;
 }
 
-function findDeviceByDesignation(index: DeviceIndex, designation: string): Device | null {
+/**
+ * Busca el dispositivo del índice de esquemas que corresponde a una designación
+ * EPLAN completa (ep.20001, con o sin punto de conexión). Se normaliza igual que
+ * en buildDeviceIndex: primero por clave exacta, si no por la etiqueta (cola tras
+ * el último separador de estructura). Devuelve null si no aparece en los SVG.
+ */
+export function findDeviceByDesignation(index: DeviceIndex, designation: string): Device | null {
   // La designación de la función lleva el mismo formato que el <title> de los
   // símbolos; se normaliza igual que en buildDeviceIndex (sin punto de conexión).
   const key = designation.replace(/:[^:]*$/, "");

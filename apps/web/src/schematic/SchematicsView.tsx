@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   SchematicViewer,
   type SchematicNavTarget,
   type SchematicViewerHandle,
 } from "../viewer/SchematicViewer";
 import { useProjects } from "../state/ProjectsContext";
-import type { Device } from "../devices";
+import { nextDeviceOccurrence, type Device } from "../devices";
+import { buildBom } from "../bom";
 import { BreadcrumbChip } from "./BreadcrumbChip";
 import { EdgeTabs } from "./EdgeTabs";
 import { PagesPanel, type PanelTab } from "./PagesPanel";
@@ -69,6 +70,17 @@ export function SchematicsView() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [dispatch]);
 
+  // Lista de piezas / BOM a partir del manifest.db (vacía sin manifest).
+  const articles = useMemo(
+    () => buildBom(doc?.manifest ?? null, doc?.deviceIndex ?? { devices: [], byElement: new Map() }),
+    [doc?.manifest, doc?.deviceIndex]
+  );
+  const bomFileName = useMemo(() => {
+    const base =
+      doc?.manifest?.projectName || doc?.fileName?.replace(/\.[^.]+$/, "") || "project";
+    return `${base}-BOM.csv`;
+  }, [doc?.manifest?.projectName, doc?.fileName]);
+
   const setPinnedPersist = useCallback((next: boolean) => {
     setPinned(next);
     try {
@@ -111,19 +123,14 @@ export function SchematicsView() {
 
   /** Salta a la siguiente aparición del dispositivo (ciclando entre páginas). */
   const jumpToDevice = (device: Device) => {
-    const occurrences = device.occurrences;
-    if (occurrences.length === 0) return;
-    const current = occurrences.findIndex(
-      (o) => o.pageIndex === doc.pageIndex && o.elementId === doc.highlight?.elementId
-    );
-    const nextIndex = (current + 1) % occurrences.length;
-    const next = occurrences[nextIndex];
+    const next = nextDeviceOccurrence(device, doc.pageIndex, doc.highlight?.elementId);
+    if (!next) return;
     dispatch({
       type: "NAVIGATE",
       id: doc.id,
-      pageIndex: next.pageIndex,
-      highlight: { elementId: next.elementId, nonce: ++nonceRef.current },
-      xrefInfo: `${device.label} · ${nextIndex + 1}/${occurrences.length}`,
+      pageIndex: next.occurrence.pageIndex,
+      highlight: { elementId: next.occurrence.elementId, nonce: ++nonceRef.current },
+      xrefInfo: `${device.label} · ${next.index + 1}/${next.total}`,
     });
     if (!inlinePanel) setOverlayOpen(false);
   };
@@ -175,6 +182,8 @@ export function SchematicsView() {
       pages={doc.pages}
       pageIndex={doc.pageIndex}
       devices={doc.deviceIndex.devices}
+      articles={articles}
+      bomFileName={bomFileName}
       tab={tab}
       onTab={setTab}
       pinned={inlinePanel}
@@ -209,6 +218,7 @@ export function SchematicsView() {
             pageIndex={doc.pageIndex}
             pageCount={doc.pages.length}
             hasDevices={doc.deviceIndex.devices.length > 0}
+            hasArticles={articles.length > 0}
             onOpen={(nextTab) => {
               setTab(nextTab);
               setOverlayOpen(true);

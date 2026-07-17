@@ -3,6 +3,8 @@ import type { E3dScene } from "@covaga/e3d-core";
 import { Viewer, type ViewerHandle } from "../viewer/Viewer";
 import { useProjects } from "../state/ProjectsContext";
 import { pickedLabel, resolvePickedToSchematic } from "../state/bridge";
+import { consumePendingPick } from "../state/deeplink";
+import { nextDeviceOccurrence } from "../devices";
 import type { PickedPart } from "../state/types";
 import { useI18n } from "../i18n";
 import { IconCube } from "../shell/icons";
@@ -67,6 +69,16 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     viewerRef.current?.applyVisibility(hiddenIds, isolated);
   }, [scene, parts, hiddenKeys, isolated]);
 
+  // Pieza 3D pendiente de un enlace profundo: se selecciona al montar la escena.
+  useEffect(() => {
+    if (!doc || !scene) return;
+    const objectId = consumePendingPick(doc.id);
+    if (objectId == null) return;
+    const info = viewerRef.current?.selectPart(objectId);
+    if (info) dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.id, scene]);
+
   if (!doc) return null;
 
   const bridgeTarget = doc.picked ? resolvePickedToSchematic(doc, doc.picked) : null;
@@ -91,14 +103,20 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
   const viewInSchematics = () => {
     if (!bridgeTarget) return;
     if (bridgeTarget.kind === "device") {
-      const occurrence = bridgeTarget.device.occurrences[0];
-      if (!occurrence) return;
+      // Misma lógica de ciclo que la búsqueda de dispositivos: el primer salto
+      // cae en la primera aparición y, si se repite, avanza a la siguiente.
+      const next = nextDeviceOccurrence(
+        bridgeTarget.device,
+        doc.pageIndex,
+        doc.highlight?.elementId
+      );
+      if (!next) return;
       dispatch({
         type: "NAVIGATE",
         id: doc.id,
-        pageIndex: occurrence.pageIndex,
-        highlight: { elementId: occurrence.elementId, nonce: ++nonceRef.current },
-        xrefInfo: `${bridgeTarget.device.label} · 1/${bridgeTarget.device.occurrences.length}`,
+        pageIndex: next.occurrence.pageIndex,
+        highlight: { elementId: next.occurrence.elementId, nonce: ++nonceRef.current },
+        xrefInfo: `${bridgeTarget.device.label} · ${next.index + 1}/${next.total}`,
       });
     } else {
       dispatch({

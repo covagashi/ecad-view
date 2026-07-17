@@ -10,12 +10,16 @@ import { LibraryView } from "./library/LibraryView";
 import { scheduleSessionSave } from "./library/session";
 import { SchematicsView } from "./schematic/SchematicsView";
 import { BottomNav } from "./mobile/BottomNav";
+import { useDeepLink } from "./state/useDeepLink";
 import { useI18n } from "./i18n";
 
 export function App() {
   const { t } = useI18n();
   const { state, active: doc, openFiles } = useProjects();
   const [dragging, setDragging] = useState(false);
+
+  // Enlaces profundos: hash de la URL ↔ estado de vista.
+  useDeepLink();
 
   // Persistencia de la sesión de pestañas (con debounce interno).
   useEffect(() => {

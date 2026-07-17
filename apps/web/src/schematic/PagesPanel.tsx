@@ -1,16 +1,29 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { LoadedPage } from "../state/types";
 import type { Device } from "../devices";
+import type { BomArticle } from "../bom";
+import { exportBomCsv } from "../bom";
 import { useI18n } from "../i18n";
-import { IconChevronRight, IconFolder, IconPage, IconPin, IconSearch } from "../shell/icons";
+import {
+  IconChevronRight,
+  IconDownload,
+  IconFolder,
+  IconPage,
+  IconPin,
+  IconSearch,
+} from "../shell/icons";
 import { buildTree, pathToPage, type TreeNode } from "./tree";
 
-export type PanelTab = "pages" | "devices";
+export type PanelTab = "pages" | "devices" | "bom";
 
 export interface PagesPanelProps {
   pages: LoadedPage[];
   pageIndex: number;
   devices: Device[];
+  /** Lista de piezas / BOM extraída de manifest.db (vacía si no hay artículos). */
+  articles: BomArticle[];
+  /** Nombre del fichero CSV al exportar la lista de piezas. */
+  bomFileName: string;
   tab: PanelTab;
   onTab: (tab: PanelTab) => void;
   pinned: boolean;
@@ -29,6 +42,8 @@ export function PagesPanel({
   pages,
   pageIndex,
   devices,
+  articles,
+  bomFileName,
   tab,
   onTab,
   pinned,
@@ -40,6 +55,8 @@ export function PagesPanel({
   const { t } = useI18n();
   const [filter, setFilter] = useState("");
   const [deviceFilter, setDeviceFilter] = useState("");
+  const [bomFilter, setBomFilter] = useState("");
+  const [bomExpanded, setBomExpanded] = useState<Set<string>>(new Set());
   const tree = useMemo(() => buildTree(pages), [pages]);
   // Nodos colapsados; por defecto se expande solo el camino a la página activa.
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
@@ -100,6 +117,29 @@ export function PagesPanel({
       .map(([crumb, list]) => ({ crumb, devices: list }));
   }, [filteredDevices]);
 
+  const filteredArticles = useMemo(() => {
+    const q = bomFilter.trim().toLowerCase();
+    if (!q) return articles;
+    return articles.filter((a) =>
+      `${a.partNumber} ${a.manufacturer ?? ""} ${a.description ?? ""} ${a.devices
+        .map((d) => d.designation)
+        .join(" ")}`
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [articles, bomFilter]);
+  // Con filtro activo se expanden todas las coincidencias para ver los aparatos.
+  const bomFilterActive = bomFilter.trim().length > 0;
+
+  const toggleBom = (key: string) => {
+    setBomExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   const toggleNode = (path: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -159,6 +199,11 @@ export function PagesPanel({
         {devices.length > 0 && (
           <button className={tab === "devices" ? "active" : ""} onClick={() => onTab("devices")}>
             {t("panel.devices")}
+          </button>
+        )}
+        {articles.length > 0 && (
+          <button className={tab === "bom" ? "active" : ""} onClick={() => onTab("bom")}>
+            {t("panel.bom")}
           </button>
         )}
         <span className="grow" />
@@ -276,6 +321,96 @@ export function PagesPanel({
             {filteredDevices.length === 0 && (
               <div className="list-empty">{t("devices.none")}</div>
             )}
+          </div>
+        </>
+      )}
+
+      {tab === "bom" && (
+        <>
+          <div className="panel-search">
+            <IconSearch size={13} />
+            <input
+              type="search"
+              placeholder={t("bom.placeholder", { count: articles.length })}
+              value={bomFilter}
+              onChange={(e) => setBomFilter(e.target.value)}
+            />
+          </div>
+          <div className="panel-scroll">
+            {filteredArticles.map((article) => {
+              const expanded = bomFilterActive || bomExpanded.has(article.key);
+              return (
+                <div key={article.key} className="bom-article">
+                  <button
+                    className="bom-head"
+                    onClick={() => toggleBom(article.key)}
+                    aria-expanded={expanded}
+                  >
+                    <span className={`twisty${expanded ? " open" : ""}`}>▸</span>
+                    <span className="bom-part">
+                      <span className="num mono">{article.partNumber}</span>
+                      {article.description && (
+                        <span className="desc">{article.description}</span>
+                      )}
+                    </span>
+                    <span className="badge">{article.quantity}×</span>
+                  </button>
+                  {expanded && (
+                    <div className="bom-devices">
+                      {article.devices.map((entry, i) =>
+                        entry.device ? (
+                          <button
+                            key={`${entry.designation}-${i}`}
+                            className="bom-device"
+                            onClick={() => onSelectDevice(entry.device!)}
+                          >
+                            <span className="title mono">{entry.designation}</span>
+                            <span aria-hidden="true" className="go">→</span>
+                          </button>
+                        ) : (
+                          <span
+                            key={`${entry.designation}-${i}`}
+                            className="bom-device off"
+                            title={t("part.noMatch")}
+                          >
+                            <span className="title mono">{entry.designation}</span>
+                          </span>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {filteredArticles.length === 0 && (
+              <div className="list-empty">{t("bom.none")}</div>
+            )}
+          </div>
+          <div className="panel-foot">
+            <span className="mono">
+              {t("bom.count", { count: filteredArticles.length })}
+            </span>
+            <span className="grow" />
+            <button
+              className="pager"
+              disabled={filteredArticles.length === 0}
+              onClick={() =>
+                exportBomCsv(
+                  filteredArticles,
+                  {
+                    manufacturer: t("bom.colManufacturer"),
+                    partNumber: t("bom.colPartNumber"),
+                    description: t("bom.colDescription"),
+                    quantity: t("bom.colQuantity"),
+                    designations: t("bom.colDesignations"),
+                  },
+                  bomFileName
+                )
+              }
+            >
+              <IconDownload size={13} />
+              <span>{t("bom.exportCsv")}</span>
+            </button>
           </div>
         </>
       )}

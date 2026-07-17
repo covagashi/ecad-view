@@ -28,6 +28,36 @@ export interface DeviceIndex {
   byElement: Map<string, Device>;
 }
 
+/** Aparición siguiente al ciclar por las del dispositivo, con su posición (1-based). */
+export interface DeviceStep {
+  occurrence: DeviceOccurrence;
+  /** Índice 0-based de la aparición elegida. */
+  index: number;
+  /** Total de apariciones del dispositivo. */
+  total: number;
+}
+
+/**
+ * Siguiente aparición del dispositivo tras la actualmente resaltada, ciclando
+ * (la última vuelve a la primera). Si la aparición actual no está resaltada
+ * (p. ej. al llegar desde el 3D) empieza por la primera. Es la lógica común de
+ * salto/ciclo de dispositivos que comparten la búsqueda de dispositivos, las
+ * referencias cruzadas y el salto desde el visor 3D.
+ */
+export function nextDeviceOccurrence(
+  device: Device,
+  currentPageIndex: number,
+  currentElementId: string | null | undefined
+): DeviceStep | null {
+  const occurrences = device.occurrences;
+  if (occurrences.length === 0) return null;
+  const current = occurrences.findIndex(
+    (o) => o.pageIndex === currentPageIndex && o.elementId === currentElementId
+  );
+  const index = (current + 1) % occurrences.length;
+  return { occurrence: occurrences[index], index, total: occurrences.length };
+}
+
 /** Símbolos EPLAN en el SVG: <g id="IdX_Y"><title>designación</title>. */
 const SYMBOL_RE = /<g[^>]*\bid="(Id\d+_\d+)"[^>]*>\s*<title>([^<]*)<\/title>/g;
 

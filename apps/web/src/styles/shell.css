@@ -447,3 +447,28 @@ button.rail-pop-action {
 .statusbar .pick {
   color: var(--accent);
 }
+
+.statusbar .copy-link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.statusbar .copy-link:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.statusbar .copy-link.copied {
+  color: var(--accent);
+  border-color: var(--accent);
+}

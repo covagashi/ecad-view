@@ -7,6 +7,7 @@ rendered locally on your device, on desktop and mobile.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/covagashi/ecad-view?sort=semver)](https://github.com/covagashi/ecad-view/releases)
+[![CI](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml/badge.svg)](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml)
 [![Web app](https://img.shields.io/badge/web%20app-covaga.dev-5b9dff)](https://covaga.dev)
 
 ▶ **Try it now — no install:** [covaga.dev](https://covaga.dev) ·
@@ -106,23 +107,12 @@ npm run test:samples   # parse the sample E3D files and validate the interpreter
 
 ## Getting a `.epdz` out of EPLAN
 
-The viewer opens the **Smart Production** publication of a project
-(a `.epdz` file). There are two ways to produce one from EPLAN Electric P8
-(2022 or newer):
-
-- **From the EPLAN UI** — with the project open, use *File → Publish* and
-  choose **Smart Production Collection**. The published `.epdz` is written to
-  the selected output folder and can be opened directly in this viewer.
-- **By script** — load [`tools/eplan/PublishEpdz.cs`](tools/eplan/PublishEpdz.cs)
-  (*Tools → Scripts → Load*), edit the two path constants at the top
-  (project `.elk` and output folder) and run it. It calls the same
-  `projectmanagement` action (`PUBLISHSMARTPRODUCTION`) that the UI uses,
-  so the result is identical.
-
-The export contains only what EPLAN publishes: the SVG schematic pages, the
-3D installation spaces (E3D) and the `manifest.db` project database. Report
-pages (parts lists / BOM, terminal diagrams, cable plans…) are included only
-if they were generated as pages in the project before publishing.
+The viewer opens the **Smart Production** publication of a project (a `.epdz`
+file): *File → Publish → Smart Production Collection* in EPLAN Electric P8
+(2022 or newer), or run the
+[`tools/eplan/PublishEpdz.cs`](tools/eplan/PublishEpdz.cs) script. Step-by-step
+instructions (and what the export does and doesn't contain) are in the
+[**wiki**](https://github.com/covagashi/ecad-view/wiki/Exporting-a-Project-from-EPLAN).
 
 ## Repository layout
 
@@ -160,24 +150,7 @@ Detailed notes live in [`docs/formats.md`](docs/formats.md):
   database), `packages/pages/**/*.svg` (schematic pages),
   `packages/installationspaces/**/*.E3d` (3D) and AutomationML.
 
-## Roadmap / ideas
-
-- [x] Cross-reference navigation in schematics (the original `jumpToFunction`
-      links between pages).
-- [x] Device search & highlight across pages.
-- [x] Project tree navigation from `manifest.db` functions and locations.
-- [x] Better 3D text-label placement (justification fidelity).
-- [x] Native shells: Capacitor (iOS/Android) and Tauri (desktop), wrapping
-      the same web core — see [`docs/native-shells.md`](docs/native-shells.md).
-- [x] PWA manifest + offline support.
-
-Ideas for the future:
-
-- [ ] Interruption-point navigation (`page_interruptionpoints`) and richer
-      cross-reference targets.
-- [ ] AutomationML-based project tree (functions/locations beyond what
-      `manifest.db` exposes).
-- [ ] Measuring tools and exploded view in the 3D viewer.
+## Contributing
 
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
