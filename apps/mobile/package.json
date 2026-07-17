@@ -1,7 +1,7 @@
 {
   "name": "@covaga/mobile",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Capacitor shell (iOS/Android) wrapping the Covaga ECAD web viewer",
   "scripts": {
     "sync": "cap sync",
