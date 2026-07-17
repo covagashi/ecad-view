@@ -132,4 +132,48 @@
   .zoom-toolbar {
     bottom: 66px;
   }
+
+  /* Paginador flotante ‹ n/total › (solo se monta en móvil). */
+  .page-nav {
+    position: absolute;
+    bottom: 66px;
+    right: 16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: color-mix(in srgb, var(--panel) 90%, transparent);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    padding: 4px;
+    backdrop-filter: blur(6px);
+  }
+
+  .page-nav button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    width: 34px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+  }
+
+  .page-nav button:disabled {
+    opacity: 0.35;
+  }
+
+  .page-nav button .flip {
+    transform: rotate(180deg);
+  }
+
+  .page-nav .mono {
+    min-width: 44px;
+    text-align: center;
+    color: var(--text);
+    font-size: 12px;
+  }
 }

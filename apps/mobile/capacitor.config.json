@@ -4,5 +4,8 @@
   "webDir": "../web/dist",
   "server": {
     "androidScheme": "https"
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
   }
 }

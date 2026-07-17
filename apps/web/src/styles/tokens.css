@@ -4,6 +4,9 @@
  * Los nombres se conservan del CSS original para no romper reglas existentes.
  */
 :root {
+  /* Declarar el esquema evita el "modo oscuro forzado" de Android WebView,
+     que invierte los SVG inline (iconos con caja blanca). */
+  color-scheme: dark;
   --bg: #0b0d11;
   --panel: #0e1116;
   --panel-2: #12151b;
@@ -32,6 +35,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #f5f6f3;
   --panel: #e9ebe6;
   --panel-2: #ffffff;
