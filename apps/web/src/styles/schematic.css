@@ -345,6 +345,37 @@
   text-overflow: ellipsis;
 }
 
+/* Fila de dispositivo: botón principal (ciclar apariciones) + "Ver en 3D". */
+.device-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.device-row .device-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.device-3d,
+.bom-3d {
+  flex: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.device-3d:hover,
+.bom-3d:hover {
+  background: var(--panel-2);
+  color: var(--accent);
+}
+
 .list-empty {
   padding: 14px;
   color: var(--text-faint);
@@ -477,6 +508,22 @@ button.bom-device:hover .go {
 .bom-device.off {
   color: var(--text-faint);
   cursor: default;
+}
+
+/* Fila BOM de dispositivo: salto al esquema (→) + "Ver en 3D". */
+.bom-device-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.bom-device-row .bom-device {
+  flex: 1;
+  min-width: 0;
+}
+
+.bom-3d {
+  padding: 0 8px;
 }
 
 .panel-foot .pager {

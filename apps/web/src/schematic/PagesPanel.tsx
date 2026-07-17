@@ -6,6 +6,7 @@ import { exportBomCsv } from "../bom";
 import { useI18n } from "../i18n";
 import {
   IconChevronRight,
+  IconCube,
   IconDownload,
   IconFolder,
   IconPage,
@@ -32,6 +33,10 @@ export interface PagesPanelProps {
   onHide: () => void;
   onSelectPage: (index: number) => void;
   onSelectDevice: (device: Device) => void;
+  /** Claves (Device.key) de los dispositivos con pieza 3D: habilitan "Ver en 3D". */
+  resolvable3d: ReadonlySet<string>;
+  /** Salta a la pieza 3D del dispositivo (solo se ofrece si está en resolvable3d). */
+  onViewIn3d: (device: Device) => void;
 }
 
 /**
@@ -51,6 +56,8 @@ export function PagesPanel({
   onHide,
   onSelectPage,
   onSelectDevice,
+  resolvable3d,
+  onViewIn3d,
 }: PagesPanelProps) {
   const { t } = useI18n();
   const [filter, setFilter] = useState("");
@@ -305,16 +312,24 @@ export function PagesPanel({
                   </div>
                 )}
                 {group.devices.map((device) => (
-                  <button
-                    key={device.key}
-                    className="device-item"
-                    onClick={() => onSelectDevice(device)}
-                  >
-                    <span className="row">
-                      <span className="title">{device.label}</span>
-                      <span className="badge">{device.occurrences.length}×</span>
-                    </span>
-                  </button>
+                  <div key={device.key} className="device-row">
+                    <button className="device-item" onClick={() => onSelectDevice(device)}>
+                      <span className="row">
+                        <span className="title">{device.label}</span>
+                        <span className="badge">{device.occurrences.length}×</span>
+                      </span>
+                    </button>
+                    {resolvable3d.has(device.key) && (
+                      <button
+                        className="device-3d"
+                        title={t("device.viewIn3d")}
+                        aria-label={t("device.viewIn3d")}
+                        onClick={() => onViewIn3d(device)}
+                      >
+                        <IconCube size={14} />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             ))}
@@ -359,14 +374,25 @@ export function PagesPanel({
                     <div className="bom-devices">
                       {article.devices.map((entry, i) =>
                         entry.device ? (
-                          <button
-                            key={`${entry.designation}-${i}`}
-                            className="bom-device"
-                            onClick={() => onSelectDevice(entry.device!)}
-                          >
-                            <span className="title mono">{entry.designation}</span>
-                            <span aria-hidden="true" className="go">→</span>
-                          </button>
+                          <div key={`${entry.designation}-${i}`} className="bom-device-row">
+                            <button
+                              className="bom-device"
+                              onClick={() => onSelectDevice(entry.device!)}
+                            >
+                              <span className="title mono">{entry.designation}</span>
+                              <span aria-hidden="true" className="go">→</span>
+                            </button>
+                            {resolvable3d.has(entry.device.key) && (
+                              <button
+                                className="bom-3d"
+                                title={t("device.viewIn3d")}
+                                aria-label={t("device.viewIn3d")}
+                                onClick={() => onViewIn3d(entry.device!)}
+                              >
+                                <IconCube size={13} />
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <span
                             key={`${entry.designation}-${i}`}

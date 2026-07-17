@@ -69,13 +69,17 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     viewerRef.current?.applyVisibility(hiddenIds, isolated);
   }, [scene, parts, hiddenKeys, isolated]);
 
-  // Pieza 3D pendiente de un enlace profundo: se selecciona al montar la escena.
+  // Pieza 3D pendiente (enlace profundo o salto esquema→3D): se selecciona y
+  // encuadra al montar la escena, para que quede visible y marcada en el panel.
   useEffect(() => {
     if (!doc || !scene) return;
     const objectId = consumePendingPick(doc.id);
     if (objectId == null) return;
     const info = viewerRef.current?.selectPart(objectId);
-    if (info) dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart });
+    if (info) {
+      dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart });
+      viewerRef.current?.focusPart(objectId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doc?.id, scene]);
 

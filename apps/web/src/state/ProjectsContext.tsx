@@ -10,6 +10,7 @@ import {
 import { initialState, projectsReducer } from "./projectsReducer";
 import { loadProject } from "./loadProject";
 import { evictProject } from "./sceneCache";
+import { evictPartLocations } from "./partLocator";
 import { markSessionTouched } from "../library/session";
 import {
   HOME_ID,
@@ -107,6 +108,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       if (doc) {
         for (const url of doc.imageUrls.values()) URL.revokeObjectURL(url);
         evictProject(id);
+        evictPartLocations(id);
       }
       dispatch({ type: "CLOSE", id });
     },

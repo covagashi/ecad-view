@@ -6,6 +6,9 @@ import {
 } from "../viewer/SchematicViewer";
 import { useProjects } from "../state/ProjectsContext";
 import { nextDeviceOccurrence, type Device } from "../devices";
+import { buildDeviceTo3dIndex } from "../state/bridge";
+import { getPartLocations } from "../state/partLocator";
+import { stashPendingPick } from "../state/deeplink";
 import { buildBom } from "../bom";
 import { BreadcrumbChip } from "./BreadcrumbChip";
 import { EdgeTabs } from "./EdgeTabs";
@@ -81,6 +84,19 @@ export function SchematicsView() {
     return `${base}-BOM.csv`;
   }, [doc?.manifest?.projectName, doc?.fileName]);
 
+  // Índice inverso esquema→3D: solo se construye si hay manifest (sin él no hay
+  // funciones que casen dispositivo y pieza). partLocations parsea los modelos
+  // una vez (cacheado por proyecto) para saber a qué modelo pertenece cada pieza.
+  const partLocations = useMemo(
+    () => (doc?.manifest ? getPartLocations(doc.id, doc.epdzModels) : new Map<string, number>()),
+    [doc?.id, doc?.manifest, doc?.epdzModels]
+  );
+  const deviceTo3d = useMemo(
+    () => buildDeviceTo3dIndex(doc?.deviceIndex.devices ?? [], doc?.manifest ?? null, partLocations),
+    [doc?.deviceIndex, doc?.manifest, partLocations]
+  );
+  const resolvable3d = useMemo(() => new Set(deviceTo3d.keys()), [deviceTo3d]);
+
   const setPinnedPersist = useCallback((next: boolean) => {
     setPinned(next);
     try {
@@ -132,6 +148,23 @@ export function SchematicsView() {
       highlight: { elementId: next.occurrence.elementId, nonce: ++nonceRef.current },
       xrefInfo: `${device.label} · ${next.index + 1}/${next.total}`,
     });
+    if (!inlinePanel) setOverlayOpen(false);
+  };
+
+  /**
+   * Salto inverso esquema→3D: cambia al modelo que contiene la pieza (si hace
+   * falta), pasa a la vista 3D y deja el objectId pendiente; el visor 3D lo
+   * consume al montar la escena y selecciona/encuadra la pieza (misma vía que
+   * los enlaces profundos). Sin pieza 3D no hace nada (la UI ya oculta la acción).
+   */
+  const viewInThreeD = (device: Device) => {
+    const target = deviceTo3d.get(device.key);
+    if (!target) return;
+    stashPendingPick(doc.id, target.objectId);
+    if (target.modelIndex !== doc.modelIndex) {
+      dispatch({ type: "SET_MODEL", id: doc.id, modelIndex: target.modelIndex });
+    }
+    dispatch({ type: "SET_VIEW", id: doc.id, view: "3d" });
     if (!inlinePanel) setOverlayOpen(false);
   };
 
@@ -191,6 +224,8 @@ export function SchematicsView() {
       onHide={hidePanel}
       onSelectPage={selectPage}
       onSelectDevice={jumpToDevice}
+      resolvable3d={resolvable3d}
+      onViewIn3d={viewInThreeD}
     />
   );
 

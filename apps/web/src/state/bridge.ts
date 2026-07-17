@@ -1,3 +1,4 @@
+import type { EplanManifest } from "@covaga/e3d-core/manifest";
 import type { Device, DeviceIndex } from "../devices";
 import type { PickedPart, ProjectDoc } from "./types";
 
@@ -71,6 +72,56 @@ function matchFunction(doc: ProjectDoc, picked: PickedPart) {
   if (!doc.manifest || picked.typeId === undefined || picked.objectId === undefined) return null;
   const candidate = `Id${picked.typeId}_${picked.objectId}`;
   return doc.manifest.functions.find((fn) => fn.svgElementId === candidate) ?? null;
+}
+
+/** Pieza 3D a la que resuelve un dispositivo del esquema (dirección inversa). */
+export interface Part3dTarget {
+  /** Índice del modelo (.e3d) que contiene la pieza. */
+  modelIndex: number;
+  /** objectId de la pieza dentro de ese modelo. */
+  objectId: number;
+}
+
+/**
+ * Índice inverso esquema→3D: para cada dispositivo con representación 3D, la
+ * pieza a la que saltar. Reutiliza la misma cadena que el sentido 3D→esquema,
+ * al revés: designación de la función → svgElementId ("Id{typeId}_{objectId}")
+ * → el par se busca en el índice pieza→modelo (partLocations); solo se conservan
+ * las funciones cuyo par corresponde a una pieza 3D real. El dispositivo se casa
+ * por clave exacta o por etiqueta (cola), igual que findDeviceByDesignation.
+ *
+ * Devuelve un Map por Device.key; los dispositivos sin pieza 3D no aparecen (la
+ * UI omite la acción "Ver en 3D" para ellos: sin botones muertos).
+ */
+export function buildDeviceTo3dIndex(
+  devices: Device[],
+  manifest: EplanManifest | null,
+  partLocations: Map<string, number>
+): Map<string, Part3dTarget> {
+  const out = new Map<string, Part3dTarget>();
+  if (!manifest || partLocations.size === 0) return out;
+
+  // Funciones con pieza 3D real, indexadas por clave de designación y por etiqueta.
+  const byKey = new Map<string, Part3dTarget>();
+  const byLabel = new Map<string, Part3dTarget>();
+  for (const fn of manifest.functions) {
+    if (!fn.designation || !fn.svgElementId) continue;
+    const match = /^Id(\d+)_(\d+)$/.exec(fn.svgElementId);
+    if (!match) continue;
+    const modelIndex = partLocations.get(`${match[1]}_${match[2]}`);
+    if (modelIndex === undefined) continue; // La función no tiene pieza 3D.
+    const target: Part3dTarget = { modelIndex, objectId: Number(match[2]) };
+    const key = fn.designation.replace(/:[^:]*$/, "");
+    if (!byKey.has(key)) byKey.set(key, target);
+    const tail = key.split(/[+=&]+/).pop()?.replace(/^#/, "");
+    if (tail && !byLabel.has(tail)) byLabel.set(tail, target);
+  }
+
+  for (const device of devices) {
+    const target = byKey.get(device.key) ?? byLabel.get(device.label);
+    if (target) out.set(device.key, target);
+  }
+  return out;
 }
 
 /**
