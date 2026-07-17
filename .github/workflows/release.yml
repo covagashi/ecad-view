@@ -41,8 +41,6 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
-    env:
-      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -70,31 +68,18 @@ jobs:
              apps/mobile/android/app/src/main/res/mipmap-anydpi-v26/
           cp apps/desktop/src-tauri/icons/android/values/ic_launcher_background.xml \
              apps/mobile/android/app/src/main/res/values/
-      - name: Build APKs
+      # Solo el APK debug: va firmado con la clave debug y es el único que se
+      # puede instalar por sideload sin keystore propio (el "release" sin firmar
+      # no lo acepta Android).
+      - name: Build APK
         working-directory: apps/mobile/android
-        run: ./gradlew assembleDebug assembleRelease --no-daemon
-      - name: Collect APKs
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Collect APK
         run: |
           VER="${GITHUB_REF_NAME#v}"
           mkdir -p out
           cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-             "out/Covaga-ECAD-Viewer_${VER}_android-debug.apk"
-          cp apps/mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk \
-             "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk"
-      - name: Sign release APK (if keystore secret configured)
-        if: env.KEYSTORE_B64 != ''
-        run: |
-          VER="${GITHUB_REF_NAME#v}"
-          echo "$KEYSTORE_B64" | base64 -d > covaga.keystore
-          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
-          "$BT/apksigner" sign \
-            --ks covaga.keystore \
-            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASS }}" \
-            --out "out/Covaga-ECAD-Viewer_${VER}_android-release.apk" \
-            "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk"
-          rm covaga.keystore "out/Covaga-ECAD-Viewer_${VER}_android-release-unsigned.apk" \
-             "out/Covaga-ECAD-Viewer_${VER}_android-release.apk.idsig" 2>/dev/null || true
+             "out/Covaga-ECAD-Viewer_${VER}_android.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: android
@@ -146,5 +131,5 @@ jobs:
             Paquetes generados automáticamente desde el tag.
 
             - **Windows**: exe portable autocontenido (requiere WebView2, preinstalado en Win 10/11), instalador NSIS y MSI.
-            - **Android**: APK listo para sideload. El APK "release" va firmado con un certificado autofirmado del proyecto (no es de Play Store).
+            - **Android**: APK listo para sideload (firma debug; no es de Play Store).
             - **iOS**: proyecto Xcode generado; compilar y firmar en macOS con Xcode (ver `docs/packaging.md`). Alternativa sin Mac: instalar la PWA desde Safari.

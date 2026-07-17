@@ -14,6 +14,8 @@ import { BreadcrumbChip } from "./BreadcrumbChip";
 import { EdgeTabs } from "./EdgeTabs";
 import { PagesPanel, type PanelTab } from "./PagesPanel";
 import { ZoomToolbar } from "./ZoomToolbar";
+import { IconChevronRight } from "../shell/icons";
+import { useI18n } from "../i18n";
 
 const PIN_KEY = "covaga.pagesPanel.pinned";
 
@@ -32,6 +34,7 @@ function initialPinned(): boolean {
  */
 export function SchematicsView() {
   const { dispatch, active: doc } = useProjects();
+  const { t } = useI18n();
   const viewerRef = useRef<SchematicViewerHandle>(null);
   const nonceRef = useRef(0);
   const [pinned, setPinned] = useState(initialPinned);
@@ -247,6 +250,29 @@ export function SchematicsView() {
           onZoomOut={() => viewerRef.current?.zoomOut()}
           onFit={() => viewerRef.current?.fit()}
         />
+
+        {/* En móvil no hay RePág/AvPág: paginador flotante junto al zoom. */}
+        {isMobile && doc.pages.length > 1 && (
+          <div className="page-nav">
+            <button
+              aria-label={t("panel.prev")}
+              disabled={doc.pageIndex === 0}
+              onClick={() => selectPage(doc.pageIndex - 1)}
+            >
+              <IconChevronRight size={14} className="flip" />
+            </button>
+            <span className="mono">
+              {doc.pageIndex + 1}/{doc.pages.length}
+            </span>
+            <button
+              aria-label={t("panel.next")}
+              disabled={doc.pageIndex >= doc.pages.length - 1}
+              onClick={() => selectPage(doc.pageIndex + 1)}
+            >
+              <IconChevronRight size={14} />
+            </button>
+          </div>
+        )}
 
         {!inlinePanel && !showOverlay && (
           <EdgeTabs

@@ -35,6 +35,9 @@ select {
   inset: 0;
   display: flex;
   flex-direction: column;
+  /* Bajo barras del sistema (WebView edge-to-edge en Android, PWA con notch). */
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--bg);
 }
 
 .btn {
