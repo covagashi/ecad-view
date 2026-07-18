@@ -11,8 +11,10 @@ This is companion tooling; nothing here ships with the web app.
 
 ## Status
 
-The core library is **done and working**. The AI-facing creator/viewer,
-the electrical-component generator catalog, and 2D-engine export are
+The core library and **Phase 0 (CLI + agent skill)** are **done and working**.
+The AI-facing creator/viewer integrates spec JSON + `create.mjs` + `preview.mjs`
+and the agent skill in `.claude/skills/asset-creator/SKILL.md`.
+The electrical-component generator catalog and 2D-engine export are
 **planned** — see [`TODO.md`](TODO.md).
 
 ## Layout
@@ -21,12 +23,18 @@ the electrical-component generator catalog, and 2D-engine export are
 lib/geometry.mjs      primitives (sphere/cone/cylinder/box/torus), 2D-profile
                       extrusion with chamfers (extrudeTris/prism), vectors,
                       flat-shaded meshing, and the composable Scene API
+lib/spec.mjs          declarative layer spec validator and Scene builder
 lib/e3d-writer.mjs    Scene -> E3D v4 binary (mirror of e3d-core's reader)
 lib/stl-writer.mjs    Scene -> binary STL (transforms baked, normals rebuilt)
-examples/contactor.mjs  parametric DIN-rail contactor, exports both formats
-examples/spm3.mjs     3-pole supplementary protector modeled from a 2D
-                      manufacturer drawing (see "From a 2D drawing to 3D")
+cli/create.mjs        spec JSON -> .e3d/.stl + .layers.json sidecar
+cli/preview.mjs       .e3d -> PNG by angle (iso/front/side/top, headless
+                      playwright + esbuild bundle in tmpdir, caché-d)
+docs/spec.md          complete JSON spec reference (params, layers, repeat, ops)
+examples/contactor.mjs parametric DIN-rail contactor (Scene API script)
+examples/spm3.spec.json 7-layer 3-pole protector spec (31 parts, 876 triangles)
+examples/spm3.mjs     same protector as Scene API script (legacy)
 todo/                 design notes for the planned work
+.claude/skills/asset-creator/SKILL.md  agent workflow and reference
 ```
 
 Plain ESM JavaScript, no build step, no dependencies — runs with `node`.
@@ -68,6 +76,28 @@ writeStl(s); // Buffer
 
 Coordinates are EPLAN-style: **Z up, millimetres**; the viewer's default
 camera looks at the scene from the −Y side, so "front" faces −Y.
+
+## Layered spec workflow
+
+For AI agents or iterative modeling, use the **declarative JSON spec** instead
+of writing Scene API code:
+
+```bash
+# Write or edit a spec (params, layers, repeat, ops)
+$EDITOR my-part.spec.json
+
+# Generate .e3d and .layers.json sidecar
+node tools/asset-creator/cli/create.mjs my-part.spec.json
+
+# Render PNGs to inspect what was built
+node tools/asset-creator/cli/preview.mjs out/my-part.e3d
+
+# Adjust only the layer(s) that need fixing, regenerate, repeat
+```
+
+**Full spec format reference:** [`docs/spec.md`](docs/spec.md) (params, layers,
+repeat, all op types). **Agent workflow and gotchas:**
+[`.claude/skills/asset-creator/SKILL.md`](../../.claude/skills/asset-creator/SKILL.md).
 
 ## From a 2D drawing to 3D
 
