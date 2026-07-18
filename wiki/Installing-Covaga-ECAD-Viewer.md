@@ -5,7 +5,7 @@ you work — they all render the same viewer.
 
 ## In the browser (nothing to install)
 
-Just open **[covaga.dev](https://covaga.dev)**. Works on desktop and mobile
+Just open **[view.covaga.dev](https://view.covaga.dev)**. Works on desktop and mobile
 browsers. This is the recommended way for most people.
 
 ## As an installed app (PWA)

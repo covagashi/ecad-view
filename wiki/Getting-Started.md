@@ -5,7 +5,7 @@ regular web browser.
 
 ## 1. Open the viewer
 
-Go to **[covaga.dev](https://covaga.dev)** (or run it locally — see
+Go to **[view.covaga.dev](https://view.covaga.dev)** (or run it locally — see
 [[Installing Covaga ECAD Viewer]]).
 
 ## 2. Open a file

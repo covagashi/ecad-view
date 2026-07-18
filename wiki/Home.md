@@ -4,7 +4,7 @@ Open **EPLAN** electrical CAD projects (`.epdz`) and 3D parts (`.e3d`) right in
 your browser — no EPLAN installation, no server, nothing uploaded. Every file is
 parsed and rendered **locally on your device**, on desktop and mobile.
 
-- **Try it online:** [covaga.dev](https://covaga.dev)
+- **Try it online:** [view.covaga.dev](https://view.covaga.dev)
 - **Source code:** [github.com/covagashi/ecad-view](https://github.com/covagashi/ecad-view)
 
 ![3D viewer](https://raw.githubusercontent.com/covagashi/ecad-view/main/docs/screenshots/viewer-3d.png)

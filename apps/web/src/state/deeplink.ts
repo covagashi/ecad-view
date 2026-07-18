@@ -106,14 +106,14 @@ export function parseHash(hash: string): DeepLinkTarget | null {
 
 /**
  * URL compartible a partir de un hash. En web usa el origen actual; en las
- * envolturas Tauri/Capacitor (origen no http) recae en https://covaga.dev/.
+ * envolturas Tauri/Capacitor (origen no http) recae en https://view.covaga.dev/.
  */
 export function shareUrl(hash: string): string {
   const loc = window.location;
   const base =
     loc.protocol === "http:" || loc.protocol === "https:"
       ? `${loc.origin}${loc.pathname}`
-      : "https://covaga.dev/";
+      : "https://view.covaga.dev/";
   return `${base}${hash}`;
 }
 
