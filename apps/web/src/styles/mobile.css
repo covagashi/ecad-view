@@ -9,7 +9,9 @@
   display: none;
 }
 
-@media (max-width: 760px) {
+/* Misma condición que MOBILE_MEDIA_QUERY (mobile/query.ts): teléfono en
+   vertical (ancho) o en horizontal (alto reducido). */
+@media (max-width: 760px), (max-height: 500px) {
   .btn {
     padding: 5px 9px;
     font-size: 12px;
@@ -235,18 +237,13 @@
     bottom: 64px;
   }
 
-  /* Barras flotantes del lienzo: sin navbar debajo ya no compiten por sitio;
-     los presets van abajo-izquierda y la pastilla de piezas encima de ellos. */
+  /* Barras flotantes del lienzo: sin navbar ni pastillas, los presets van
+     abajo-izquierda con todo el ancho disponible. */
   .view-presets {
     bottom: 12px;
     left: 12px;
     max-width: calc(100vw - 24px);
     overflow-x: auto;
-  }
-
-  .parts-fab {
-    right: 12px;
-    bottom: 62px;
   }
 
   .zoom-toolbar {
@@ -297,9 +294,19 @@
     font-size: 12px;
   }
 
-  /* Vista "Datos" en pantalla completa. */
+  /* Vista "Datos" en pantalla completa, con cabecera compacta (el alto es
+     escaso en horizontal). */
   .data-head {
-    padding: 16px 16px 0;
+    padding: 10px 16px 0;
+  }
+
+  .data-head .eyebrow {
+    display: none;
+  }
+
+  .data-head h1 {
+    font-size: 17px;
+    margin: 0 0 2px;
   }
 
   .data-tabs {

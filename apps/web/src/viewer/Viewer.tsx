@@ -12,6 +12,11 @@ export interface ViewerHandle {
   fit(): void;
   setPreset(preset: ViewPreset): void;
   /**
+   * Encuadra una caja en coordenadas EPLAN (Z-up, mm) mirando desde `preset`.
+   * Sirve para enfocar una región concreta (p. ej. una regleta de bornes).
+   */
+  frameBox(min: [number, number, number], max: [number, number, number], preset: ViewPreset): void;
+  /**
    * Aplica la visibilidad por pieza: con `isolated` solo se muestra esa parte;
    * si no, se ocultan los objectIds de `hidden`.
    */
@@ -28,6 +33,8 @@ export interface ViewerProps {
   scene: E3dScene | null;
   /** Se llama al hacer clic sobre una parte, con su userData ({ typeId, objectId, meshId, textLines }). */
   onPickPart?: (info: Record<string, unknown> | null) => void;
+  /** Preset con el que se encuadra la escena al cargarla (iso por defecto). */
+  initialPreset?: ViewPreset;
 }
 
 interface ViewerHandles {
@@ -49,7 +56,7 @@ const PRESET_DIRECTIONS: Record<ViewPreset, [number, number, number]> = {
 };
 
 export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
-  { scene, onPickPart },
+  { scene, onPickPart, initialPreset = "iso" },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -160,12 +167,10 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     };
   }, []);
 
-  /** Encuadra el modelo con la cámara mirando desde `direction`. */
-  const frame = (direction: [number, number, number]) => {
+  /** Coloca la cámara para encuadrar `box` mirando desde `direction`. */
+  const frameBox3 = (box: THREE.Box3, direction: [number, number, number]) => {
     const handles = handlesRef.current;
-    if (!handles?.modelRoot) return;
-    const box = new THREE.Box3().setFromObject(handles.modelRoot);
-    if (box.isEmpty()) return;
+    if (!handles || box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3()).length();
     const distance = Math.max(size, 1) * 1.2;
@@ -177,6 +182,13 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     handles.camera.far = distance * 100;
     handles.camera.updateProjectionMatrix();
     handles.controls.update();
+  };
+
+  /** Encuadra el modelo con la cámara mirando desde `direction`. */
+  const frame = (direction: [number, number, number]) => {
+    const handles = handlesRef.current;
+    if (!handles?.modelRoot) return;
+    frameBox3(new THREE.Box3().setFromObject(handles.modelRoot), direction);
   };
 
   /** Primer grupo de parte con ese objectId, o null. */
@@ -195,6 +207,14 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
   useImperativeHandle(ref, () => ({
     fit: () => frame(PRESET_DIRECTIONS.iso),
     setPreset: (preset) => frame(PRESET_DIRECTIONS[preset]),
+    frameBox(min, max, preset) {
+      // EPLAN es Z-up y el builder rota a Y-up de three: (x, y, z) -> (x, z, -y).
+      const box = new THREE.Box3(
+        new THREE.Vector3(min[0], min[2], -max[1]),
+        new THREE.Vector3(max[0], max[2], -min[1])
+      );
+      frameBox3(box, PRESET_DIRECTIONS[preset]);
+    },
     applyVisibility(hidden, isolated) {
       const handles = handlesRef.current;
       if (!handles?.modelRoot) return;
@@ -270,7 +290,8 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     handles.modelRoot = root;
 
     // Encuadra la cámara sobre el modelo.
-    frame(PRESET_DIRECTIONS.iso);
+    frame(PRESET_DIRECTIONS[initialPreset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
   return <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />;

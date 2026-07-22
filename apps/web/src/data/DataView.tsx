@@ -190,7 +190,14 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
             {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
             {tab === "panel" && aml && <PanelView aml={aml} />}
             {tab === "terminals" && (
-              <TerminalsView manifest={manifest} aml={aml} partBoxes={partBoxes} nav={nav} />
+              <TerminalsView
+                manifest={manifest}
+                aml={aml}
+                partBoxes={partBoxes}
+                projectId={doc.id}
+                models={doc.epdzModels}
+                nav={nav}
+              />
             )}
             {tab === "network" && aml && <NetworkView aml={aml} nav={nav} />}
             {tab === "positions" && aml && <PositionsView aml={aml} lang={lang} nav={nav} />}

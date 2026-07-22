@@ -395,6 +395,98 @@
 }
 
 /* Regletas de bornes (vista frontal) */
+/* Bornes: lista de regletas + detalle con 3D frontal embebido. */
+.terminals-layout {
+  display: grid;
+  grid-template-columns: minmax(170px, 240px) 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 620px) {
+  .terminals-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.strip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: min(56vh, 460px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  background: var(--panel);
+}
+
+.strip-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.strip-item:hover {
+  background: var(--panel-2);
+}
+
+.strip-item.active {
+  background: var(--accent-dim);
+}
+
+.strip-item.active .name {
+  color: var(--accent);
+}
+
+.strip-item .name {
+  font-size: 12.5px;
+}
+
+.strip-item .meta {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.strip-detail {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.strip-detail-head {
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+}
+
+/* El visor three.js se posiciona en absoluto: necesita un alto fijo. */
+.strip-3d {
+  position: relative;
+  height: clamp(200px, 48vh, 440px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.strip-3d .view-presets {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
 .strip-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

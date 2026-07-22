@@ -1,27 +1,43 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AmlProject } from "@covaga/e3d-core/aml";
 import type { EplanManifest, ManifestFunction } from "@covaga/e3d-core/manifest";
+import type { EpdzEntry } from "@covaga/e3d-core/epdz";
+import { Viewer, type ViewerHandle, type ViewPreset } from "../viewer/Viewer";
+import { ViewPresets } from "../viewer3d/ViewPresets";
+import { getScene } from "../state/sceneCache";
 import { useI18n } from "../i18n";
 import { IconSearch } from "../shell/icons";
 import { buildTerminalStrips, type TerminalStrip } from "./derive";
 import type { PartBoxIndex } from "./partBoxes";
 import type { DataNav } from "./DataView";
 
+/** Región 3D de una regleta: unión de las cajas de sus bornes. */
+interface StripRegion {
+  modelIndex: number;
+  min: [number, number, number];
+  max: [number, number, number];
+  located: number;
+}
+
 /**
- * Regletas de bornes. Si el proyecto trae modelos 3D, cada regleta se dibuja
- * como alzado real (proyección frontal 2D del E3D, estilo EPLAN Smart Wiring):
- * los bornes en su posición y tamaño reales, el resto del armario como
- * contexto tenue y los puentes por encima. Sin 3D, un diagrama esquemático.
+ * Regletas de bornes al estilo EPLAN Smart Wiring: lista de regletas a la
+ * izquierda y, para la seleccionada, el 3D real del armario en vista frontal
+ * encuadrado sobre la regleta — con el cableado enrutado visible — más el
+ * diagrama de puentes. Los bornes del diagrama saltan a su esquema.
  */
 export function TerminalsView({
   manifest,
   aml,
   partBoxes,
+  projectId,
+  models,
   nav,
 }: {
   manifest: EplanManifest | null;
   aml: AmlProject | null;
   partBoxes: PartBoxIndex;
+  projectId: string;
+  models: EpdzEntry[];
   nav: DataNav;
 }) {
   const { t } = useI18n();
@@ -32,11 +48,45 @@ export function TerminalsView({
     [manifest]
   );
 
+  // Región 3D por regleta (unión de cajas de sus bornes, un solo modelo).
+  const regions = useMemo(() => {
+    const map = new Map<string, StripRegion>();
+    for (const strip of strips) {
+      let region: StripRegion | null = null;
+      strip.functionIds.forEach((functionId) => {
+        const fn = functionsById.get(functionId ?? -1);
+        const match = fn?.svgElementId ? /^Id(\d+)_(\d+)$/.exec(fn.svgElementId) : null;
+        const box = match ? partBoxes.get(`${match[1]}_${match[2]}`) : undefined;
+        if (!box) return;
+        if (!region) {
+          region = { modelIndex: box.modelIndex, min: [...box.min], max: [...box.max], located: 0 };
+        } else if (region.modelIndex !== box.modelIndex) {
+          return;
+        }
+        for (let axis = 0; axis < 3; axis++) {
+          if (box.min[axis] < region.min[axis]) region.min[axis] = box.min[axis];
+          if (box.max[axis] > region.max[axis]) region.max[axis] = box.max[axis];
+        }
+        region.located += 1;
+      });
+      if (region) map.set(strip.name, region);
+    }
+    return map;
+  }, [strips, functionsById, partBoxes]);
+
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
     if (!q) return strips;
     return strips.filter((strip) => strip.name.toLowerCase().includes(q));
   }, [strips, filter]);
+
+  // Selección: la primera regleta con región 3D (o la primera a secas).
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const selected =
+    filtered.find((strip) => strip.name === selectedName) ??
+    filtered.find((strip) => regions.has(strip.name)) ??
+    filtered[0] ??
+    null;
 
   if (strips.length === 0) return <div className="data-note">{t("data.empty")}</div>;
 
@@ -58,208 +108,113 @@ export function TerminalsView({
         />
       </div>
 
-      {filtered.map((strip) => (
-        <StripCard
-          key={strip.name}
-          strip={strip}
-          functionsById={functionsById}
-          partBoxes={partBoxes}
-          onPoint={(i) => jumpToPoint(strip, i)}
-        />
-      ))}
-      {filtered.length === 0 && <div className="data-note">{t("data.empty")}</div>}
+      <div className="terminals-layout">
+        <div className="strip-list">
+          {filtered.map((strip) => (
+            <button
+              key={strip.name}
+              className={`strip-item${selected?.name === strip.name ? " active" : ""}`}
+              onClick={() => setSelectedName(strip.name)}
+            >
+              <span className="mono name">{strip.name}</span>
+              <span className="meta">
+                {t("data.terminalCount", { count: strip.points.length })}
+                {strip.bridges.length > 0 &&
+                  ` · ${t("data.bridgeCount", { count: strip.bridges.length })}`}
+              </span>
+            </button>
+          ))}
+          {filtered.length === 0 && <div className="data-note">{t("data.empty")}</div>}
+        </div>
+
+        {selected && (
+          <div className="strip-detail">
+            <StripDetail
+              key={selected.name}
+              strip={selected}
+              region={regions.get(selected.name) ?? null}
+              projectId={projectId}
+              models={models}
+              onPoint={(i) => jumpToPoint(selected, i)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-/** Borne resuelto a su caja 3D (proyección frontal: x horizontal, z vertical). */
-interface FrontTerminal {
-  point: string;
-  index: number;
-  x0: number;
-  x1: number;
-  z0: number;
-  z1: number;
-}
-
-function StripCard({
+function StripDetail({
   strip,
-  functionsById,
-  partBoxes,
+  region,
+  projectId,
+  models,
   onPoint,
 }: {
   strip: TerminalStrip;
-  functionsById: Map<number, ManifestFunction>;
-  partBoxes: PartBoxIndex;
+  region: StripRegion | null;
+  projectId: string;
+  models: EpdzEntry[];
   onPoint: (index: number) => void;
 }) {
   const { t } = useI18n();
+  const viewerRef = useRef<ViewerHandle>(null);
 
-  // Bornes con pieza 3D: función -> "Id{type}_{object}" -> caja del modelo.
-  const front = useMemo(() => {
-    const terminals: FrontTerminal[] = [];
-    let modelIndex = -1;
-    strip.points.forEach((point, index) => {
-      const fn = functionsById.get(strip.functionIds[index] ?? -1);
-      const match = fn?.svgElementId ? /^Id(\d+)_(\d+)$/.exec(fn.svgElementId) : null;
-      const box = match ? partBoxes.get(`${match[1]}_${match[2]}`) : undefined;
-      if (!box) return;
-      if (modelIndex === -1) modelIndex = box.modelIndex;
-      if (box.modelIndex !== modelIndex) return;
-      terminals.push({
-        point,
-        index,
-        x0: box.min[0],
-        x1: box.max[0],
-        z0: box.min[2],
-        z1: box.max[2],
-      });
-    });
-    return { terminals, modelIndex };
-  }, [strip, functionsById, partBoxes]);
+  const scene = useMemo(() => {
+    if (!region) return null;
+    const entry = models[region.modelIndex];
+    return entry ? getScene(projectId, region.modelIndex, entry) : null;
+  }, [region, projectId, models]);
 
-  // El alzado real solo compensa si la mayoría de bornes tienen pieza 3D.
-  const useFrontal = front.terminals.length >= Math.max(2, strip.points.length / 2);
+  // Región ampliada: aire alrededor de la regleta y profundidad para que el
+  // encuadre incluya las mangueras de cables que llegan a los bornes.
+  const frameStrip = (preset: ViewPreset) => {
+    if (!region) return;
+    const pad = (axis: number) => Math.max((region.max[axis] - region.min[axis]) * 0.2, 60);
+    viewerRef.current?.frameBox(
+      [region.min[0] - pad(0), region.min[1] - pad(1), region.min[2] - pad(2)],
+      [region.max[0] + pad(0), region.max[1] + pad(1), region.max[2] + pad(2)],
+      preset
+    );
+  };
+
+  // Al montar la escena el visor encuadra el modelo completo; acto seguido se
+  // encuadra la regleta en frontal (el efecto del padre corre tras el del hijo).
+  useEffect(() => {
+    if (scene) frameStrip("front");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene]);
 
   return (
-    <section className="data-card">
-      <header className="data-card-head">
+    <>
+      <header className="data-card-head strip-detail-head">
         <span className="mono">{strip.name}</span>
         <span className="off">
           {t("data.terminalCount", { count: strip.points.length })}
           {strip.bridges.length > 0 &&
             ` · ${t("data.bridgeCount", { count: strip.bridges.length })}`}
-          {useFrontal &&
-            ` · ${t("data.frontalView")}${
-              front.terminals.length < strip.points.length
-                ? ` (${front.terminals.length}/${strip.points.length})`
-                : ""
-            }`}
+          {region && ` · ${t("data.frontalView")} (${region.located}/${strip.points.length})`}
         </span>
       </header>
-      {useFrontal ? (
-        <FrontalStrip strip={strip} terminals={front.terminals} onPoint={onPoint} />
+
+      {scene ? (
+        <div className="strip-3d">
+          <Viewer ref={viewerRef} scene={scene} initialPreset="front" />
+          <ViewPresets initial="front" onPreset={frameStrip} />
+        </div>
       ) : (
-        <StripDiagram strip={strip} onPoint={onPoint} />
+        <div className="data-note">{t("data.stripNo3d")}</div>
       )}
-    </section>
-  );
-}
 
-/**
- * Alzado real de la regleta: rectángulos en mm (X/Z del proyecto) por borne,
- * puentes en carriles por encima. Y positiva del SVG hacia abajo: se invierte Z.
- */
-function FrontalStrip({
-  strip,
-  terminals,
-  onPoint,
-}: {
-  strip: TerminalStrip;
-  terminals: FrontTerminal[];
-  onPoint: (index: number) => void;
-}) {
-  const byIndex = new Map(terminals.map((terminal) => [terminal.index, terminal]));
-
-  const minX = Math.min(...terminals.map((terminal) => terminal.x0));
-  const maxX = Math.max(...terminals.map((terminal) => terminal.x1));
-  const minZ = Math.min(...terminals.map((terminal) => terminal.z0));
-  const maxZ = Math.max(...terminals.map((terminal) => terminal.z1));
-
-  // Puentes dibujables (ambos extremos con pieza 3D), en carriles sin solape.
-  const drawable = strip.bridges.filter(
-    (bridge) => byIndex.has(bridge.from) && byIndex.has(bridge.to)
-  );
-  const lanes: { a: number; b: number }[][] = [];
-  const placed = drawable.map((bridge) => {
-    const a = (byIndex.get(bridge.from)!.x0 + byIndex.get(bridge.from)!.x1) / 2;
-    const b = (byIndex.get(bridge.to)!.x0 + byIndex.get(bridge.to)!.x1) / 2;
-    const range = { a: Math.min(a, b), b: Math.max(a, b) };
-    let lane = 0;
-    for (; ; lane++) {
-      const busy = (lanes[lane] ??= []);
-      if (busy.every((other) => range.b < other.a || range.a > other.b)) {
-        busy.push(range);
-        break;
-      }
-    }
-    return { ...bridge, lane, xa: a, xb: b };
-  });
-  const laneStep = Math.max((maxZ - minZ) * 0.16, 6);
-  const top = 4 + lanes.length * laneStep;
-
-  const pad = Math.max((maxX - minX) * 0.03, 4);
-  const width = maxX - minX + pad * 2;
-  const height = top + (maxZ - minZ) + pad;
-  // Escala de pantalla: ~7 px/mm, limitada para que el alzado no desborde
-  // ni en ancho (regletas largas) ni en alto (bornes de perfil alto).
-  const scale = Math.max(Math.min(7, 1600 / width, 300 / height), 320 / width, 1);
-  const pxWidth = width * scale;
-
-  const sx = (x: number) => x - minX + pad;
-  const sy = (z: number) => top + (maxZ - z);
-
-  return (
-    <div className="strip-scroll">
-      <svg
-        className="strip-svg frontal"
-        width={pxWidth}
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label={strip.name}
-      >
-        {terminals.map((terminal) => {
-          const w = terminal.x1 - terminal.x0;
-          const h = terminal.z1 - terminal.z0;
-          const cx = sx(terminal.x0) + w / 2;
-          const cy = sy(terminal.z1) + h / 2;
-          const vertical = w < h * 0.6;
-          return (
-            <g
-              key={terminal.index}
-              className="strip-terminal"
-              onClick={() => onPoint(terminal.index)}
-              role="button"
-              aria-label={`${strip.name}:${terminal.point}`}
-            >
-              <rect x={sx(terminal.x0)} y={sy(terminal.z1)} width={w} height={h} rx={0.6} />
-              <text
-                x={cx}
-                y={cy}
-                textAnchor="middle"
-                dominantBaseline="central"
-                style={{ fontSize: Math.min(Math.max((vertical ? w : h) * 0.55, 2.6), 6) }}
-                transform={vertical ? `rotate(-90 ${cx} ${cy})` : undefined}
-              >
-                {terminal.point}
-              </text>
-            </g>
-          );
-        })}
-        {placed.map((bridge, i) => {
-          const y = top - 3 - bridge.lane * laneStep;
-          const anchor = sy(maxZ) + 1;
-          const saddle = bridge.kind.toLowerCase().includes("saddle");
-          return (
-            <g key={i} className={saddle ? "strip-bridge saddle" : "strip-bridge"}>
-              <path d={`M ${sx(bridge.xa)} ${anchor} V ${y} H ${sx(bridge.xb)} V ${anchor}`}>
-                <title>{`${bridge.kind}: ${strip.points[bridge.from]} – ${strip.points[bridge.to]}`}</title>
-              </path>
-              <circle cx={sx(bridge.xa)} cy={anchor} r={1.1} />
-              <circle cx={sx(bridge.xb)} cy={anchor} r={1.1} />
-            </g>
-          );
-        })}
-      </svg>
-    </div>
+      <StripDiagram strip={strip} onPoint={onPoint} />
+    </>
   );
 }
 
 const CELL = 30; // ancho de un borne, px del viewBox
 const BOX_H = 46;
 
-/** Diagrama esquemático (fallback sin modelos 3D). */
+/** Diagrama de bornes y puentes; cada borne salta a su esquema. */
 function StripDiagram({
   strip,
   onPoint,
