@@ -11,6 +11,7 @@ import { initialState, projectsReducer } from "./projectsReducer";
 import { loadProject } from "./loadProject";
 import { evictProject } from "./sceneCache";
 import { evictPartLocations } from "./partLocator";
+import { evictPartBoxes } from "../data/partBoxes";
 import { markSessionTouched } from "../library/session";
 import {
   HOME_ID,
@@ -109,6 +110,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         for (const url of doc.imageUrls.values()) URL.revokeObjectURL(url);
         evictProject(id);
         evictPartLocations(id);
+        evictPartBoxes(id);
       }
       dispatch({ type: "CLOSE", id });
     },

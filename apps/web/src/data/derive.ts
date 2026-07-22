@@ -377,43 +377,62 @@ export function buildNetwork(aml: AmlProject): NetworkRow[] {
 
 // ---------- Puntos de interrupción ----------
 
-export interface InterruptionOccurrence {
-  /** packageId de la página donde aparece. */
+/** Referencia cruzada única de una señal, con el punto al que saltar. */
+export interface InterruptionRef {
+  /** Texto de la referencia (ep.19007), p. ej. "=GB1+A1&EFS1/ 1.9". */
+  xref: string;
+  /** packageId de la página del punto que lleva esta referencia. */
   pageId: number | null;
   /** Id del elemento SVG ("Id70_1887") para resaltarlo. */
   elementId: string | null;
-  xref: string | null;
 }
 
 export interface InterruptionGroup {
   designation: string;
-  occurrences: InterruptionOccurrence[];
-  /** Un punto con una sola aparición no tiene pareja origen/destino. */
+  /** Referencias cruzadas únicas de la señal (deduplicadas por texto). */
+  refs: InterruptionRef[];
+  /** Con una sola aparición no hay pareja origen/destino. */
   lonely: boolean;
   /** Alguna aparición sin referencia cruzada resuelta (ep.19007 vacío). */
   unresolved: boolean;
 }
 
-/** Agrupa los puntos de interrupción por señal y marca sueltos/sin referencia. */
+/**
+ * Agrupa los puntos de interrupción por señal, deduplicando por referencia
+ * cruzada única (las apariciones repetidas de la misma referencia no aportan),
+ * y marca las señales sueltas o sin referencia.
+ */
 export function buildInterruptionGroups(manifest: EplanManifest | null): InterruptionGroup[] {
   if (!manifest) return [];
-  const groups = new Map<string, InterruptionGroup>();
+  const groups = new Map<string, { group: InterruptionGroup; count: number; seen: Set<string> }>();
   for (const point of manifest.interruptionPoints) {
     const designation = point.designation ?? "?";
-    let group = groups.get(designation);
-    if (!group) {
-      group = { designation, occurrences: [], lonely: false, unresolved: false };
-      groups.set(designation, group);
+    let entry = groups.get(designation);
+    if (!entry) {
+      entry = {
+        group: { designation, refs: [], lonely: false, unresolved: false },
+        count: 0,
+        seen: new Set(),
+      };
+      groups.set(designation, entry);
     }
-    group.occurrences.push({
-      pageId: point.pageIds[0] ?? null,
-      elementId: point.svgElementId,
-      xref: point.xref,
-    });
-    if (!point.xref) group.unresolved = true;
+    entry.count += 1;
+    if (!point.xref) {
+      entry.group.unresolved = true;
+    } else if (!entry.seen.has(point.xref)) {
+      entry.seen.add(point.xref);
+      entry.group.refs.push({
+        xref: point.xref,
+        pageId: point.pageIds[0] ?? null,
+        elementId: point.svgElementId,
+      });
+    }
   }
-  const rows = [...groups.values()];
-  for (const group of rows) group.lonely = group.occurrences.length < 2;
+  const rows = [...groups.values()].map((entry) => {
+    entry.group.lonely = entry.count < 2;
+    entry.group.refs.sort((a, b) => naturalCompare(a.xref, b.xref));
+    return entry.group;
+  });
   rows.sort(
     (a, b) =>
       Number(b.lonely || b.unresolved) - Number(a.lonely || a.unresolved) ||

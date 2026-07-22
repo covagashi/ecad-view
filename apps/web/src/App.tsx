@@ -10,8 +10,7 @@ import { LibraryView } from "./library/LibraryView";
 import { scheduleSessionSave } from "./library/session";
 import { SchematicsView } from "./schematic/SchematicsView";
 import { DataView } from "./data/DataView";
-import { BottomNav } from "./mobile/BottomNav";
-import { DataFab } from "./mobile/DataFab";
+import { MobileBar } from "./mobile/MobileBar";
 import { useDeepLink } from "./state/useDeepLink";
 import { useI18n } from "./i18n";
 
@@ -92,9 +91,8 @@ export function App() {
         </main>
       </div>
 
-      <StatusBar scene={scene} />
-      <BottomNav />
-      <DataFab />
+      <StatusBar />
+      <MobileBar />
     </div>
   );
 }

@@ -32,9 +32,7 @@ export function InterruptionView({
           <thead>
             <tr>
               <th>{t("data.col.signal")}</th>
-              <th className="num">×</th>
               <th>{t("data.col.status")}</th>
-              <th>{t("data.col.pages")}</th>
               <th>{t("data.col.xref")}</th>
             </tr>
           </thead>
@@ -42,7 +40,6 @@ export function InterruptionView({
             {groups.map((group) => (
               <tr key={group.designation} className={group.lonely ? "warn" : ""}>
                 <td className="mono">{group.designation}</td>
-                <td className="num">{group.occurrences.length}</td>
                 <td>
                   {group.lonely ? (
                     <span className="data-pill warn">{t("data.status.lonely")}</span>
@@ -53,18 +50,19 @@ export function InterruptionView({
                   )}
                 </td>
                 <td>
-                  {group.occurrences.map((occurrence, i) => (
-                    <button
-                      key={i}
-                      className="data-link mono"
-                      title={t("data.viewInSchematic")}
-                      onClick={() => nav.toSchematic(occurrence.pageId, occurrence.elementId)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  {group.refs.length > 0
+                    ? group.refs.map((ref) => (
+                        <button
+                          key={ref.xref}
+                          className="data-link mono"
+                          title={t("data.viewInSchematic")}
+                          onClick={() => nav.toSchematic(ref.pageId, ref.elementId)}
+                        >
+                          {ref.xref}
+                        </button>
+                      ))
+                    : "—"}
                 </td>
-                <td className="desc mono">{group.occurrences[0]?.xref ?? "—"}</td>
               </tr>
             ))}
           </tbody>

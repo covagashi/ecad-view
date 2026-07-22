@@ -5,6 +5,7 @@ import { useAml } from "../aml/useAml";
 import { buildDeviceTo3dIndex, findDeviceByDesignation } from "../state/bridge";
 import { getPartLocations } from "../state/partLocator";
 import { stashPendingPick } from "../state/deeplink";
+import { getPartBoxes, type PartBoxIndex } from "./partBoxes";
 import { pickText } from "./derive";
 import { EclassBomView } from "./EclassBomView";
 import { PanelView } from "./PanelView";
@@ -61,6 +62,16 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   const deviceTo3d = useMemo(
     () => buildDeviceTo3dIndex(doc?.deviceIndex.devices ?? [], manifest, partLocations),
     [doc?.deviceIndex, manifest, partLocations]
+  );
+
+  // Cajas 3D por pieza para el alzado del bornero; solo cuando hace falta.
+  const partBoxes = useMemo<PartBoxIndex>(
+    () =>
+      tab === "terminals" && doc && doc.epdzModels.length > 0
+        ? getPartBoxes(doc.id, doc.epdzModels)
+        : new Map(),
+    [tab, doc?.id, doc?.epdzModels]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   );
 
   if (!doc) return null;
@@ -179,7 +190,7 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
             {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
             {tab === "panel" && aml && <PanelView aml={aml} />}
             {tab === "terminals" && (
-              <TerminalsView manifest={manifest} aml={aml} nav={nav} />
+              <TerminalsView manifest={manifest} aml={aml} partBoxes={partBoxes} nav={nav} />
             )}
             {tab === "network" && aml && <NetworkView aml={aml} nav={nav} />}
             {tab === "positions" && aml && <PositionsView aml={aml} lang={lang} nav={nav} />}

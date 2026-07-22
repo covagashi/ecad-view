@@ -444,11 +444,3 @@
   fill: var(--ok);
 }
 
-/* Botón flotante + hoja modal (solo móvil; ver mobile.css) */
-.data-fab {
-  display: none;
-}
-
-.data-sheet-wrap {
-  display: none;
-}
