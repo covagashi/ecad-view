@@ -26,6 +26,10 @@
     "./manifest": {
       "types": "./dist/manifest.d.ts",
       "default": "./dist/manifest.js"
+    },
+    "./aml": {
+      "types": "./dist/aml.d.ts",
+      "default": "./dist/aml.js"
     }
   },
   "scripts": {

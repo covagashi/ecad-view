@@ -1,0 +1,454 @@
+/* ---------- Vista "Datos" (AutomationML + manifest) ---------- */
+
+.data-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.data-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 24px 24px 0;
+  flex-wrap: wrap;
+}
+
+.data-title {
+  flex: 1;
+  min-width: 200px;
+}
+
+.data-head .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.data-head h1 {
+  font-size: 19px;
+  font-weight: 650;
+  margin: 0;
+}
+
+.data-head .sub {
+  color: var(--text-muted);
+  margin: 2px 0 0;
+  font-size: 12.5px;
+}
+
+/* Selector de idioma del proyecto */
+.data-lang {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-bottom: 2px;
+}
+
+.data-lang select {
+  appearance: none;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 26px 6px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-faint) 50%),
+    linear-gradient(135deg, var(--text-faint) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 55%,
+    calc(100% - 10px) 55%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.data-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 14px 24px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.data-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.data-tabs button {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.data-tabs button.active {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.data-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 60px;
+}
+
+.data-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 980px;
+}
+
+.data-search {
+  max-width: 340px;
+}
+
+.data-note {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 18px 0;
+}
+
+.data-note.off {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  padding: 4px 0 0;
+}
+
+/* Tarjeta por clase eCl@ss / regleta */
+.data-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.data-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.data-card-head .off {
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+.data-class {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+
+.data-card-head .badge,
+.data-chip .badge {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 650;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tablas: siempre con scroll horizontal propio (clave en móvil). */
+.data-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+  font-size: 12.5px;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  font-weight: 600;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr.warn td {
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table .desc {
+  color: var(--text-muted);
+  min-width: 160px;
+}
+
+.data-table .devices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 200px;
+}
+
+.data-table .actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.data-table .off {
+  color: var(--text-faint);
+}
+
+.data-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.data-link:hover {
+  text-decoration: underline;
+}
+
+/* Enlaces contiguos en una celda (apariciones 1 2 3…) van espaciados. */
+.data-table td .data-link + .data-link {
+  margin-left: 7px;
+}
+
+.data-tool {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  color: var(--text-muted);
+  width: 26px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.data-tool:hover {
+  color: var(--accent);
+  border-color: var(--accent-strong);
+}
+
+.data-pill {
+  display: inline-block;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin: 1px 4px 1px 0;
+  white-space: nowrap;
+}
+
+.data-pill.warn {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+.data-pill.ok {
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+  color: var(--ok);
+}
+
+/* KPIs y chips (mecanizado) */
+.data-kpis {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.data-chiprow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.data-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.data-chip.active {
+  color: var(--accent);
+  border-color: var(--accent-strong);
+  background: var(--accent-dim);
+}
+
+/* Plano de taladros */
+.data-plan-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 10px;
+}
+
+.data-plan {
+  width: 100%;
+  max-height: 55vh;
+  display: block;
+}
+
+.plan-outline {
+  fill: transparent;
+  stroke: var(--border-strong);
+  stroke-dasharray: 5 4;
+}
+
+.plan-hole {
+  fill: var(--accent-dim);
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.plan-hole.threaded {
+  fill: color-mix(in srgb, var(--ok) 16%, transparent);
+  stroke: var(--ok);
+}
+
+.data-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding: 8px 4px 0;
+}
+
+.data-legend .mono {
+  margin-left: auto;
+}
+
+.data-legend .dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 5px;
+  border: 1px solid var(--accent);
+  background: var(--accent-dim);
+  vertical-align: -1px;
+}
+
+.data-legend .dot.threaded {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+}
+
+/* Regletas de bornes (vista frontal) */
+.strip-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px 14px;
+}
+
+.strip-body {
+  fill: var(--panel-2);
+  stroke: var(--border-strong);
+}
+
+.strip-terminal rect {
+  fill: var(--panel);
+  stroke: var(--border-strong);
+  cursor: pointer;
+}
+
+.strip-terminal:hover rect {
+  stroke: var(--accent);
+  fill: var(--accent-dim);
+}
+
+.strip-terminal text {
+  font-size: 10px;
+  fill: var(--text);
+  font-family: var(--font-mono);
+  pointer-events: none;
+}
+
+.strip-bridge path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.strip-bridge circle {
+  fill: var(--accent);
+}
+
+.strip-bridge.saddle path {
+  stroke: var(--ok);
+  stroke-dasharray: 4 3;
+}
+
+.strip-bridge.saddle circle {
+  fill: var(--ok);
+}
+
+/* Botón flotante + hoja modal (solo móvil; ver mobile.css) */
+.data-fab {
+  display: none;
+}
+
+.data-sheet-wrap {
+  display: none;
+}

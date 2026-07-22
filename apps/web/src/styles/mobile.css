@@ -176,4 +176,141 @@
     color: var(--text);
     font-size: 12px;
   }
+
+  /* ---------- Vista "Datos" en móvil: pastilla flotante + hoja modal ---------- */
+
+  /* Pastilla flotante centrada sobre la navegación inferior (estilo Vercel). */
+  .data-fab {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    /* Por encima de las barras flotantes de las vistas (presets 3D, zoom). */
+    bottom: calc(108px + max(10px, env(safe-area-inset-bottom)));
+    z-index: 25;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    appearance: none;
+    border: 1px solid var(--border-strong);
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 999px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+  }
+
+  .data-fab:active {
+    transform: translateX(-50%) scale(0.97);
+  }
+
+  /* Hoja modal deslizante con la vista de datos completa. */
+  .data-sheet-wrap {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.45);
+    animation: data-fade 0.18s ease-out;
+  }
+
+  .data-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 92dvh;
+    background: var(--bg);
+    border-top: 1px solid var(--border-strong);
+    border-radius: 18px 18px 0 0;
+    overflow: hidden;
+    animation: data-slide-up 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  .data-sheet .data-view {
+    position: absolute;
+    inset: 0;
+  }
+
+  .data-sheet-grab {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border-strong);
+    z-index: 2;
+  }
+
+  .data-sheet-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    appearance: none;
+    border: 1px solid var(--border-strong);
+    background: var(--panel);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  @keyframes data-slide-up {
+    from {
+      transform: translateY(24%);
+      opacity: 0.6;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes data-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Dentro de la hoja: cabecera compacta, y hueco para el botón de cierre. */
+  .data-sheet .data-head {
+    padding: 18px 56px 0 18px;
+  }
+
+  .data-sheet .data-tabs {
+    padding: 12px 18px 0;
+  }
+
+  .data-sheet .data-body {
+    padding: 14px 14px 40px;
+  }
+
+  /* En pantalla estrecha las tablas no se apilan: siguen en horizontal y la
+     fila desborda con scroll lateral (el formato pedido para móvil). */
+  .data-table {
+    min-width: 560px;
+  }
+
+  /* La vista "Datos" a pantalla completa (deep link) también es usable. */
+  .data-head {
+    padding: 18px 18px 0;
+  }
+
+  .data-body {
+    padding: 14px 14px 90px;
+  }
 }

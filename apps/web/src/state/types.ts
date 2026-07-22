@@ -1,10 +1,14 @@
 import type { EpdzEntry } from "@covaga/e3d-core/epdz";
 import type { EplanManifest } from "@covaga/e3d-core/manifest";
+import type { AmlProject } from "@covaga/e3d-core/aml";
 import type { SchematicHighlight } from "../viewer/SchematicViewer";
 import type { DeviceIndex } from "../devices";
 import type { TranslateParams, TranslationKey } from "../i18n";
 
-export type ProjectView = "3d" | "pages" | "project";
+export type ProjectView = "3d" | "pages" | "project" | "data";
+
+/** Estado de carga del AutomationML (se parsea bajo demanda en un worker). */
+export type AmlState = "idle" | "loading" | "ready" | "error";
 
 /** Origen del documento; determina si la pestaña puede restaurarse al arrancar. */
 export type ProjectSource =
@@ -51,6 +55,13 @@ export interface ProjectDoc {
   /** nombre de imagen (minúsculas) -> object URL; se revocan al cerrar. */
   imageUrls: Map<string, string>;
   deviceIndex: DeviceIndex;
+  /** Export AutomationML del archivo (crudo); null si el .epdz no lo trae. */
+  amlEntry: EpdzEntry | null;
+  /** Resultado del parseo del AML (bajo demanda, en worker). */
+  aml: AmlProject | null;
+  amlState: AmlState;
+  /** Idioma de proyecto elegido ("es-ES"...); "" = idioma del export. */
+  amlLang: string;
   // --- Estado de UI por pestaña ---
   view: ProjectView;
   /** Índice en epdzModels; -1 si no hay modelos. */
@@ -74,7 +85,14 @@ export interface AppState {
 /** Fragmento que produce loadProject al completarse la carga. */
 export type LoadedProjectData = Pick<
   ProjectDoc,
-  "epdzModels" | "pages" | "manifest" | "imageUrls" | "deviceIndex" | "view" | "modelIndex"
+  | "epdzModels"
+  | "pages"
+  | "manifest"
+  | "imageUrls"
+  | "deviceIndex"
+  | "amlEntry"
+  | "view"
+  | "modelIndex"
 >;
 
 export type Action =
@@ -94,4 +112,8 @@ export type Action =
       xrefInfo: string | null;
     }
   | { type: "SET_PICKED"; id: string; picked: PickedPart | null }
+  | { type: "AML_LOADING"; id: string }
+  | { type: "AML_READY"; id: string; aml: AmlProject }
+  | { type: "AML_ERROR"; id: string }
+  | { type: "SET_AML_LANG"; id: string; lang: string }
   | { type: "SET_STATUS"; status: StatusMessage | null };

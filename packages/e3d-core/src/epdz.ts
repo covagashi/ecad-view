@@ -15,7 +15,9 @@ export interface EpdzContents {
   images: EpdzEntry[];
   /** Bases de datos SQLite (manifest.db). */
   databases: EpdzEntry[];
-  /** Resto de entradas (AML, scripts...), solo rutas. */
+  /** Exports AutomationML (.aml) con el proyecto completo (CAEX). */
+  amls: EpdzEntry[];
+  /** Resto de entradas (scripts...), solo rutas. */
   otherPaths: string[];
 }
 
@@ -52,6 +54,7 @@ export async function extractEpdz(
   const pages: EpdzEntry[] = [];
   const images: EpdzEntry[] = [];
   const databases: EpdzEntry[] = [];
+  const amls: EpdzEntry[] = [];
   const otherPaths: string[] = [];
 
   const walk = (dir: string) => {
@@ -72,6 +75,8 @@ export async function extractEpdz(
           images.push({ path: relative, data: seven.FS.readFile(full) });
         } else if (lower.endsWith(".db") || lower.endsWith(".sqlite")) {
           databases.push({ path: relative, data: seven.FS.readFile(full) });
+        } else if (lower.endsWith(".aml")) {
+          amls.push({ path: relative, data: seven.FS.readFile(full) });
         } else {
           otherPaths.push(relative);
         }
@@ -85,5 +90,5 @@ export async function extractEpdz(
   pages.sort(naturalByPath);
   models.sort(naturalByPath);
 
-  return { models, pages, images, databases, otherPaths };
+  return { models, pages, images, databases, amls, otherPaths };
 }
