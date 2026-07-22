@@ -1,0 +1,189 @@
+{
+  "name": "spm3",
+  "viewBox": ["WIDTH*2.6", "D_NOSE*3", "HEIGHT*1.8"],
+  "params": {
+    "POLES": 3,
+    "POLE_W": 17.4,
+    "WIDTH": 52.2,
+    "HEIGHT": 74.64,
+    "D_BODY": 50.3,
+    "D_NOSE": 63.7,
+    "BACK": 25.15,
+    "F_BODY": -25.15,
+    "F_NOSE": -38.55,
+    "NOSE_Z0": 12,
+    "NOSE_Z1": 62,
+    "CH": 2.5,
+    "PIVOT_Z": 32,
+    "tip_y": -0.81915204,
+    "tip_z": -0.57357644,
+    "perp_y": 0.57357644,
+    "perp_z": -0.81915204
+  },
+  "layers": [
+    {
+      "name": "carcasa",
+      "color": [0.93, 0.93, 0.91],
+      "ops": [
+        {
+          "op": "prism",
+          "xCenter": 0,
+          "width": "WIDTH",
+          "profile": [
+            ["F_BODY+CH", 0],
+            ["BACK-2", 0],
+            ["BACK", 2],
+            ["BACK", 27],
+            ["BACK-7.5", 27],
+            ["BACK-7.5", 45],
+            ["BACK", 45],
+            ["BACK", "HEIGHT-2"],
+            ["BACK-2", "HEIGHT"],
+            ["F_BODY+5", "HEIGHT"],
+            ["F_BODY", "HEIGHT-5"],
+            ["F_BODY", "NOSE_Z1+2"],
+            ["F_NOSE+CH", "NOSE_Z1"],
+            ["F_NOSE", "NOSE_Z1-CH"],
+            ["F_NOSE", "NOSE_Z0+CH"],
+            ["F_NOSE+CH", "NOSE_Z0"],
+            ["F_BODY", "NOSE_Z0-2"],
+            ["F_BODY", "CH"]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ranuras",
+      "color": [0.68, 0.68, 0.66],
+      "repeat": { "count": "POLES-1", "dx": "POLE_W" },
+      "ops": [
+        {
+          "op": "box",
+          "center": ["-WIDTH/2 + POLE_W", "F_NOSE-0.1", "(NOSE_Z0+NOSE_Z1)/2"],
+          "size": [0.7, 0.6, "NOSE_Z1-NOSE_Z0-6"]
+        }
+      ]
+    },
+    {
+      "name": "maneta",
+      "color": [0.3, 0.55, 0.8],
+      "repeat": { "count": "POLES", "dx": "POLE_W" },
+      "ops": [
+        {
+          "op": "box",
+          "color": [0.42, 0.43, 0.46],
+          "center": ["-WIDTH/2 + 0.5*POLE_W", "F_NOSE-0.3", "PIVOT_Z+2"],
+          "size": [11, 1.4, 21]
+        },
+        {
+          "op": "part",
+          "mesh": "box",
+          "basis": {
+            "x": [9, 0, 0],
+            "y": [0, "4.5*perp_y", "4.5*perp_z"],
+            "z": [0, "17*tip_y", "17*tip_z"],
+            "t": ["-WIDTH/2 + 0.5*POLE_W", "F_NOSE+4 + tip_y*7", "PIVOT_Z + tip_z*7"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "barra",
+      "color": [0.3, 0.55, 0.8],
+      "ops": [
+        {
+          "op": "part",
+          "mesh": "prism",
+          "profile": [
+            [-1.5, -6], [1.5, -6], [3.5, -4], [3.5, 4],
+            [1.5, 6], [-1.5, 6], [-3.5, 4], [-3.5, -4]
+          ],
+          "basis": {
+            "x": ["WIDTH-3.5", 0, 0],
+            "y": [0, "tip_y", "tip_z"],
+            "z": [0, "perp_y", "perp_z"],
+            "t": [0, "F_NOSE+4 + tip_y*15.5", "PIVOT_Z + tip_z*15.5"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "bornes",
+      "color": [0.13, 0.13, 0.14],
+      "repeat": { "count": "POLES", "dx": "POLE_W" },
+      "ops": [
+        {
+          "op": "tube",
+          "from": ["-WIDTH/2 + 0.5*POLE_W", -6, "HEIGHT-9"],
+          "to": ["-WIDTH/2 + 0.5*POLE_W", -6, "HEIGHT+0.05"],
+          "radius": 4.8
+        },
+        {
+          "op": "tube",
+          "color": [0.68, 0.7, 0.74],
+          "from": ["-WIDTH/2 + 0.5*POLE_W", -6, "HEIGHT-9"],
+          "to": ["-WIDTH/2 + 0.5*POLE_W", -6, "HEIGHT-9+1.6"],
+          "radius": 3.8
+        },
+        {
+          "op": "box",
+          "center": ["-WIDTH/2 + 0.5*POLE_W", -6, "HEIGHT-9+1.9"],
+          "size": [1.3, 7, 0.5]
+        },
+        {
+          "op": "tube",
+          "from": ["-WIDTH/2 + 0.5*POLE_W", -6, 9],
+          "to": ["-WIDTH/2 + 0.5*POLE_W", -6, -0.05],
+          "radius": 4.8
+        },
+        {
+          "op": "tube",
+          "color": [0.68, 0.7, 0.74],
+          "from": ["-WIDTH/2 + 0.5*POLE_W", -6, 9],
+          "to": ["-WIDTH/2 + 0.5*POLE_W", -6, "9-1.6"],
+          "radius": 3.8
+        },
+        {
+          "op": "box",
+          "center": ["-WIDTH/2 + 0.5*POLE_W", -6, "9-1.9"],
+          "size": [1.3, 7, 0.5]
+        }
+      ]
+    },
+    {
+      "name": "marcado",
+      "color": [0.97, 0.97, 0.96],
+      "ops": [
+        {
+          "op": "part",
+          "mesh": "box",
+          "size": [15, 1, 9],
+          "basis": {
+            "x": [1, 0, 0],
+            "y": [0, 1, 0],
+            "z": [0, 0, 1],
+            "t": [-9, "F_NOSE-0.6", 54]
+          }
+        },
+        { "op": "label", "text": "1492-SP", "position": [0, -1, 1.6], "height": 3.4 },
+        { "op": "label", "text": "C 10A", "position": [0, -1, -2.6], "height": 3, "attach": 0 }
+      ]
+    },
+    {
+      "name": "carril-din",
+      "color": [0.58, 0.59, 0.61],
+      "ops": [
+        {
+          "op": "box",
+          "center": [0, "BACK-4", 36],
+          "size": ["WIDTH-8", 7, 16]
+        },
+        {
+          "op": "box",
+          "center": [0, "BACK-5.5", 24.5],
+          "size": [10, 4, 6]
+        }
+      ]
+    }
+  ]
+}

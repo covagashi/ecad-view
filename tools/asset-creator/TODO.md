@@ -20,7 +20,7 @@ pipeline. Each area has its own document under [`todo/`](todo/).
 
 | Area | Doc | Summary |
 | --- | --- | --- |
-| AI creator/viewer | [`todo/01-ai-creator.md`](todo/01-ai-creator.md) | Let an AI agent create assets from a JSON spec and see what it built (CLI + skill first, MCP server later) |
+| AI creator/viewer | [`todo/01-ai-creator.md`](todo/01-ai-creator.md) | **Phase 0 done (CLI + skill).** Phase 1 (MCP) and Phase 2 (hot-reload + picking) pending. |
 | Electrical STL catalog | [`todo/02-stl-electrical.md`](todo/02-stl-electrical.md) | Parametric generators for common panel components, STL quality notes |
 | 2D game engines | [`todo/03-2d-engines.md`](todo/03-2d-engines.md) | Render generated assets to sprite sheets usable from 2D engines such as Phaser.js |
 
