@@ -56,6 +56,47 @@ export interface ManifestFunction {
   pageIds: number[];
 }
 
+/** Conexión agrupada (tabla mergedconnection_package): un tramo de cableado. */
+export interface ManifestConnection {
+  packageId: number;
+  /** Id del elemento SVG derivado del sufijo del nombre ("Id10007_80833"). */
+  svgElementId: string | null;
+  /** Origen (ep.31019), p. ej. "+A1-XD1:1". */
+  source: string | null;
+  /** Destino (ep.31020). */
+  target: string | null;
+  /** Potencial/señal (ep.33003 o, en su defecto, ep.20045). */
+  potential: string | null;
+  /** Color del conductor (ep.31004). */
+  color: string | null;
+  /** Sección con unidad (ep.31007), p. ej. "0,25 mm²". */
+  crossSection: string | null;
+  /** Longitud con unidad (ep.31003). */
+  length: string | null;
+  /** Tipo de conductor/cable (ep.31048). */
+  partType: string | null;
+  /** Object ids EPLAN de las conexiones agrupadas (propiedad "connectionoid"). */
+  connectionOids: string[];
+  /**
+   * Id de la pieza 3D del cable enrutado ("166/60618" = typeId/objectId del
+   * E3D), propiedad "connection3did"; null si la conexión no está enrutada.
+   */
+  wire3d: string | null;
+}
+
+/** Punto de interrupción (tabla interruptionpoint_package). */
+export interface ManifestInterruptionPoint {
+  packageId: number;
+  /** Designación completa (ep.20001), p. ej. "=GB1-24V". */
+  designation: string | null;
+  /** Texto de referencia cruzada resuelto por EPLAN (ep.19007). */
+  xref: string | null;
+  /** Id del elemento SVG derivado del sufijo del nombre ("Id70_1887"). */
+  svgElementId: string | null;
+  /** packageIds de las páginas donde aparece (tabla page_interruptionpoints). */
+  pageIds: number[];
+}
+
 /** Ubicación/aspecto de estructura (tabla location_package). */
 export interface ManifestLocation {
   packageId: number;
@@ -74,6 +115,8 @@ export interface EplanManifest {
   installationSpaces: ManifestInstallationSpace[];
   functions: ManifestFunction[];
   locations: ManifestLocation[];
+  connections: ManifestConnection[];
+  interruptionPoints: ManifestInterruptionPoint[];
   /** Recuento de packages por tipo (project, page, function, location...). */
   packageCounts: Record<string, number>;
 }
@@ -238,6 +281,82 @@ export async function readManifest(
       };
     });
 
+    // Conexiones agrupadas: cada package lleva una propiedad "connectionoid"
+    // por conexión EPLAN original (los puentes de bornes del AML referencian
+    // esos object ids). El resto son propiedades ep.31xxx del cableado.
+    const connectionOids = new Map<number, string[]>();
+    for (const [packageId, value] of rows(
+      db,
+      `SELECT p.packageid, p.value FROM property p
+       WHERE p.propname = 'connectionoid' AND p.value IS NOT NULL AND p.value != ''
+       ORDER BY p.propindex`
+    )) {
+      const list = connectionOids.get(Number(packageId)) ?? [];
+      list.push(String(value));
+      connectionOids.set(Number(packageId), list);
+    }
+
+    // Pieza 3D del cable enrutado de cada conexión (typeId/objectId del E3D).
+    const wire3dIds = new Map<number, string>();
+    for (const [packageId, value] of rows(
+      db,
+      `SELECT p.packageid, p.value FROM property p
+       WHERE p.propname = 'connection3did' AND p.value IS NOT NULL AND p.value != ''`
+    )) {
+      if (!wire3dIds.has(Number(packageId))) wire3dIds.set(Number(packageId), String(value));
+    }
+
+    const connections: ManifestConnection[] = rows(
+      db,
+      `SELECT k.id, k.name, ${firstProp(31019)}, ${firstProp(31020)}, ${firstProp(33003)},
+              ${firstProp(20045)}, ${firstProp(31004)}, ${firstProp(31007)},
+              ${firstProp(31003)}, ${firstProp(31048)}
+       FROM package k WHERE k.type = 'mergedconnection'`
+    ).map((row) => {
+      const suffix = /_(\d+)_(\d+)$/.exec(String(row[1]));
+      const clean = (value: (typeof row)[number]) =>
+        value == null || value === "" ? null : String(value);
+      return {
+        packageId: Number(row[0]),
+        svgElementId: suffix ? `Id${suffix[1]}_${suffix[2]}` : null,
+        source: clean(row[2]),
+        target: clean(row[3]),
+        potential: clean(row[4]) ?? clean(row[5]),
+        color: clean(row[6]),
+        crossSection: clean(row[7]),
+        length: clean(row[8]),
+        partType: clean(row[9]),
+        connectionOids: connectionOids.get(Number(row[0])) ?? [],
+        wire3d: wire3dIds.get(Number(row[0])) ?? null,
+      };
+    });
+
+    // Puntos de interrupción con las páginas en las que aparecen.
+    const interruptionPages = new Map<number, number[]>();
+    for (const [pageId, pointId] of rows(
+      db,
+      "SELECT pageid, interruptionpointid FROM page_interruptionpoints"
+    )) {
+      const list = interruptionPages.get(Number(pointId)) ?? [];
+      list.push(Number(pageId));
+      interruptionPages.set(Number(pointId), list);
+    }
+
+    const interruptionPoints: ManifestInterruptionPoint[] = rows(
+      db,
+      `SELECT k.id, k.name, ${firstProp(20001)}, ${firstProp(19007)}
+       FROM package k WHERE k.type = 'interruptionpoint'`
+    ).map(([packageId, name, designation, xref]) => {
+      const suffix = /_(\d+)_(\d+)$/.exec(String(name));
+      return {
+        packageId: Number(packageId),
+        designation: designation == null || designation === "" ? null : String(designation),
+        xref: xref == null || xref === "" ? null : String(xref),
+        svgElementId: suffix ? `Id${suffix[1]}_${suffix[2]}` : null,
+        pageIds: interruptionPages.get(Number(packageId)) ?? [],
+      };
+    });
+
     // location_package.name viene como "<categoría>-<valor>"; la categoría está
     // en el idioma del proyecto (p. ej. "Lugar de instalación-DC10V").
     const locations: ManifestLocation[] = rows(
@@ -261,6 +380,8 @@ export async function readManifest(
       installationSpaces,
       functions,
       locations,
+      connections,
+      interruptionPoints,
       packageCounts,
     };
   } finally {

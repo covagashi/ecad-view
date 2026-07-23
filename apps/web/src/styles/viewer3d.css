@@ -271,31 +271,6 @@
   padding: 3px 8px;
 }
 
-/* Botón flotante que abre el desglose en móvil (el panel va en overlay). */
-.parts-fab {
-  position: absolute;
-  right: 16px;
-  bottom: 18px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  appearance: none;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 11px 15px;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-float);
-}
-
-.parts-fab-count {
-  font-size: 11px;
-  color: var(--text-faint);
-}
-
 /* ---------- Vista 3D: UI flotante ---------- */
 
 .model-card {

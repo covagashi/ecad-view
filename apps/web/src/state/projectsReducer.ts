@@ -34,6 +34,10 @@ export function projectsReducer(state: AppState, action: Action): AppState {
         manifest: null,
         imageUrls: new Map(),
         deviceIndex: buildDeviceIndex([]),
+        amlEntry: null,
+        aml: null,
+        amlState: "idle",
+        amlLang: "",
         view: "3d",
         modelIndex: -1,
         pageIndex: 0,
@@ -78,7 +82,9 @@ export function projectsReducer(state: AppState, action: Action): AppState {
             ? doc.modelIndex >= 0
             : action.view === "pages"
               ? doc.pages.length > 0
-              : doc.manifest !== null;
+              : action.view === "data"
+                ? doc.manifest !== null || doc.amlEntry !== null
+                : doc.manifest !== null;
         return valid ? { view: action.view } : {};
       });
     case "SET_MODEL":
@@ -98,6 +104,14 @@ export function projectsReducer(state: AppState, action: Action): AppState {
       });
     case "SET_PICKED":
       return patchProject(state, action.id, { picked: action.picked });
+    case "AML_LOADING":
+      return patchProject(state, action.id, { amlState: "loading" });
+    case "AML_READY":
+      return patchProject(state, action.id, { aml: action.aml, amlState: "ready" });
+    case "AML_ERROR":
+      return patchProject(state, action.id, { amlState: "error" });
+    case "SET_AML_LANG":
+      return patchProject(state, action.id, { amlLang: action.lang });
     case "SET_STATUS":
       return { ...state, status: action.status };
     default:

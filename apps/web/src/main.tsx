@@ -11,6 +11,7 @@ import "./styles/library.css";
 import "./styles/schematic.css";
 import "./styles/viewer3d.css";
 import "./styles/project.css";
+import "./styles/data.css";
 import "./styles/mobile.css";
 
 createRoot(document.getElementById("root")!).render(

@@ -23,6 +23,7 @@ export async function loadProject(
       manifest: null,
       imageUrls: new Map(),
       deviceIndex: buildDeviceIndex([]),
+      amlEntry: null,
       view: "3d",
       modelIndex: 0,
     };
@@ -64,6 +65,7 @@ export async function loadProject(
     manifest,
     imageUrls,
     deviceIndex: buildDeviceIndex(pages),
+    amlEntry: contents.amls[0] ?? null,
     view: contents.models.length > 0 ? "3d" : "pages",
     modelIndex: contents.models.length > 0 ? 0 : -1,
   };

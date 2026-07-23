@@ -16,6 +16,7 @@ import { PagesPanel, type PanelTab } from "./PagesPanel";
 import { ZoomToolbar } from "./ZoomToolbar";
 import { IconChevronRight } from "../shell/icons";
 import { useI18n } from "../i18n";
+import { useIsMobile } from "../mobile/query";
 
 const PIN_KEY = "covaga.pagesPanel.pinned";
 
@@ -41,16 +42,7 @@ export function SchematicsView() {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [tab, setTab] = useState<PanelTab>("pages");
   const [zoomPercent, setZoomPercent] = useState(100);
-  const [isMobile, setIsMobile] = useState(
-    () => window.matchMedia?.("(max-width: 760px)").matches ?? false
-  );
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 760px)");
-    const onChange = () => setIsMobile(media.matches);
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
+  const isMobile = useIsMobile();
 
   // Atajos de teclado: RePág/AvPág página anterior/siguiente; Inicio/Fin,
   // primera/última. Se ignoran cuando el foco está en un campo de texto.

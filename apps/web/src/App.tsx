@@ -9,7 +9,8 @@ import { StatusBar } from "./shell/StatusBar";
 import { LibraryView } from "./library/LibraryView";
 import { scheduleSessionSave } from "./library/session";
 import { SchematicsView } from "./schematic/SchematicsView";
-import { BottomNav } from "./mobile/BottomNav";
+import { DataView } from "./data/DataView";
+import { MobileBar } from "./mobile/MobileBar";
 import { useDeepLink } from "./state/useDeepLink";
 import { useI18n } from "./i18n";
 
@@ -81,11 +82,17 @@ export function App() {
           {doc && !doc.loading && !doc.error && doc.view === "project" && doc.manifest && (
             <ProjectView />
           )}
+
+          {doc &&
+            !doc.loading &&
+            !doc.error &&
+            doc.view === "data" &&
+            (doc.manifest || doc.amlEntry) && <DataView />}
         </main>
       </div>
 
-      <StatusBar scene={scene} />
-      <BottomNav />
+      <StatusBar />
+      <MobileBar />
     </div>
   );
 }

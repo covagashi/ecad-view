@@ -1,6 +1,6 @@
 {
   "name": "@covaga/e3d-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "EPLAN E3D binary format parser (v1-v4), .epdz extraction, manifest.db (SQLite) reader and three.js scene builder",
   "license": "MIT",
@@ -26,6 +26,10 @@
     "./manifest": {
       "types": "./dist/manifest.d.ts",
       "default": "./dist/manifest.js"
+    },
+    "./aml": {
+      "types": "./dist/aml.d.ts",
+      "default": "./dist/aml.js"
     }
   },
   "scripts": {

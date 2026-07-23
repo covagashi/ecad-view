@@ -1,17 +1,23 @@
 /* ---------- Móvil ---------- */
 
-/* Navegación inferior: solo visible en pantallas estrechas. */
-.bottom-nav {
+/* La barra de navegación móvil solo existe en pantallas estrechas. */
+.mobile-bar {
   display: none;
 }
 
-@media (max-width: 760px) {
+.mobile-menu-wrap {
+  display: none;
+}
+
+/* Misma condición que MOBILE_MEDIA_QUERY (mobile/query.ts): teléfono en
+   vertical (ancho) o en horizontal (alto reducido). */
+@media (max-width: 760px), (max-height: 500px) {
   .btn {
     padding: 5px 9px;
     font-size: 12px;
   }
 
-  /* El rail se sustituye por la navegación inferior. */
+  /* Sin rail ni barra de estado: el lienzo ocupa casi toda la pantalla. */
   .rail {
     display: none;
   }
@@ -20,16 +26,145 @@
     display: none;
   }
 
-  .bottom-nav {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+  /*
+   * Navegación al estilo Smart Wiring: barra inferior fina ‹ vista ›.
+   * No es el navbar típico de app: cicla entre las vistas disponibles y
+   * tocar el centro abre el modal de navegación.
+   */
+  .mobile-bar {
+    display: flex;
+    align-items: stretch;
     flex: none;
+    height: 42px;
     background: var(--panel);
     border-top: 1px solid var(--border);
-    padding: 8px 0 max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
 
-  /* Hoja inferior de Ajustes (el rail y su popover no existen en móvil). */
+  .mobile-bar button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .mobile-bar-arrow {
+    width: 56px;
+    display: grid;
+    place-items: center;
+  }
+
+  .mobile-bar-arrow:disabled {
+    opacity: 0.3;
+  }
+
+  .mobile-bar-arrow .flip {
+    transform: rotate(180deg);
+  }
+
+  .mobile-bar-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+
+  .mobile-bar-center .dim {
+    color: var(--text-faint);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Modal de navegación (tocar el centro de la barra). */
+  .mobile-menu-wrap {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.45);
+    animation: sheet-fade 0.16s ease-out;
+  }
+
+  .mobile-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--panel-2);
+    border-top: 1px solid var(--border-strong);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 14px max(14px, env(safe-area-inset-bottom));
+    animation: sheet-slide-up 0.22s cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  .mobile-menu-grab {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+
+  .mobile-menu-item {
+    appearance: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    padding: 11px 12px;
+    cursor: pointer;
+  }
+
+  .mobile-menu-item.active {
+    color: var(--accent);
+    background: var(--accent-dim);
+    font-weight: 600;
+  }
+
+  .mobile-menu-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 4px;
+  }
+
+  @keyframes sheet-slide-up {
+    from {
+      transform: translateY(18%);
+      opacity: 0.6;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes sheet-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Hoja inferior de Ajustes. */
   .settings-sheet-wrap {
     position: fixed;
     inset: 0;
@@ -48,29 +183,6 @@
     padding: 18px 20px max(18px, env(safe-area-inset-bottom));
     max-height: 75vh;
     overflow-y: auto;
-  }
-
-  .bottom-nav button {
-    appearance: none;
-    border: none;
-    background: transparent;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    color: var(--text-faint);
-    font-size: 10.5px;
-    cursor: pointer;
-    padding: 2px 0;
-  }
-
-  .bottom-nav button.active {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .bottom-nav button:disabled {
-    opacity: 0.35;
   }
 
   /* El panel de páginas siempre es overlay y ocupa casi todo el ancho. */
@@ -122,22 +234,27 @@
     right: 16px;
     max-width: none;
     top: auto;
-    bottom: 72px;
+    bottom: 64px;
   }
 
+  /* Barras flotantes del lienzo: sin navbar ni pastillas, los presets van
+     abajo-izquierda con todo el ancho disponible. */
   .view-presets {
-    bottom: 18px;
+    bottom: 12px;
+    left: 12px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
   }
 
   .zoom-toolbar {
-    bottom: 66px;
+    bottom: 12px;
   }
 
   /* Paginador flotante ‹ n/total › (solo se monta en móvil). */
   .page-nav {
     position: absolute;
-    bottom: 66px;
-    right: 16px;
+    bottom: 12px;
+    right: 12px;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -175,5 +292,34 @@
     text-align: center;
     color: var(--text);
     font-size: 12px;
+  }
+
+  /* Vista "Datos" en pantalla completa, con cabecera compacta (el alto es
+     escaso en horizontal). */
+  .data-head {
+    padding: 10px 16px 0;
+  }
+
+  .data-head .eyebrow {
+    display: none;
+  }
+
+  .data-head h1 {
+    font-size: 17px;
+    margin: 0 0 2px;
+  }
+
+  .data-tabs {
+    padding: 10px 16px 0;
+  }
+
+  .data-body {
+    padding: 14px 14px 40px;
+  }
+
+  /* En pantalla estrecha las tablas no se apilan: siguen en horizontal y la
+     fila desborda con scroll lateral (el formato pedido para móvil). */
+  .data-table {
+    min-width: 560px;
   }
 }

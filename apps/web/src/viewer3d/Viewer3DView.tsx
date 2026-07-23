@@ -7,6 +7,7 @@ import { consumePendingPick } from "../state/deeplink";
 import { nextDeviceOccurrence } from "../devices";
 import type { PickedPart } from "../state/types";
 import { useI18n } from "../i18n";
+import { isMobileNow, useIsMobile } from "../mobile/query";
 import { IconCube } from "../shell/icons";
 import { ModelSelectorCard } from "./ModelSelectorCard";
 import { PartsPanel } from "./PartsPanel";
@@ -22,7 +23,7 @@ function initialPanelOpen(): boolean {
   } catch {
     // Sin persistencia.
   }
-  return !(window.matchMedia?.("(max-width: 760px)").matches ?? false);
+  return !isMobileNow();
 }
 
 /**
@@ -38,16 +39,7 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
   const [isolated, setIsolated] = useState<number | null>(null);
   const [hiddenKeys, setHiddenKeys] = useState<ReadonlySet<string>>(new Set());
   const [panelOpen, setPanelOpen] = useState(initialPanelOpen);
-  const [isMobile, setIsMobile] = useState(
-    () => window.matchMedia?.("(max-width: 760px)").matches ?? false
-  );
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 760px)");
-    const onChange = () => setIsMobile(media.matches);
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
+  const isMobile = useIsMobile();
 
   const parts = useMemo(
     () => buildPartList(scene, doc?.manifest ?? null),
@@ -245,17 +237,6 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
               <span className="edge-count mono">{parts.length}</span>
             </button>
           </div>
-        )}
-
-        {parts.length > 0 && !panelOpen && isMobile && (
-          <button
-            className="parts-fab"
-            aria-label={t("parts.title")}
-            onClick={() => setPanelOpenPersist(true)}
-          >
-            <IconCube size={17} />
-            <span className="parts-fab-count mono">{parts.length}</span>
-          </button>
         )}
 
         {showPanel && isMobile && (

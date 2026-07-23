@@ -22,11 +22,13 @@ const VIEW_TO_URL: Record<ProjectView, string> = {
   "3d": "3d",
   pages: "schematic",
   project: "info",
+  data: "data",
 };
 const URL_TO_VIEW: Record<string, ProjectView> = {
   "3d": "3d",
   schematic: "pages",
   info: "project",
+  data: "data",
 };
 
 /** Objetivo decodificado de un enlace profundo. */
