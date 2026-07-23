@@ -26,6 +26,8 @@ export interface DataNav {
   /** Salta a la pieza 3D de una designación (si la tiene). */
   to3d: (designation: string) => void;
   has3d: (designation: string) => boolean;
+  /** Pieza 3D (modelo + objectId) de una designación, si existe. */
+  resolve3d: (designation: string) => { modelIndex: number; objectId: number } | null;
 }
 
 /**
@@ -66,11 +68,10 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
     [doc?.deviceIndex, manifest, partLocations]
   );
 
-  // Cajas 3D por pieza (cable de cada conexión, longitudes del mecanizado);
-  // solo se calculan al entrar en una pestaña que las usa.
+  // Cajas 3D por pieza para localizar el cable de cada conexión; bajo demanda.
   const partBoxes = useMemo<PartBoxIndex>(
     () =>
-      (tab === "connections" || tab === "panel") && doc && doc.epdzModels.length > 0
+      tab === "connections" && doc && doc.epdzModels.length > 0
         ? getPartBoxes(doc.id, doc.epdzModels)
         : new Map(),
     [tab, doc?.id, doc?.epdzModels]
@@ -121,6 +122,10 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
       const device = findDeviceByDesignation(doc.deviceIndex, designation);
       return device ? deviceTo3d.has(device.key) : false;
     },
+    resolve3d: (designation) => {
+      const device = findDeviceByDesignation(doc.deviceIndex, designation);
+      return (device && deviceTo3d.get(device.key)) ?? null;
+    },
   };
 
   const tabs: { key: DataTab; label: string; enabled: boolean }[] = [
@@ -151,24 +156,6 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
           <h1>{manifest?.projectName ?? aml?.name ?? doc.fileName}</h1>
           {description && <p className="sub">{description}</p>}
         </div>
-        {aml && aml.languages.length > 0 && (
-          <label className="data-lang">
-            <span>{t("data.language")}</span>
-            <select
-              value={lang}
-              onChange={(e) =>
-                dispatch({ type: "SET_AML_LANG", id: doc.id, lang: e.target.value })
-              }
-            >
-              <option value="">{t("data.langOriginal")}</option>
-              {aml.languages.map((code) => (
-                <option key={code} value={code}>
-                  {languageName(code)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </header>
 
       <nav className="data-tabs" role="tablist">
@@ -185,6 +172,24 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
               {entry.label}
             </button>
           ))}
+        {aml && aml.languages.length > 0 && (
+          <label className="data-lang" title={t("data.language")}>
+            <select
+              aria-label={t("data.language")}
+              value={lang}
+              onChange={(e) =>
+                dispatch({ type: "SET_AML_LANG", id: doc.id, lang: e.target.value })
+              }
+            >
+              <option value="">{t("data.langOriginal")}</option>
+              {aml.languages.map((code) => (
+                <option key={code} value={code}>
+                  {languageName(code)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </nav>
 
       <div className="data-body">
@@ -195,9 +200,7 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
         ) : (
           <>
             {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
-            {tab === "panel" && aml && (
-              <PanelView aml={aml} manifest={manifest} partBoxes={partBoxes} />
-            )}
+            {tab === "panel" && aml && <PanelView aml={aml} />}
             {tab === "connections" && (
               <ConnectionsView
                 manifest={manifest}

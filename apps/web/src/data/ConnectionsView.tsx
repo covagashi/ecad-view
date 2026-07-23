@@ -163,12 +163,22 @@ function ConnectionDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, connection.objectId]);
 
-  // Modo "solo el cable": aísla la pieza del hilo, como hace Smart Wiring al
-  // separar la conexión de enrutamiento del resto de la construcción.
+  // Modo aislar: deja visibles el hilo y los dispositivos de origen y destino
+  // (como Smart Wiring al separar la conexión del resto de la construcción).
   useEffect(() => {
-    if (!scene || connection.objectId === null) return;
-    viewerRef.current?.applyVisibility(new Set(), wireOnly ? connection.objectId : null);
-  }, [scene, connection.objectId, wireOnly]);
+    if (!scene || connection.objectId === null || !box) return;
+    if (!wireOnly) {
+      viewerRef.current?.applyVisibility(new Set(), null);
+      return;
+    }
+    const visible = new Set<number>([connection.objectId]);
+    for (const designation of [connection.source, connection.target]) {
+      const target = nav.resolve3d(designation.replace(/:[^:]*$/, ""));
+      if (target && target.modelIndex === box.modelIndex) visible.add(target.objectId);
+    }
+    viewerRef.current?.applyVisibility(new Set(), visible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene, connection, wireOnly]);
 
   const endpoint = (designation: string) =>
     nav.hasDevice(designation.replace(/:[^:]*$/, "")) ? (

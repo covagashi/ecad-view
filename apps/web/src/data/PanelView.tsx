@@ -1,9 +1,7 @@
 import { useMemo, useState } from "react";
 import type { AmlProject } from "@covaga/e3d-core/aml";
-import type { EplanManifest } from "@covaga/e3d-core/manifest";
 import { useI18n } from "../i18n";
 import { buildPanelSpaces, buildPositions, type PanelHole, type PanelSpace } from "./derive";
-import type { PartBoxIndex } from "./partBoxes";
 
 /** Pieza montada en el panel: agrupa los taladros de un mismo propietario. */
 interface PanelPart {
@@ -11,8 +9,6 @@ interface PanelPart {
   holes: PanelHole[];
   classLabel: string | null;
   partNumber: string | null;
-  /** Longitud de la pieza (dimensión mayor de su caja 3D), en mm. */
-  length: number | null;
   minX: number;
   maxX: number;
   minY: number;
@@ -20,20 +16,12 @@ interface PanelPart {
 }
 
 /**
- * Mecanizado del armario al estilo EPLAN Smart Wiring (Rails & ducts): lista
- * de piezas con taladros (carriles, canales...) y plano frontal del panel.
- * Al seleccionar una pieza se resalta con sus taladros en rojo; los botones
- * de taladros y cotas alternan el resaltado y las medidas hasta los bordes.
+ * Mecanizado del armario al estilo EPLAN Smart Wiring (Rails & ducts).
+ * Al seleccionar una pieza el plano se encuadra sobre su zona a mecanizar
+ * (taladros en rojo); el botón de cotas muestra el cuerpo entero con las
+ * medidas hasta los bordes del panel.
  */
-export function PanelView({
-  aml,
-  manifest,
-  partBoxes,
-}: {
-  aml: AmlProject;
-  manifest: EplanManifest | null;
-  partBoxes: PartBoxIndex;
-}) {
+export function PanelView({ aml }: { aml: AmlProject }) {
   const { t } = useI18n();
   const spaces = useMemo(() => buildPanelSpaces(aml), [aml]);
   const positions = useMemo(() => buildPositions(aml), [aml]);
@@ -48,29 +36,17 @@ export function PanelView({
   const parts = useMemo(() => {
     if (!space) return [];
     const byDesignation = new Map(positions.map((row) => [row.designation, row]));
-    const functionsByDesignation = new Map(
-      (manifest?.functions ?? [])
-        .filter((fn) => fn.designation)
-        .map((fn) => [fn.designation as string, fn])
-    );
     const byOwner = new Map<string, PanelPart>();
     for (const hole of space.holes) {
       if (!hole.owner) continue;
       let part = byOwner.get(hole.owner);
       if (!part) {
         const info = byDesignation.get(hole.owner);
-        const fn = functionsByDesignation.get(hole.owner);
-        const match = fn?.svgElementId ? /^Id(\d+)_(\d+)$/.exec(fn.svgElementId) : null;
-        const box = match ? partBoxes.get(`${match[1]}_${match[2]}`) : undefined;
-        const length = box
-          ? Math.round(Math.max(...box.max.map((value, axis) => value - box.min[axis])))
-          : null;
         part = {
           designation: hole.owner,
           holes: [],
           classLabel: info?.classLabel ?? null,
           partNumber: info?.partNumber ?? null,
-          length,
           minX: Infinity,
           maxX: -Infinity,
           minY: Infinity,
@@ -87,7 +63,7 @@ export function PanelView({
     return [...byOwner.values()].sort((a, b) =>
       a.designation.localeCompare(b.designation, undefined, { numeric: true })
     );
-  }, [space, positions, manifest, partBoxes]);
+  }, [space, positions]);
 
   if (spaces.length === 0) return <div className="data-note">{t("data.empty")}</div>;
 
@@ -128,15 +104,9 @@ export function PanelView({
               }
             >
               <span className="mono name">{part.designation}</span>
-              <span className="meta">
-                {[
-                  part.classLabel?.replace(/^\S+\s/, ""),
-                  part.length !== null ? `${part.length} mm` : null,
-                  t("data.holes", { count: part.holes.length }),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
+              {part.classLabel && (
+                <span className="meta">{part.classLabel.replace(/^\S+\s/, "")}</span>
+              )}
             </button>
           ))}
           {parts.length === 0 && <div className="data-note">{t("data.empty")}</div>}
@@ -183,7 +153,16 @@ function DrillPlan({
   const pad = 40;
   const width = Math.max(space.maxX - space.minX, 1);
   const height = Math.max(space.maxY - space.minY, 1);
-  const viewBox = `${space.minX - pad} ${-(space.maxY + pad)} ${width + pad * 2} ${height + pad * 2}`;
+
+  // Con pieza seleccionada el plano se encuadra sobre su zona a mecanizar;
+  // con las cotas activas se vuelve al cuerpo entero para ver las medidas.
+  let viewBox = `${space.minX - pad} ${-(space.maxY + pad)} ${width + pad * 2} ${height + pad * 2}`;
+  if (selected && !showDims) {
+    const zoomPad = Math.max(selected.maxX - selected.minX, selected.maxY - selected.minY, 60) * 0.3;
+    viewBox = `${selected.minX - zoomPad} ${-(selected.maxY + zoomPad)} ${
+      selected.maxX - selected.minX + zoomPad * 2
+    } ${selected.maxY - selected.minY + zoomPad * 2}`;
+  }
 
   // Bordes del panel dibujado (el marco exterior del plano).
   const panel = {

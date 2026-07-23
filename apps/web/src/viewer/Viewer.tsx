@@ -17,10 +17,13 @@ export interface ViewerHandle {
    */
   frameBox(min: [number, number, number], max: [number, number, number], preset: ViewPreset): void;
   /**
-   * Aplica la visibilidad por pieza: con `isolated` solo se muestra esa parte;
-   * si no, se ocultan los objectIds de `hidden`.
+   * Aplica la visibilidad por pieza: con `isolated` solo se muestran esas
+   * partes (un objectId o un conjunto); si no, se ocultan los de `hidden`.
    */
-  applyVisibility(hidden: ReadonlySet<number>, isolated: number | null): void;
+  applyVisibility(
+    hidden: ReadonlySet<number>,
+    isolated: number | ReadonlySet<number> | null
+  ): void;
   /** Selecciona la parte (recuadro) y devuelve su userData, o null si no existe. */
   selectPart(objectId: number): Record<string, unknown> | null;
   /** Acerca la cámara a la parte manteniendo la dirección de vista. */
@@ -223,7 +226,8 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
           const objectId = obj.userData.objectId as number | undefined;
           obj.visible =
             isolated !== null
-              ? objectId === isolated
+              ? objectId !== undefined &&
+                (typeof isolated === "number" ? objectId === isolated : isolated.has(objectId))
               : objectId === undefined || !hidden.has(objectId);
         }
       });
