@@ -9,12 +9,12 @@ import { getPartBoxes, type PartBoxIndex } from "./partBoxes";
 import { pickText } from "./derive";
 import { EclassBomView } from "./EclassBomView";
 import { PanelView } from "./PanelView";
-import { TerminalsView } from "./TerminalsView";
+import { ConnectionsView } from "./ConnectionsView";
 import { NetworkView } from "./NetworkView";
 import { PositionsView } from "./PositionsView";
 import { InterruptionView } from "./InterruptionView";
 
-export type DataTab = "bom" | "panel" | "terminals" | "network" | "positions" | "ipoints";
+export type DataTab = "bom" | "panel" | "connections" | "network" | "positions" | "ipoints";
 
 /** Acciones de navegación que las pestañas usan para saltar a esquemas/3D. */
 export interface DataNav {
@@ -31,14 +31,16 @@ export interface DataNav {
 /**
  * Vista "Datos": lo que el AutomationML y el manifest.db saben del proyecto
  * más allá de páginas y modelos — BOM por clase eCl@ss, mecanizado del armario
- * (ProPanel), regletas de bornes con puentes, dispositivos de red/PLC,
- * posiciones exactas de montaje y validación de puntos de interrupción.
+ * (ProPanel), conexiones de cableado con su cable en 3D, dispositivos de
+ * red/PLC, posiciones de montaje y validación de puntos de interrupción.
  * Se usa como vista completa (escritorio) y dentro del modal móvil.
  */
 export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   const { dispatch, active: doc } = useProjects();
   const { t, locale } = useI18n();
-  const [tab, setTab] = useState<DataTab>(() => (doc?.aml || doc?.amlEntry ? "bom" : "terminals"));
+  const [tab, setTab] = useState<DataTab>(() =>
+    doc?.aml || doc?.amlEntry ? "bom" : "connections"
+  );
   const nonceRef = useRef(0);
 
   // Parseo perezoso del AutomationML al entrar por primera vez.
@@ -64,10 +66,10 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
     [doc?.deviceIndex, manifest, partLocations]
   );
 
-  // Cajas 3D por pieza para el alzado del bornero; solo cuando hace falta.
+  // Cajas 3D por pieza para localizar el cable de cada conexión; bajo demanda.
   const partBoxes = useMemo<PartBoxIndex>(
     () =>
-      tab === "terminals" && doc && doc.epdzModels.length > 0
+      tab === "connections" && doc && doc.epdzModels.length > 0
         ? getPartBoxes(doc.id, doc.epdzModels)
         : new Map(),
     [tab, doc?.id, doc?.epdzModels]
@@ -123,7 +125,11 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   const tabs: { key: DataTab; label: string; enabled: boolean }[] = [
     { key: "bom", label: t("data.tab.bom"), enabled: doc.amlEntry !== null },
     { key: "panel", label: t("data.tab.panel"), enabled: doc.amlEntry !== null },
-    { key: "terminals", label: t("data.tab.terminals"), enabled: manifest !== null },
+    {
+      key: "connections",
+      label: t("data.tab.connections"),
+      enabled: (manifest?.connections.length ?? 0) > 0,
+    },
     { key: "network", label: t("data.tab.network"), enabled: doc.amlEntry !== null },
     { key: "positions", label: t("data.tab.positions"), enabled: doc.amlEntry !== null },
     {
@@ -189,8 +195,8 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
           <>
             {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
             {tab === "panel" && aml && <PanelView aml={aml} />}
-            {tab === "terminals" && (
-              <TerminalsView
+            {tab === "connections" && (
+              <ConnectionsView
                 manifest={manifest}
                 aml={aml}
                 partBoxes={partBoxes}

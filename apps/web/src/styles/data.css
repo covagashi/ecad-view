@@ -394,75 +394,66 @@
   background: color-mix(in srgb, var(--ok) 16%, transparent);
 }
 
-/* Regletas de bornes (vista frontal) */
-/* Bornes: lista de regletas + detalle con 3D frontal embebido. */
-.terminals-layout {
+/* Conexiones de cableado: tabla + detalle con el cable en 3D. */
+.connections-layout {
   display: grid;
-  grid-template-columns: minmax(170px, 240px) 1fr;
+  grid-template-columns: minmax(300px, 5fr) minmax(260px, 6fr);
   gap: 14px;
   align-items: start;
 }
 
 @media (max-width: 620px) {
-  .terminals-layout {
+  .connections-layout {
     grid-template-columns: 1fr;
   }
 }
 
-.strip-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: min(56vh, 460px);
+.conn-list {
+  max-height: min(58vh, 480px);
   overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px;
-  background: var(--panel);
 }
 
-.strip-item {
-  appearance: none;
-  border: none;
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
+.conn-row {
   cursor: pointer;
 }
 
-.strip-item:hover {
+.conn-row:hover td {
   background: var(--panel-2);
 }
 
-.strip-item.active {
+.conn-row.active td {
   background: var(--accent-dim);
 }
 
-.strip-item.active .name {
-  color: var(--accent);
+.conn-row .data-pill {
+  margin-left: 7px;
 }
 
-.strip-item .name {
-  font-size: 12.5px;
-}
-
-.strip-item .meta {
-  font-size: 11px;
-  color: var(--text-faint);
-}
-
-.strip-detail {
+.conn-detail {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+}
+
+.conn-ends {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.conn-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+.conn-fact .off {
+  color: var(--text-faint);
+  margin-right: 4px;
 }
 
 .strip-detail-head {
@@ -485,54 +476,5 @@
   position: absolute;
   bottom: 10px;
   left: 10px;
-}
-
-.strip-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 12px 14px 14px;
-}
-
-.strip-body {
-  fill: var(--panel-2);
-  stroke: var(--border-strong);
-}
-
-.strip-terminal rect {
-  fill: var(--panel);
-  stroke: var(--border-strong);
-  cursor: pointer;
-}
-
-.strip-terminal:hover rect {
-  stroke: var(--accent);
-  fill: var(--accent-dim);
-}
-
-.strip-terminal text {
-  font-size: 10px;
-  fill: var(--text);
-  font-family: var(--font-mono);
-  pointer-events: none;
-}
-
-.strip-bridge path {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-
-.strip-bridge circle {
-  fill: var(--accent);
-}
-
-.strip-bridge.saddle path {
-  stroke: var(--ok);
-  stroke-dasharray: 4 3;
-}
-
-.strip-bridge.saddle circle {
-  fill: var(--ok);
 }
 

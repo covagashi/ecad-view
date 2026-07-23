@@ -251,87 +251,72 @@ export function buildPanelSpaces(aml: AmlProject): PanelSpace[] {
     .sort((a, b) => b.holes.length - a.holes.length || a.name.localeCompare(b.name));
 }
 
-// ---------- Regletas de bornes con puentes ----------
+// ---------- Conexiones de cableado ----------
 
-export interface TerminalBridge {
-  /** Tipo de puente ("Plug-in bridge", "Saddle jumper"...). */
-  kind: string;
-  /** Índices (en points) de los bornes puenteados. */
-  from: number;
-  to: number;
-}
-
-export interface TerminalStrip {
-  /** Designación de la regleta ("+A1-XD1"). */
-  name: string;
-  /** Puntos de borne en orden natural ("1", "2", ... "PE"). */
-  points: string[];
-  bridges: TerminalBridge[];
-  /** packageId de la función de cada punto (para saltar al esquema). */
-  functionIds: (number | null)[];
+/** Conexión de la lista de cableado, con su cable 3D si está enrutado. */
+export interface ConnectionRow {
+  /** Origen "+A1-XD1:1" y destino "+A1-XD1:4". */
+  source: string;
+  target: string;
+  potential: string | null;
+  color: string | null;
+  crossSection: string | null;
+  length: string | null;
+  partType: string | null;
+  /** Tipo de puente ("Plug-in bridge"...) si la conexión es un puente de bornes. */
+  bridge: string | null;
+  /** Clave "{typeId}_{objectId}" de la pieza 3D del cable (índice de cajas). */
+  partKey: string | null;
+  /** objectId numérico de la pieza del cable, para seleccionarla en el visor. */
+  objectId: number | null;
 }
 
 const naturalCompare = (a: string, b: string) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 
 /**
- * Regletas de bornes a partir de las funciones del manifest (designaciones
- * "REGLETA:PUNTO" cuyo aparato es -X...). Los puentes salen de cruzar los
- * grupos de puentes del AML (object ids) con las conexiones del manifest.
+ * Lista de conexiones de cableado (estilo Smart Wiring) a partir de las
+ * mergedconnections del manifest. El sufijo del nombre da la pieza 3D del
+ * cable enrutado; los grupos de puentes del AML marcan qué conexiones son
+ * puentes de bornes en lugar de hilos.
  */
-export function buildTerminalStrips(
+export function buildConnections(
   manifest: EplanManifest | null,
   aml: AmlProject | null
-): TerminalStrip[] {
+): ConnectionRow[] {
   if (!manifest) return [];
 
-  const strips = new Map<string, Map<string, number | null>>();
-  for (const fn of manifest.functions) {
-    const designation = fn.designation;
-    if (!designation) continue;
-    const match = /^(.*-X[^-+=:]*):([^:]+)$/.exec(designation);
-    if (!match) continue;
-    const strip = strips.get(match[1]) ?? new Map<string, number | null>();
-    if (strip.size === 0) strips.set(match[1], strip);
-    if (!strip.has(match[2])) strip.set(match[2], fn.packageId);
+  // Object id EPLAN -> tipo de puente, según los grupos del AML.
+  const bridgeByOid = new Map<string, string>();
+  for (const group of aml?.bridgeGroups ?? []) {
+    for (const oid of group.objectIds) bridgeByOid.set(oid, group.kind);
   }
 
-  const rows: TerminalStrip[] = [...strips.entries()].map(([name, pointsMap]) => {
-    const points = [...pointsMap.keys()].sort(naturalCompare);
-    return {
-      name,
-      points,
-      bridges: [],
-      functionIds: points.map((point) => pointsMap.get(point) ?? null),
-    };
-  });
-  const byName = new Map(rows.map((row) => [row.name, row]));
-
-  // Puentes: object id del AML -> conexión del manifest -> extremos "X:PT".
-  if (aml) {
-    const byOid = new Map<string, (typeof manifest.connections)[number]>();
-    for (const connection of manifest.connections) {
-      for (const oid of connection.connectionOids) byOid.set(oid, connection);
-    }
-    const endpoint = /^(.*):([^:]+)$/;
-    for (const group of aml.bridgeGroups) {
-      for (const oid of group.objectIds) {
-        const connection = byOid.get(oid);
-        if (!connection?.source || !connection.target) continue;
-        const from = endpoint.exec(connection.source);
-        const to = endpoint.exec(connection.target);
-        if (!from || !to || from[1] !== to[1]) continue;
-        const strip = byName.get(from[1]);
-        if (!strip) continue;
-        const a = strip.points.indexOf(from[2]);
-        const b = strip.points.indexOf(to[2]);
-        if (a === -1 || b === -1 || a === b) continue;
-        strip.bridges.push({ kind: group.kind, from: Math.min(a, b), to: Math.max(a, b) });
-      }
-    }
+  const rows: ConnectionRow[] = [];
+  for (const connection of manifest.connections) {
+    if (!connection.source && !connection.target) continue;
+    // "166/60618" -> typeId 166, objectId 60618: la pieza del cable en el E3D.
+    const match = connection.wire3d ? /^(\d+)\/(\d+)$/.exec(connection.wire3d) : null;
+    rows.push({
+      source: connection.source ?? "?",
+      target: connection.target ?? "?",
+      potential: connection.potential,
+      color: connection.color,
+      crossSection: connection.crossSection,
+      length: connection.length,
+      partType: connection.partType,
+      bridge:
+        connection.connectionOids
+          .map((oid) => bridgeByOid.get(oid))
+          .find((kind) => kind !== undefined) ?? null,
+      partKey: match ? `${match[1]}_${match[2]}` : null,
+      objectId: match ? Number(match[2]) : null,
+    });
   }
 
-  rows.sort((a, b) => naturalCompare(a.name, b.name));
+  rows.sort(
+    (a, b) => naturalCompare(a.source, b.source) || naturalCompare(a.target, b.target)
+  );
   return rows;
 }
 

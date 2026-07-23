@@ -77,6 +77,11 @@ export interface ManifestConnection {
   partType: string | null;
   /** Object ids EPLAN de las conexiones agrupadas (propiedad "connectionoid"). */
   connectionOids: string[];
+  /**
+   * Id de la pieza 3D del cable enrutado ("166/60618" = typeId/objectId del
+   * E3D), propiedad "connection3did"; null si la conexión no está enrutada.
+   */
+  wire3d: string | null;
 }
 
 /** Punto de interrupción (tabla interruptionpoint_package). */
@@ -291,6 +296,16 @@ export async function readManifest(
       connectionOids.set(Number(packageId), list);
     }
 
+    // Pieza 3D del cable enrutado de cada conexión (typeId/objectId del E3D).
+    const wire3dIds = new Map<number, string>();
+    for (const [packageId, value] of rows(
+      db,
+      `SELECT p.packageid, p.value FROM property p
+       WHERE p.propname = 'connection3did' AND p.value IS NOT NULL AND p.value != ''`
+    )) {
+      if (!wire3dIds.has(Number(packageId))) wire3dIds.set(Number(packageId), String(value));
+    }
+
     const connections: ManifestConnection[] = rows(
       db,
       `SELECT k.id, k.name, ${firstProp(31019)}, ${firstProp(31020)}, ${firstProp(33003)},
@@ -312,6 +327,7 @@ export async function readManifest(
         length: clean(row[8]),
         partType: clean(row[9]),
         connectionOids: connectionOids.get(Number(row[0])) ?? [],
+        wire3d: wire3dIds.get(Number(row[0])) ?? null,
       };
     });
 
