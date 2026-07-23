@@ -2,6 +2,7 @@ import { useI18n, LOCALES, LOCALE_NAMES, type Locale } from "../i18n";
 import { useProjects } from "../state/ProjectsContext";
 import { useTheme } from "../theme";
 import { useWakeLock } from "../wakeLock";
+import { languageName, resolveAmlLang } from "../data/lang";
 import { IconMoon, IconSun } from "./icons";
 
 export interface SettingsPanelProps {
@@ -18,10 +19,13 @@ export interface SettingsPanelProps {
  */
 export function SettingsPanel({ onClose, showTheme = false }: SettingsPanelProps) {
   const { t, locale, setLocale } = useI18n();
-  const { state, openDemo } = useProjects();
+  const { state, dispatch, active: doc, openDemo } = useProjects();
   const { theme, toggleTheme } = useTheme();
   const wakeLock = useWakeLock();
   const busy = state.projects.some((p) => p.loading);
+  // Idioma del proyecto activo (textos multiidioma del AML), si lo hay.
+  const aml = doc?.aml ?? null;
+  const amlLang = resolveAmlLang(aml, doc?.amlLang, locale);
 
   return (
     <>
@@ -35,6 +39,23 @@ export function SettingsPanel({ onClose, showTheme = false }: SettingsPanelProps
           ))}
         </select>
       </label>
+
+      {doc && aml && aml.languages.length > 0 && (
+        <label className="rail-pop-row data-lang">
+          <span>{t("data.language")}</span>
+          <select
+            value={amlLang}
+            onChange={(e) => dispatch({ type: "SET_AML_LANG", id: doc.id, lang: e.target.value })}
+          >
+            <option value="">{t("data.langOriginal")}</option>
+            {aml.languages.map((code) => (
+              <option key={code} value={code}>
+                {languageName(code)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {showTheme && (
         <>

@@ -43,36 +43,6 @@
   font-size: 12.5px;
 }
 
-/* Selector de idioma del proyecto: compacto, al final de la fila de pestañas. */
-.data-lang {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  align-self: center;
-}
-
-.data-lang select {
-  appearance: none;
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 3px 22px 3px 8px;
-  font: inherit;
-  font-size: 11.5px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-faint) 50%),
-    linear-gradient(135deg, var(--text-faint) 50%, transparent 50%);
-  background-position:
-    calc(100% - 14px) 55%,
-    calc(100% - 10px) 55%;
-  background-size: 4px 4px;
-  background-repeat: no-repeat;
-}
-
 .data-tabs {
   display: flex;
   gap: 2px;

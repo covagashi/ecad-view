@@ -6,6 +6,7 @@ import { buildDeviceTo3dIndex, findDeviceByDesignation } from "../state/bridge";
 import { getPartLocations } from "../state/partLocator";
 import { stashPendingPick } from "../state/deeplink";
 import { getPartBoxes, type PartBoxIndex } from "./partBoxes";
+import { resolveAmlLang } from "./lang";
 import { pickText } from "./derive";
 import { EclassBomView } from "./EclassBomView";
 import { PanelView } from "./PanelView";
@@ -51,12 +52,11 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   const aml = doc?.aml ?? null;
   const manifest = doc?.manifest ?? null;
 
-  // Idioma de proyecto: por defecto, el que mejor casa con el idioma de la UI.
-  const lang = useMemo(() => {
-    if (!aml) return "";
-    if (doc?.amlLang) return aml.languages.includes(doc.amlLang) ? doc.amlLang : "";
-    return aml.languages.find((code) => code.toLowerCase().startsWith(locale)) ?? "";
-  }, [aml, doc?.amlLang, locale]);
+  // Idioma de proyecto: se elige en Ajustes; aquí solo se resuelve.
+  const lang = useMemo(
+    () => resolveAmlLang(aml, doc?.amlLang, locale),
+    [aml, doc?.amlLang, locale]
+  );
 
   // Índice esquema→3D (mismo mecanismo que la vista de esquemas).
   const partLocations = useMemo(
@@ -172,24 +172,6 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
               {entry.label}
             </button>
           ))}
-        {aml && aml.languages.length > 0 && (
-          <label className="data-lang" title={t("data.language")}>
-            <select
-              aria-label={t("data.language")}
-              value={lang}
-              onChange={(e) =>
-                dispatch({ type: "SET_AML_LANG", id: doc.id, lang: e.target.value })
-              }
-            >
-              <option value="">{t("data.langOriginal")}</option>
-              {aml.languages.map((code) => (
-                <option key={code} value={code}>
-                  {languageName(code)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </nav>
 
       <div className="data-body">
@@ -221,12 +203,3 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   );
 }
 
-/** Nombre legible de un código de idioma del AML ("es-ES" → "español (España)"). */
-function languageName(code: string): string {
-  try {
-    const name = new Intl.DisplayNames([code], { type: "language" }).of(code);
-    return name && name !== code ? `${name}` : code;
-  } catch {
-    return code;
-  }
-}
