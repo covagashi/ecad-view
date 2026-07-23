@@ -66,10 +66,11 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
     [doc?.deviceIndex, manifest, partLocations]
   );
 
-  // Cajas 3D por pieza para localizar el cable de cada conexión; bajo demanda.
+  // Cajas 3D por pieza (cable de cada conexión, longitudes del mecanizado);
+  // solo se calculan al entrar en una pestaña que las usa.
   const partBoxes = useMemo<PartBoxIndex>(
     () =>
-      tab === "connections" && doc && doc.epdzModels.length > 0
+      (tab === "connections" || tab === "panel") && doc && doc.epdzModels.length > 0
         ? getPartBoxes(doc.id, doc.epdzModels)
         : new Map(),
     [tab, doc?.id, doc?.epdzModels]
@@ -194,7 +195,9 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
         ) : (
           <>
             {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
-            {tab === "panel" && aml && <PanelView aml={aml} />}
+            {tab === "panel" && aml && (
+              <PanelView aml={aml} manifest={manifest} partBoxes={partBoxes} />
+            )}
             {tab === "connections" && (
               <ConnectionsView
                 manifest={manifest}

@@ -136,6 +136,7 @@ function ConnectionDetail({
 }) {
   const { t } = useI18n();
   const viewerRef = useRef<ViewerHandle>(null);
+  const [wireOnly, setWireOnly] = useState(false);
 
   const scene = useMemo(() => {
     if (!box) return null;
@@ -161,6 +162,13 @@ function ConnectionDetail({
     frameWire("front");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, connection.objectId]);
+
+  // Modo "solo el cable": aísla la pieza del hilo, como hace Smart Wiring al
+  // separar la conexión de enrutamiento del resto de la construcción.
+  useEffect(() => {
+    if (!scene || connection.objectId === null) return;
+    viewerRef.current?.applyVisibility(new Set(), wireOnly ? connection.objectId : null);
+  }, [scene, connection.objectId, wireOnly]);
 
   const endpoint = (designation: string) =>
     nav.hasDevice(designation.replace(/:[^:]*$/, "")) ? (
@@ -206,6 +214,12 @@ function ConnectionDetail({
         <div className="strip-3d">
           <Viewer ref={viewerRef} scene={scene} initialPreset="front" />
           <ViewPresets initial="front" onPreset={frameWire} />
+          <button
+            className={`data-chip wire-only${wireOnly ? " active" : ""}`}
+            onClick={() => setWireOnly((value) => !value)}
+          >
+            {t("data.isolateWire")}
+          </button>
         </div>
       ) : (
         <div className="data-note">{t("data.connNo3d")}</div>
