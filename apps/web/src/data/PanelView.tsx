@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AmlProject } from "@covaga/e3d-core/aml";
 import { useI18n } from "../i18n";
+import { useIsMobile } from "../mobile/query";
 import { buildPanelSpaces, buildPositions, type PanelHole, type PanelSpace } from "./derive";
 
 /** Pieza montada en el panel: agrupa los taladros de un mismo propietario. */
@@ -150,19 +151,51 @@ function DrillPlan({
   showDims: boolean;
 }) {
   const { t } = useI18n();
+  const isMobile = useIsMobile();
+  /*
+   * Las cotas dibujadas obligan a encuadrar el panel entero, donde en un
+   * teléfono no se lee ni el número ni el taladro: ahí se dan como texto y el
+   * plano sigue sobre la pieza.
+   */
+  const drawDims = showDims && !isMobile;
   const pad = 40;
   const width = Math.max(space.maxX - space.minX, 1);
   const height = Math.max(space.maxY - space.minY, 1);
 
   // Con pieza seleccionada el plano se encuadra sobre su zona a mecanizar;
   // con las cotas activas se vuelve al cuerpo entero para ver las medidas.
-  let viewBox = `${space.minX - pad} ${-(space.maxY + pad)} ${width + pad * 2} ${height + pad * 2}`;
-  if (selected && !showDims) {
+  let view = { x: space.minX - pad, y: -(space.maxY + pad), w: width + pad * 2, h: height + pad * 2 };
+  if (selected && !drawDims) {
     const zoomPad = Math.max(selected.maxX - selected.minX, selected.maxY - selected.minY, 60) * 0.3;
-    viewBox = `${selected.minX - zoomPad} ${-(selected.maxY + zoomPad)} ${
-      selected.maxX - selected.minX + zoomPad * 2
-    } ${selected.maxY - selected.minY + zoomPad * 2}`;
+    view = {
+      x: selected.minX - zoomPad,
+      y: -(selected.maxY + zoomPad),
+      w: selected.maxX - selected.minX + zoomPad * 2,
+      h: selected.maxY - selected.minY + zoomPad * 2,
+    };
   }
+  const viewBox = `${view.x} ${view.y} ${view.w} ${view.h}`;
+
+  /*
+   * Milímetros por píxel del dibujo: el plano puede abarcar dos metros o el
+   * hueco de una pieza, así que taladros y cotas se calculan contra el tamaño
+   * real en pantalla; si no, o son de una fracción de píxel o gigantes.
+   */
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [rendered, setRendered] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const measure = () => setRendered({ w: svg.clientWidth, h: svg.clientHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
+  const mmPerPx =
+    rendered.w > 0 && rendered.h > 0
+      ? Math.max(view.w / rendered.w, view.h / rendered.h)
+      : Math.max(view.w, view.h) / 320;
 
   // Bordes del panel dibujado (el marco exterior del plano).
   const panel = {
@@ -183,7 +216,10 @@ function DrillPlan({
       }
     : null;
 
-  const fontSize = Math.max(width, height) / 45;
+  // Radio mínimo modesto: con 130 taladros en el encuadre general, un punto
+  // más gordo los convierte en una mancha.
+  const minRadius = 1.5 * mmPerPx;
+  const fontSize = 11 * mmPerPx;
 
   /** Línea de cota con su etiqueta en mm. */
   const dim = (x1: number, y1: number, x2: number, y2: number, label: string, key: string) => {
@@ -212,6 +248,7 @@ function DrillPlan({
   return (
     <div className="data-plan-wrap">
       <svg
+        ref={svgRef}
         className="data-plan"
         viewBox={viewBox}
         preserveAspectRatio="xMidYMid meet"
@@ -248,7 +285,7 @@ function DrillPlan({
               }
               cx={hole.x}
               cy={-hole.y}
-              r={Math.max(hole.d / 2, 2)}
+              r={Math.max(hole.d / 2, minRadius)}
             >
               <title>
                 {(hole.owner ? `${hole.owner} · ` : "") +
@@ -258,7 +295,7 @@ function DrillPlan({
             </circle>
           );
         })}
-        {showDims && band && (
+        {drawDims && band && (
           <>
             {dim(
               panel.minX,
@@ -295,6 +332,14 @@ function DrillPlan({
           </>
         )}
       </svg>
+      {showDims && band && (
+        <div className="plan-dims mono">
+          <span>← {Math.round(band.x0 - panel.minX)} mm</span>
+          <span>{Math.round(panel.maxX - band.x1)} mm →</span>
+          <span>↓ {Math.round(band.y0 - panel.minY)} mm</span>
+          <span>↑ {Math.round(panel.maxY - band.y1)} mm</span>
+        </div>
+      )}
       <div className="data-legend">
         <span>
           <i className="dot drill" /> ⌀ {t("data.legendDrill")}

@@ -319,21 +319,36 @@
   display: block;
 }
 
+/* El plano se dibuja en mm dentro de un viewBox de metros: sin
+   non-scaling-stroke los trazos salen a una fracción de píxel. */
 .plan-outline {
   fill: transparent;
   stroke: var(--border-strong);
+  stroke-width: 1;
   stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-hole {
   fill: var(--accent-dim);
   stroke: var(--accent);
-  stroke-width: 1;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-hole.threaded {
   fill: color-mix(in srgb, var(--ok) 16%, transparent);
   stroke: var(--ok);
+}
+
+/* Distancias de la pieza a los bordes del panel (modo cotas). */
+.plan-dims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 8px 4px 0;
+  font-size: 11.5px;
+  color: var(--accent);
 }
 
 .data-legend {
@@ -518,6 +533,7 @@
   fill: color-mix(in srgb, var(--danger) 16%, transparent);
   stroke: color-mix(in srgb, var(--danger) 55%, transparent);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .plan-hole.owned {
@@ -532,6 +548,7 @@
 .plan-dim line {
   stroke: var(--accent);
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
   marker-start: none;
 }
 

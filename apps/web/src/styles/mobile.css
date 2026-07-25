@@ -310,6 +310,41 @@
     height: clamp(130px, 30vh, 240px);
   }
 
+  /* Mecanizado: cabecera compacta y plano acotado para que quepa entero sin
+     desplazar la página. */
+  .data-chiprow {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .data-chiprow .data-chip {
+    flex: none;
+  }
+
+  /* El recuento de taladros ya está en la pastilla de cada espacio. */
+  .data-kpis {
+    display: none;
+  }
+
+  .strip-list {
+    max-height: clamp(120px, 34vh, 260px);
+  }
+
+  .data-plan {
+    max-height: clamp(110px, 30vh, 240px);
+  }
+
+  .data-plan-wrap {
+    padding: 8px;
+  }
+
+  /* De la leyenda solo se conserva la medida del panel: los colores se
+     entienden en el propio plano y la fila estorba al botón flotante. */
+  .data-legend span:not(.mono) {
+    display: none;
+  }
+
   .data-body {
     padding: 14px 14px 72px;
   }
