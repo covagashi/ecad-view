@@ -18,7 +18,9 @@ export interface SettingsPanelProps {
  * de donde se vuelve con su enlace "Back to the viewer".
  */
 function standaloneDisplay(): boolean {
-  return window.matchMedia?.("(display-mode: standalone)").matches === true;
+  const query =
+    "(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)";
+  return window.matchMedia?.(query).matches === true;
 }
 
 /**
