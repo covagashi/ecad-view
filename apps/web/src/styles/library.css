@@ -221,25 +221,6 @@
   color: var(--text-faint);
 }
 
-.session-banner {
-  margin: 18px 32px 0;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-strong);
-  border-radius: 10px;
-  color: var(--text);
-  flex: none;
-  flex-wrap: wrap;
-}
-
-.session-banner span {
-  flex: 1;
-  min-width: 160px;
-}
-
 .library-section {
   padding: 26px 32px 10px;
   display: flex;

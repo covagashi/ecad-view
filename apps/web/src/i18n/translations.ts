@@ -55,9 +55,6 @@ const en = {
   "library.dropHere": "Drag .epdz / .e3d here",
   "library.noFolderSupport":
     "This browser cannot keep folders linked; use Open file or drag files here. Recent files reopen from linked folders only in Chromium-based browsers.",
-  "library.restoreHint": "{count} tabs from your last session",
-  "library.restore": "Restore session",
-  "library.dismiss": "Dismiss",
   "library.openBadge": "Open",
   "library.pageN": "p. {n}",
   "panel.pages": "Pages",
@@ -243,9 +240,6 @@ const es: Translation = {
   "library.dropHere": "Arrastra .epdz / .e3d aquí",
   "library.noFolderSupport":
     "Este navegador no puede mantener carpetas vinculadas; usa Abrir fichero o arrastra ficheros aquí. Reabrir desde carpetas solo funciona en navegadores basados en Chromium.",
-  "library.restoreHint": "{count} pestañas de tu última sesión",
-  "library.restore": "Restaurar sesión",
-  "library.dismiss": "Descartar",
   "library.openBadge": "Abierto",
   "library.pageN": "pág. {n}",
   "panel.pages": "Páginas",
@@ -429,9 +423,6 @@ const pt: Translation = {
   "library.dropHere": "Arraste .epdz / .e3d para aqui",
   "library.noFolderSupport":
     "Este navegador não consegue manter pastas associadas; use Abrir ficheiro ou arraste ficheiros para aqui. Reabrir a partir de pastas só funciona em navegadores baseados em Chromium.",
-  "library.restoreHint": "{count} separadores da última sessão",
-  "library.restore": "Restaurar sessão",
-  "library.dismiss": "Ignorar",
   "library.openBadge": "Aberto",
   "library.pageN": "pág. {n}",
   "panel.pages": "Páginas",
@@ -615,9 +606,6 @@ const de: Translation = {
   "library.dropHere": ".epdz / .e3d hierher ziehen",
   "library.noFolderSupport":
     "Dieser Browser kann keine Ordner dauerhaft verknüpfen; verwenden Sie „Datei öffnen“ oder ziehen Sie Dateien hierher. Das Wiederöffnen aus Ordnern funktioniert nur in Chromium-basierten Browsern.",
-  "library.restoreHint": "{count} Tabs aus der letzten Sitzung",
-  "library.restore": "Sitzung wiederherstellen",
-  "library.dismiss": "Verwerfen",
   "library.openBadge": "Geöffnet",
   "library.pageN": "S. {n}",
   "panel.pages": "Seiten",
@@ -801,9 +789,6 @@ const it: Translation = {
   "library.dropHere": "Trascina qui .epdz / .e3d",
   "library.noFolderSupport":
     "Questo browser non può mantenere cartelle collegate; usa Apri file o trascina i file qui. La riapertura dalle cartelle funziona solo nei browser basati su Chromium.",
-  "library.restoreHint": "{count} schede dell'ultima sessione",
-  "library.restore": "Ripristina sessione",
-  "library.dismiss": "Ignora",
   "library.openBadge": "Aperto",
   "library.pageN": "pag. {n}",
   "panel.pages": "Pagine",
@@ -987,9 +972,6 @@ const ja: Translation = {
   "library.dropHere": ".epdz / .e3d をここにドラッグ",
   "library.noFolderSupport":
     "このブラウザーはフォルダーのリンクを保持できません。「ファイルを開く」を使うか、ファイルをここにドラッグしてください。フォルダーからの再オープンはChromium系ブラウザーでのみ機能します。",
-  "library.restoreHint": "前回のセッションのタブ {count}件",
-  "library.restore": "セッションを復元",
-  "library.dismiss": "閉じる",
   "library.openBadge": "開いています",
   "library.pageN": "{n}ページ",
   "panel.pages": "ページ",
@@ -1173,9 +1155,6 @@ const ko: Translation = {
   "library.dropHere": ".epdz / .e3d 파일을 여기에 끌어다 놓기",
   "library.noFolderSupport":
     "이 브라우저는 폴더 연결을 유지할 수 없습니다. 파일 열기를 사용하거나 파일을 여기로 끌어다 놓으세요. 폴더에서 다시 열기는 Chromium 기반 브라우저에서만 작동합니다.",
-  "library.restoreHint": "마지막 세션의 탭 {count}개",
-  "library.restore": "세션 복원",
-  "library.dismiss": "닫기",
   "library.openBadge": "열림",
   "library.pageN": "{n}페이지",
   "panel.pages": "페이지",
@@ -1359,9 +1338,6 @@ const zh: Translation = {
   "library.dropHere": "将 .epdz / .e3d 拖到此处",
   "library.noFolderSupport":
     "此浏览器无法保持文件夹链接；请使用“打开文件”或将文件拖到此处。从文件夹重新打开仅在基于 Chromium 的浏览器中可用。",
-  "library.restoreHint": "上次会话的 {count} 个标签页",
-  "library.restore": "恢复会话",
-  "library.dismiss": "忽略",
   "library.openBadge": "已打开",
   "library.pageN": "第 {n} 页",
   "panel.pages": "页面",

@@ -98,20 +98,6 @@ export function LibraryView({ dragging }: LibraryViewProps) {
           {openFileButton}
         </div>
 
-        {library.pendingSession && state.projects.length === 0 && (
-          <div className="session-banner">
-            <span>
-              {t("library.restoreHint", { count: library.pendingSession.tabs.length })}
-            </span>
-            <button className="btn primary" onClick={() => void library.restoreSession()}>
-              {t("library.restore")}
-            </button>
-            <button className="btn quiet" onClick={library.dismissSession}>
-              {t("library.dismiss")}
-            </button>
-          </div>
-        )}
-
         <RecentsRow recents={library.recents} onOpenRecent={(r) => void library.openRecent(r)} />
 
         <div className="library-section">

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useProjects } from "../state/ProjectsContext";
-import type { LoadedProjectData, ProjectSource, ProjectView } from "../state/types";
+import type { LoadedProjectData, ProjectSource } from "../state/types";
 import {
-  getSession,
   getIndex,
   listFolders,
   listRecents,
@@ -15,7 +14,6 @@ import {
   type IndexedFile,
   type LinkedFolder,
   type RecentEntry,
-  type SessionState,
 } from "./db";
 import {
   persistentFoldersSupported,
@@ -39,8 +37,6 @@ export interface LibraryApi {
   supported: boolean;
   folders: FolderView[];
   recents: RecentEntry[];
-  /** Sesión anterior pendiente de restaurar (banner). */
-  pendingSession: SessionState | null;
   linkFolder: () => Promise<void>;
   /** "Cambiar": sustituye la carpeta por otra elegida con el picker. */
   changeFolder: (id: string) => Promise<void>;
@@ -50,17 +46,14 @@ export interface LibraryApi {
   unlinkFolder: (id: string) => Promise<void>;
   openIndexedFile: (folderId: string, file: IndexedFile) => Promise<void>;
   openRecent: (recent: RecentEntry) => Promise<void>;
-  restoreSession: () => Promise<void>;
-  dismissSession: () => void;
 }
 
-/** Estado y acciones de la biblioteca (carpetas vinculadas, recientes, sesión). */
+/** Estado y acciones de la biblioteca (carpetas vinculadas y recientes). */
 export function useLibrary(): LibraryApi {
   const { state, dispatch, openFile } = useProjects();
   const [supported] = useState(persistentFoldersSupported);
   const [folders, setFolders] = useState<FolderView[]>([]);
   const [recents, setRecents] = useState<RecentEntry[]>([]);
-  const [pendingSession, setPendingSession] = useState<SessionState | null>(null);
 
   const refresh = useCallback(async () => {
     setRecents(await listRecents());
@@ -80,14 +73,6 @@ export function useLibrary(): LibraryApi {
   useEffect(() => {
     void refresh();
   }, [refresh]);
-
-  // Sesión anterior: se ofrece restaurarla solo si aún no hay pestañas abiertas.
-  useEffect(() => {
-    void getSession().then((session) => {
-      if (session && session.tabs.length > 0) setPendingSession(session);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const indexFolder = useCallback(async (folder: LinkedFolder) => {
     const files = await scanFolder(folder.handle);
@@ -225,48 +210,10 @@ export function useLibrary(): LibraryApi {
     [state.projects, dispatch, openFromFolder, openFile, afterOpen]
   );
 
-  /** Reabre las pestañas de la sesión anterior (un solo gesto de usuario). */
-  const restoreSession = useCallback(async () => {
-    const session = pendingSession;
-    setPendingSession(null);
-    if (!session) return;
-    const idByKey = new Map<string, string>();
-    for (const tab of session.tabs) {
-      try {
-        let result: { id: string; data: LoadedProjectData | null } | null = null;
-        if (tab.source.kind === "folder") {
-          result = await openFromFolder(tab.source.folderId, tab.source.relPath, tab.fileName);
-        } else if (tab.source.kind === "url") {
-          const response = await fetch(tab.source.url);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          result = await openFile(tab.fileName, await response.arrayBuffer(), tab.source);
-          await afterOpen(tab.source, tab.fileName, result.data);
-        }
-        if (!result?.data) continue;
-        idByKey.set(tab.key, result.id);
-        // Restaura la vista/página/modelo de la pestaña (el reducer valida).
-        if (tab.modelIndex >= 0 && tab.modelIndex < result.data.epdzModels.length) {
-          dispatch({ type: "SET_MODEL", id: result.id, modelIndex: tab.modelIndex });
-        }
-        if (tab.pageIndex > 0) {
-          dispatch({ type: "SET_PAGE", id: result.id, pageIndex: tab.pageIndex });
-        }
-        dispatch({ type: "SET_VIEW", id: result.id, view: tab.view as ProjectView });
-      } catch (error) {
-        console.warn(`No se pudo restaurar ${tab.fileName}:`, error);
-      }
-    }
-    const activeId = idByKey.get(session.activeKey);
-    dispatch({ type: "SET_ACTIVE", id: activeId ?? "home" });
-  }, [pendingSession, openFromFolder, openFile, afterOpen, dispatch]);
-
-  const dismissSession = useCallback(() => setPendingSession(null), []);
-
   return {
     supported,
     folders,
     recents,
-    pendingSession,
     linkFolder,
     changeFolder,
     reindexFolder,
@@ -274,7 +221,5 @@ export function useLibrary(): LibraryApi {
     unlinkFolder,
     openIndexedFile,
     openRecent,
-    restoreSession,
-    dismissSession,
   };
 }

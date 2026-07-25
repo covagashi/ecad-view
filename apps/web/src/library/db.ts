@@ -59,8 +59,13 @@ export interface SessionTab {
 }
 
 export interface SessionState {
+  /** Último proyecto abierto; se reabre solo al arrancar. null = nada que reabrir. */
+  last: SessionTab | null;
+}
+
+/** Forma guardada por versiones anteriores (lista de pestañas + activa). */
+interface LegacySessionState {
   tabs: SessionTab[];
-  /** Clave de la pestaña activa, o "home". */
   activeKey: string;
 }
 
@@ -141,7 +146,12 @@ export async function pushRecent(entry: RecentEntry): Promise<void> {
 const SESSION_KEY = "session";
 
 export async function getSession(): Promise<SessionState | null> {
-  return (await get<SessionState>(SESSION_KEY, sessionStore)) ?? null;
+  const stored = await get<SessionState | LegacySessionState>(SESSION_KEY, sessionStore);
+  if (!stored) return null;
+  if (!("tabs" in stored)) return stored;
+  // Migración: de la sesión con varias pestañas solo se conserva la activa.
+  const tabs = stored.tabs ?? [];
+  return { last: tabs.find((tab) => tab.key === stored.activeKey) ?? tabs.at(-1) ?? null };
 }
 
 export async function setSession(session: SessionState): Promise<void> {

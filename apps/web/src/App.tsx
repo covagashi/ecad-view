@@ -8,6 +8,7 @@ import { Rail } from "./shell/Rail";
 import { StatusBar } from "./shell/StatusBar";
 import { LibraryView } from "./library/LibraryView";
 import { scheduleSessionSave } from "./library/session";
+import { useSessionRestore } from "./library/useSessionRestore";
 import { SchematicsView } from "./schematic/SchematicsView";
 import { DataView } from "./data/DataView";
 import { MobileBar } from "./mobile/MobileBar";
@@ -21,6 +22,9 @@ export function App() {
 
   // Enlaces profundos: hash de la URL ↔ estado de vista.
   useDeepLink();
+
+  // Reabre el último proyecto al arrancar (sin banner ni confirmación).
+  useSessionRestore();
 
   // Persistencia de la sesión de pestañas (con debounce interno).
   useEffect(() => {
