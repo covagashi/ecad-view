@@ -1,30 +1,50 @@
 import { useI18n, type TranslationKey } from "../i18n";
 import { translations } from "../i18n/translations";
 import { useProjects } from "../state/ProjectsContext";
+import { useAml } from "../aml/useAml";
+import { languageName, resolveAmlLang } from "../data/lang";
 import { IconCube } from "../shell/icons";
+
+/*
+ * Propiedades que no aportan nada al que consulta el proyecto: la versión de
+ * EPLAN con la que se exportó y el nombre del proyecto, que ya es el título.
+ */
+const HIDDEN_PROP_IDS = new Set([2000, 10000]);
 
 /** Ficha del proyecto construida a partir del manifest.db (SQLite) del .epdz. */
 export function ProjectView() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { dispatch, active: doc } = useProjects();
+  // El idioma de proyecto sale del AutomationML: se parsea aquí también, no
+  // solo al abrir "Datos" (el resultado queda cacheado en la pestaña).
+  useAml(doc ?? null);
   const manifest = doc?.manifest;
   if (!doc || !manifest) return null;
 
   const stats: [string, number | undefined][] = [
     [t("project.pages"), doc.pages.length],
     [t("project.models3d"), doc.epdzModels.length],
-    [t("project.functions"), manifest.packageCounts["function"]],
-    [t("project.locations"), manifest.packageCounts["location"]],
   ];
 
+  const amlLanguages = doc.aml?.languages ?? [];
+  const amlLang = resolveAmlLang(doc.aml, doc.amlLang, locale);
+  const manifestLang = manifest.properties.find((prop) => prop.name === "language")?.value ?? null;
+
   const properties = manifest.properties
+    .filter((prop) => {
+      if (prop.propId != null && HIDDEN_PROP_IDS.has(prop.propId)) return false;
+      const name = prop.name ?? "";
+      // Configuración interna del árbol de EPLAN (pages.treeconf, etc.).
+      if (name.endsWith(".treeconf")) return false;
+      // El idioma se ofrece como selector, no como texto.
+      return name !== "language";
+    })
     .map((prop) => {
       const key = prop.propId != null ? (`prop.${prop.propId}` as TranslationKey) : null;
+      // Sin nombre traducible la fila sería "ep.10100: …": un id interno no
+      // dice qué es el valor, así que la propiedad no se muestra.
       return {
-        label:
-          (key && key in translations.en ? t(key) : null) ||
-          prop.name ||
-          (prop.propId != null ? `ep.${prop.propId}` : null),
+        label: (key && key in translations.en ? t(key) : null) || prop.name,
         value: prop.value,
       };
     })
@@ -64,9 +84,6 @@ export function ProjectView() {
       <div className="inner">
         <div className="eyebrow">{t("tabs.project")}</div>
         <h1>{manifest.projectName ?? t("project.unnamed")}</h1>
-        <p className="sub">
-          manifest.db · {t("project.schema")} {manifest.schemaVersion ?? "?"}
-        </p>
 
         <div className="stat-row">
           {stats
@@ -81,6 +98,31 @@ export function ProjectView() {
 
         <h2 className="section-title">{t("project.propertiesTitle")}</h2>
         <div className="kv">
+          {(amlLanguages.length > 0 || manifestLang) && (
+            <div>
+              <span className="k">{t("data.language")}</span>
+              <span className="v">
+                {amlLanguages.length > 0 ? (
+                  <select
+                    className="lang-select"
+                    value={amlLang}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_AML_LANG", id: doc.id, lang: e.target.value })
+                    }
+                  >
+                    <option value="">{t("data.langOriginal")}</option>
+                    {amlLanguages.map((code) => (
+                      <option key={code} value={code}>
+                        {languageName(code)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  manifestLang
+                )}
+              </span>
+            </div>
+          )}
           {properties.map((prop, i) => (
             <div key={i}>
               <span className="k">{prop.label}</span>

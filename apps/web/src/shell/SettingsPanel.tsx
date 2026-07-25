@@ -13,6 +13,17 @@ export interface SettingsPanelProps {
 }
 
 /**
+ * Instalada como app (sin barra del navegador) una pestaña nueva es un callejón
+ * sin salida: la política de privacidad se abre entonces en la misma ventana,
+ * de donde se vuelve con su enlace "Back to the viewer".
+ */
+function standaloneDisplay(): boolean {
+  const query =
+    "(display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui)";
+  return window.matchMedia?.(query).matches === true;
+}
+
+/**
  * Contenido de Ajustes: idioma, (tema), ficheros de ejemplo, enlaces,
  * privacidad y versión. Lo comparten el popover del rail (escritorio) y la
  * hoja inferior de móvil.
@@ -121,9 +132,13 @@ export function SettingsPanel({ onClose, showTheme = false }: SettingsPanelProps
       <a className="rail-pop-action" href="https://covaga.dev" target="_blank" rel="noreferrer">
         covaga.dev<span className="ext">↗</span>
       </a>
-      <a className="rail-pop-action" href="privacy.html" target="_blank" rel="noreferrer">
+      <a
+        className="rail-pop-action"
+        href="privacy.html"
+        {...(standaloneDisplay() ? {} : { target: "_blank", rel: "noreferrer" })}
+      >
         {t("settings.privacy")}
-        <span className="ext">↗</span>
+        {!standaloneDisplay() && <span className="ext">↗</span>}
       </a>
 
       <div className="rail-pop-version mono">Covaga ECAD Viewer · v{__APP_VERSION__}</div>

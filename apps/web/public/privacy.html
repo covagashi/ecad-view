@@ -22,9 +22,28 @@
     h2 { font-size: 17px; margin-top: 32px; }
     .date { color: #77808c; font-size: 13px; }
     a { color: #0b62d6; }
+    /* Vuelta al visor: en la app instalada esta página ocupa toda la ventana
+       y el navegador no ofrece ningún control para regresar. */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 28px;
+      padding: 10px 16px 10px 12px;
+      border: 1px solid #d5d9e0;
+      border-radius: 999px;
+      font-weight: 600;
+      text-decoration: none;
+      color: inherit;
+    }
+    @media (prefers-color-scheme: dark) {
+      .back { border-color: #333a45; color: inherit; }
+    }
   </style>
 </head>
 <body>
+  <a class="back" href="./" id="back">←&nbsp;<span>Back to the viewer</span></a>
+
   <h1>Privacy Policy</h1>
   <p class="date">Covaga ECAD Viewer · Last updated: July 16, 2026</p>
 
@@ -70,5 +89,16 @@
     <a href="https://github.com/covagashi/ecad-view">github.com/covagashi/ecad-view</a>
     or visit <a href="https://covaga.dev">covaga.dev</a>.
   </p>
+
+  <script>
+    // Si se llegó desde el visor, volver por el historial conserva su estado
+    // (proyecto abierto); si no, el href recarga la app.
+    document.getElementById("back").addEventListener("click", function (event) {
+      if (history.length > 1 && document.referrer.indexOf(location.origin) === 0) {
+        event.preventDefault();
+        history.back();
+      }
+    });
+  </script>
 </body>
 </html>

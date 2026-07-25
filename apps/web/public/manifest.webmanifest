@@ -4,7 +4,8 @@
   "description": "Open-source viewer for EPLAN .epdz project exports and .e3d 3D parts. Everything is parsed locally on your device.",
   "start_url": ".",
   "scope": ".",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#0b0d11",
   "theme_color": "#0e1116",
   "icons": [

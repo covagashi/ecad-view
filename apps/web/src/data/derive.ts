@@ -179,76 +179,106 @@ export interface PanelHole {
   owner: string | null;
 }
 
-export interface PanelSpace {
-  name: string;
+export interface PanelSurface {
+  /** Designación de la superficie ("S1:Frontal de placa de montaje"). */
+  label: string;
+  /** Espacio de montaje al que pertenece ("A1"). */
+  space: string | null;
+  /** Medidas reales de la superficie (mm), tal cual vienen del AML. */
+  width: number;
+  height: number;
+  /** Taladros en coordenadas de la propia superficie (origen abajo-izquierda). */
   holes: PanelHole[];
-  surfaces: number;
-  restricted: number;
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
 }
 
-/** Taladros y superficies por espacio de montaje, en coordenadas absolutas 2D. */
-export function buildPanelSpaces(aml: AmlProject): PanelSpace[] {
-  const spaces = new Map<string, PanelSpace>();
-  const space = (name: string): PanelSpace => {
-    let entry = spaces.get(name);
-    if (!entry) {
-      entry = {
-        name,
-        holes: [],
-        surfaces: 0,
-        restricted: 0,
-        minX: Infinity,
-        maxX: -Infinity,
-        minY: Infinity,
-        maxY: -Infinity,
-      };
-      spaces.set(name, entry);
+/**
+ * Superficies de montaje mecanizadas (ProPanel), con sus taladros en
+ * coordenadas de cada superficie.
+ *
+ * El AML da de cada superficie su rectángulo real (origen y tamaño) y cuelga de
+ * ella los taladros que lleva. La posición del taladro se acumula por el camino
+ * de frames que va de la superficie al taladro, es decir en el sistema de la
+ * propia superficie: una placa vertical lleva rx=90 en su frame, así que pasar
+ * por coordenadas absolutas aplastaría todos sus taladros en una línea.
+ */
+export function buildMountingSurfaces(aml: AmlProject): PanelSurface[] {
+  const parent = (index: number): number => aml.elements[index]?.parent ?? -1;
+
+  /** Superficie de montaje más cercana hacia la raíz. */
+  const ownerSurface = (index: number): number => {
+    for (let i = parent(index); i >= 0; i = parent(i)) {
+      if (aml.elements[i].proPanelRole === "Mounting surface" && aml.elements[i].surface) return i;
     }
-    return entry;
+    return -1;
   };
 
+  /** Pieza propietaria del taladro: primer ancestro con artículo o clase. */
+  const ownerPart = (index: number): string | null => {
+    for (let i = parent(index); i >= 0; i = parent(i)) {
+      const element = aml.elements[i];
+      if (element.partNumber || element.classCode) return baseDesignation(element.name);
+    }
+    return null;
+  };
+
+  /** Posición del elemento en el sistema de coordenadas de `ancestor`. */
+  const positionWithin = (index: number, ancestor: number): [number, number] => {
+    let x = 0;
+    let y = 0;
+    for (let i = index; i >= 0 && i !== ancestor; i = parent(i)) {
+      const frame = aml.elements[i].frame;
+      if (!frame) continue;
+      const [fx, fy, , , , rz] = frame;
+      if (rz) {
+        const rad = (rz * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const rotatedX = fx + x * cos - y * sin;
+        const rotatedY = fy + x * sin + y * cos;
+        x = rotatedX;
+        y = rotatedY;
+      } else {
+        x += fx;
+        y += fy;
+      }
+    }
+    return [x, y];
+  };
+
+  const holesBySurface = new Map<number, PanelHole[]>();
   aml.elements.forEach((element, index) => {
     const role = element.proPanelRole;
-    if (!role) return;
-    const spaceName = elementSpace(aml, index);
-    if (!spaceName) return;
-    if (role === "Mounting surface") {
-      space(spaceName).surfaces += 1;
-      return;
-    }
-    if (role.startsWith("Restricted")) {
-      space(spaceName).restricted += 1;
-      return;
-    }
     if (role !== "Drill hole" && role !== "Threaded hole") return;
-
-    const [x, y] = absolutePosition(aml, index);
-    // Pieza propietaria: primer ancestro con designación de componente.
-    let owner: string | null = null;
-    let ancestor: AmlElement | undefined =
-      element.parent >= 0 ? aml.elements[element.parent] : undefined;
-    while (ancestor) {
-      if (ancestor.partNumber || ancestor.classCode) {
-        owner = baseDesignation(ancestor.name);
-        break;
-      }
-      ancestor = ancestor.parent >= 0 ? aml.elements[ancestor.parent] : undefined;
-    }
-    const entry = space(spaceName);
-    entry.holes.push({ x, y, d: element.diameter ?? 0, threaded: role === "Threaded hole", owner });
-    entry.minX = Math.min(entry.minX, x);
-    entry.maxX = Math.max(entry.maxX, x);
-    entry.minY = Math.min(entry.minY, y);
-    entry.maxY = Math.max(entry.maxY, y);
+    const surfaceIndex = ownerSurface(index);
+    if (surfaceIndex < 0) return;
+    const surface = aml.elements[surfaceIndex].surface!;
+    const [x, y] = positionWithin(index, surfaceIndex);
+    const list = holesBySurface.get(surfaceIndex) ?? [];
+    if (list.length === 0) holesBySurface.set(surfaceIndex, list);
+    list.push({
+      x: x - surface.start[0],
+      y: y - surface.start[1],
+      d: element.diameter ?? 0,
+      threaded: role === "Threaded hole",
+      owner: ownerPart(index),
+    });
   });
 
-  return [...spaces.values()]
-    .filter((entry) => entry.holes.length > 0 || entry.surfaces > 0)
-    .sort((a, b) => b.holes.length - a.holes.length || a.name.localeCompare(b.name));
+  const surfaces: PanelSurface[] = [];
+  for (const [index, holes] of holesBySurface) {
+    const element = aml.elements[index];
+    const surface = element.surface!;
+    surfaces.push({
+      label: element.itemDesignation || element.name,
+      space: elementSpace(aml, index),
+      width: surface.size[0],
+      height: surface.size[1],
+      holes,
+    });
+  }
+  return surfaces.sort(
+    (a, b) => b.holes.length - a.holes.length || a.label.localeCompare(b.label)
+  );
 }
 
 // ---------- Conexiones de cableado ----------

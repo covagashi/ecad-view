@@ -1,13 +1,20 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "../i18n";
-import { IconChevronRight, IconClose, IconCube, IconEye, IconEyeOff, IconSearch } from "../shell/icons";
+import {
+  IconChevronRight,
+  IconClose,
+  IconCube,
+  IconEye,
+  IconEyeOff,
+  IconFit,
+  IconIsolate,
+  IconSearch,
+} from "../shell/icons";
 import type { PartEntry } from "./parts";
 
 /** Datos de la pieza seleccionada que se muestran en la cabecera del panel. */
 export interface SelectedPart {
   label: string;
-  typeId: string;
-  objectId: string;
   hasObject: boolean;
   hasBridge: boolean;
   isolated: boolean;
@@ -100,44 +107,47 @@ export function PartsPanel({
             </button>
           </div>
 
-          <div className="part-detail-ids">
-            <span className="kv">
-              <span className="k">typeId</span>
-              <span className="v mono">{selected.typeId}</span>
-            </span>
-            <span className="kv">
-              <span className="k">objectId</span>
-              <span className="v mono">{selected.objectId}</span>
-            </span>
+          <div className="part-action-row">
+            <button
+              className="part-action primary"
+              disabled={!selected.hasBridge}
+              title={selected.hasBridge ? undefined : t("part.noMatch")}
+              onClick={onViewInSchematics}
+            >
+              {t("part.viewInSchematics")}
+              <span aria-hidden="true">→</span>
+            </button>
+            {/* Las acciones de visor van como iconos: caben en una fila y el
+                texto largo era lo que rompía la ficha. */}
+            {selected.hasObject && (
+              <>
+                <button
+                  className={`part-action icon${selected.isolated ? " on" : ""}`}
+                  title={selected.isolated ? t("part.showAll") : t("part.isolate")}
+                  aria-label={selected.isolated ? t("part.showAll") : t("part.isolate")}
+                  onClick={onToggleIsolate}
+                >
+                  <IconIsolate size={14} />
+                </button>
+                <button
+                  className={`part-action icon${selected.hidden ? " on" : ""}`}
+                  title={selected.hidden ? t("part.show") : t("part.hide")}
+                  aria-label={selected.hidden ? t("part.show") : t("part.hide")}
+                  onClick={onToggleSelectedHidden}
+                >
+                  {selected.hidden ? <IconEyeOff size={14} /> : <IconEye size={14} />}
+                </button>
+                <button
+                  className="part-action icon"
+                  title={t("part.focus")}
+                  aria-label={t("part.focus")}
+                  onClick={onFocusSelected}
+                >
+                  <IconFit size={14} />
+                </button>
+              </>
+            )}
           </div>
-
-          <button
-            className="part-action primary"
-            disabled={!selected.hasBridge}
-            title={selected.hasBridge ? undefined : t("part.noMatch")}
-            onClick={onViewInSchematics}
-          >
-            {t("part.viewInSchematics")}
-            <span aria-hidden="true">→</span>
-          </button>
-
-          {selected.hasObject && (
-            <div className="part-action-row">
-              <button className="part-action" onClick={onToggleIsolate}>
-                {selected.isolated ? t("part.showAll") : t("part.isolate")}
-              </button>
-              <button className="part-action" onClick={onToggleSelectedHidden}>
-                {selected.hidden ? t("part.show") : t("part.hide")}
-              </button>
-              <button className="part-action" onClick={onFocusSelected}>
-                {t("part.focus")}
-              </button>
-            </div>
-          )}
-
-          {!selected.hasBridge && (
-            <div className="part-detail-hint">{t("part.noMatch")}</div>
-          )}
         </div>
       )}
 

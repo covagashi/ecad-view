@@ -1,7 +1,7 @@
 /* ---------- Móvil ---------- */
 
-/* La barra de navegación móvil solo existe en pantallas estrechas. */
-.mobile-bar {
+/* El botón flotante de navegación solo existe en pantallas estrechas. */
+.mobile-fab {
   display: none;
 }
 
@@ -27,63 +27,77 @@
   }
 
   /*
-   * Navegación al estilo Smart Wiring: barra inferior fina ‹ vista ›.
-   * No es el navbar típico de app: cicla entre las vistas disponibles y
-   * tocar el centro abre el modal de navegación.
+   * Navegación: un solo botón flotante sobre el lienzo (estilo Vercel /
+   * Cloudflare). No ocupa altura fija, así el esquema usa toda la pantalla,
+   * y concentra lo que antes eran barra inferior, paginador y pestañas
+   * verticales del borde.
    */
-  .mobile-bar {
+  .mobile-fab {
     display: flex;
-    align-items: stretch;
-    flex: none;
-    height: 42px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    position: fixed;
+    z-index: 20;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: max(10px, env(safe-area-inset-bottom));
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    background: color-mix(in srgb, var(--panel-2) 92%, transparent);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(10px);
   }
 
-  .mobile-bar button {
+  /* Con un panel abierto sobre el lienzo el botón estorba: se retira. */
+  .app:has(.panel-scrim) .mobile-fab {
+    display: none;
+  }
+
+  .mobile-fab button {
     appearance: none;
     border: none;
     background: transparent;
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
+    border-radius: 999px;
   }
 
-  .mobile-bar-arrow {
-    width: 56px;
+  .mobile-fab-arrow {
+    width: 42px;
+    height: 38px;
     display: grid;
     place-items: center;
   }
 
-  .mobile-bar-arrow:disabled {
+  .mobile-fab-arrow:disabled {
     opacity: 0.3;
   }
 
-  .mobile-bar-arrow .flip {
+  .mobile-fab-arrow .flip {
     transform: rotate(180deg);
   }
 
-  .mobile-bar-center {
-    flex: 1;
+  .mobile-fab-main {
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    padding: 0 16px;
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
   }
 
-  .mobile-bar-center .dim {
+  .mobile-fab-main .dim {
     color: var(--text-faint);
     font-size: 11px;
     font-weight: 500;
   }
 
-  /* Modal de navegación (tocar el centro de la barra). */
+  /* Modal de navegación (tocar el botón flotante). */
   .mobile-menu-wrap {
     display: block;
     position: fixed;
@@ -102,7 +116,23 @@
     border-top: 1px solid var(--border-strong);
     border-radius: 16px 16px 0 0;
     padding: 20px 14px max(14px, env(safe-area-inset-bottom));
+    max-height: 88vh;
+    overflow-y: auto;
     animation: sheet-slide-up 0.22s cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  /* En horizontal el alto no da para una lista: dos columnas. */
+  @media (max-height: 500px) {
+    .mobile-menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 8px;
+      align-content: start;
+    }
+
+    .mobile-menu-sep {
+      grid-column: 1 / -1;
+    }
   }
 
   .mobile-menu-grab {
@@ -136,6 +166,12 @@
     color: var(--accent);
     background: var(--accent-dim);
     font-weight: 600;
+  }
+
+  .mobile-menu-item .count {
+    margin-left: auto;
+    color: var(--text-faint);
+    font-size: 11px;
   }
 
   .mobile-menu-sep {
@@ -220,101 +256,86 @@
     grid-template-columns: 1fr;
   }
 
+  /* Hueco inferior para que el botón flotante no tape el final de la lista. */
   .library-foot {
-    padding: 12px 20px 14px;
+    padding: 12px 20px calc(20px + max(48px, env(safe-area-inset-bottom)));
   }
 
-  .breadcrumb-chip {
-    max-width: calc(100% - 32px);
-    font-size: 11px;
-  }
-
-  .part-card {
-    left: 16px;
-    right: 16px;
-    max-width: none;
-    top: auto;
-    bottom: 64px;
-  }
-
-  /* Barras flotantes del lienzo: sin navbar ni pastillas, los presets van
-     abajo-izquierda con todo el ancho disponible. */
+  /* Presets de cámara del 3D: abajo a la izquierda, sin invadir el carril
+     central que ocupa el botón flotante. */
   .view-presets {
-    bottom: 12px;
-    left: 12px;
-    max-width: calc(100vw - 24px);
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    max-width: calc(50vw - 120px);
     overflow-x: auto;
   }
 
-  .zoom-toolbar {
-    bottom: 12px;
-  }
-
-  /* Paginador flotante ‹ n/total › (solo se monta en móvil). */
-  .page-nav {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: color-mix(in srgb, var(--panel) 90%, transparent);
-    border: 1px solid var(--border-strong);
-    border-radius: 9px;
-    padding: 4px;
-    backdrop-filter: blur(6px);
-  }
-
-  .page-nav button {
-    appearance: none;
-    border: none;
-    background: transparent;
-    width: 34px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    color: var(--text-muted);
-    cursor: pointer;
-    border-radius: 6px;
-  }
-
-  .page-nav button:disabled {
-    opacity: 0.35;
-  }
-
-  .page-nav button .flip {
-    transform: rotate(180deg);
-  }
-
-  .page-nav .mono {
-    min-width: 44px;
-    text-align: center;
-    color: var(--text);
-    font-size: 12px;
-  }
-
-  /* Vista "Datos" en pantalla completa, con cabecera compacta (el alto es
-     escaso en horizontal). */
+  /* Vista "Datos" en pantalla completa: el nombre y la descripción del
+     proyecto ya están en la vista Proyecto, así que aquí sobran y se empieza
+     directamente por las pestañas. */
   .data-head {
-    padding: 10px 16px 0;
-  }
-
-  .data-head .eyebrow {
     display: none;
-  }
-
-  .data-head h1 {
-    font-size: 17px;
-    margin: 0 0 2px;
   }
 
   .data-tabs {
     padding: 10px 16px 0;
   }
 
+  /* Conexiones: la ficha de la conexión, compacta; solo origen/destino en la
+     lista (sección y color están en la ficha) y 3D bajo. */
+  .conn-list .data-table {
+    min-width: 0;
+  }
+
+  .conn-facts {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    font-size: 11.5px;
+  }
+
+  .conn-fact {
+    white-space: nowrap;
+  }
+
+  .strip-3d {
+    height: clamp(130px, 30vh, 240px);
+  }
+
+  /* Mecanizado: pastillas en una fila y plano acotado para que la ficha quepa
+     entera sin desplazar la página. */
+  .data-chiprow {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .data-chiprow .data-chip {
+    flex: none;
+  }
+
+  .strip-list {
+    max-height: clamp(120px, 34vh, 260px);
+  }
+
+  .data-plan {
+    max-height: clamp(110px, 30vh, 240px);
+  }
+
+  .data-plan-wrap {
+    padding: 8px;
+  }
+
+  /* El cuadro de taladros va en una fila desplazable. */
+  .data-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    white-space: nowrap;
+  }
+
   .data-body {
-    padding: 14px 14px 40px;
+    padding: 14px 14px 72px;
   }
 
   /* En pantalla estrecha las tablas no se apilan: siguen en horizontal y la

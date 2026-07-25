@@ -68,6 +68,9 @@ jobs:
              apps/mobile/android/app/src/main/res/mipmap-anydpi-v26/
           cp apps/desktop/src-tauri/icons/android/values/ic_launcher_background.xml \
              apps/mobile/android/app/src/main/res/values/
+      # Pantalla completa y sin "modo oscuro forzado" del WebView (ver script).
+      - name: Patch Android theme
+        run: node scripts/patch-android-theme.mjs
       # Solo el APK debug: va firmado con la clave debug y es el único que se
       # puede instalar por sideload sin keystore propio (el "release" sin firmar
       # no lo acepta Android).

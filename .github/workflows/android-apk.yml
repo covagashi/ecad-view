@@ -1,0 +1,47 @@
+name: android-apk
+
+# APK de prueba desde cualquier rama, sin publicar una release:
+# Actions > android-apk > Run workflow > (rama) . El APK queda como artefacto
+# de la ejecución. Mismos pasos que el job "android" de release.yml.
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+      - name: Generate Android project
+        working-directory: apps/mobile
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+      - name: Apply branded launcher icons
+        run: |
+          for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            cp apps/desktop/src-tauri/icons/android/$d/*.png apps/mobile/android/app/src/main/res/$d/
+          done
+          cp apps/desktop/src-tauri/icons/android/mipmap-anydpi-v26/ic_launcher.xml \
+             apps/mobile/android/app/src/main/res/mipmap-anydpi-v26/
+          cp apps/desktop/src-tauri/icons/android/values/ic_launcher_background.xml \
+             apps/mobile/android/app/src/main/res/values/
+      - name: Patch Android theme
+        run: node scripts/patch-android-theme.mjs
+      - name: Build APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-test-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk

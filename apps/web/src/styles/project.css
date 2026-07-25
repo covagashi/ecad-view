@@ -95,6 +95,17 @@
   overflow-wrap: anywhere;
 }
 
+/* Selector del idioma de proyecto, en la fila de propiedades. */
+.kv .lang-select {
+  max-width: 100%;
+  margin: -4px 0;
+  padding: 4px 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+}
+
 /* --- Modelos 3D vinculados --- */
 
 .model-list {

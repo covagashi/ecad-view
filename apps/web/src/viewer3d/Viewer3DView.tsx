@@ -8,6 +8,7 @@ import { nextDeviceOccurrence } from "../devices";
 import type { PickedPart } from "../state/types";
 import { useI18n } from "../i18n";
 import { isMobileNow, useIsMobile } from "../mobile/query";
+import { useProvideMobileActions, type MobileAction } from "../mobile/actions";
 import { IconCube } from "../shell/icons";
 import { ModelSelectorCard } from "./ModelSelectorCard";
 import { PartsPanel } from "./PartsPanel";
@@ -75,11 +76,7 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doc?.id, scene]);
 
-  if (!doc) return null;
-
-  const bridgeTarget = doc.picked ? resolvePickedToSchematic(doc, doc.picked) : null;
-  const pickedId = doc.picked?.objectId;
-
+  /** Abre/cierra el panel de piezas recordando la preferencia. */
   const setPanelOpenPersist = (open: boolean) => {
     setPanelOpen(open);
     try {
@@ -88,6 +85,32 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
       // Sin persistencia.
     }
   };
+
+  // En móvil el desglose de piezas se abre desde el menú del botón flotante
+  // (no hay pestañas en el borde del lienzo).
+  const partCount = parts.length;
+  const mobileActions = useMemo<MobileAction[]>(
+    () =>
+      isMobile && partCount > 0
+        ? [
+            {
+              id: "parts",
+              label: t("parts.title"),
+              icon: IconCube,
+              count: partCount,
+              onSelect: () => setPanelOpenPersist(true),
+            },
+          ]
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isMobile, partCount, t]
+  );
+  useProvideMobileActions(mobileActions);
+
+  if (!doc) return null;
+
+  const bridgeTarget = doc.picked ? resolvePickedToSchematic(doc, doc.picked) : null;
+  const pickedId = doc.picked?.objectId;
 
   const onPick = (info: Record<string, unknown> | null) => {
     dispatch({ type: "SET_PICKED", id: doc.id, picked: info as PickedPart | null });
@@ -132,9 +155,17 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     dispatch({ type: "SET_PICKED", id: doc.id, picked: null });
   };
 
+  /*
+   * Aislar sin mover la cámara deja la pieza perdida en medio del armario: al
+   * separarla se acerca a ella, y al volver a mostrarlo todo se reencuadra el
+   * modelo completo.
+   */
   const toggleIsolate = () => {
     if (pickedId === undefined) return;
-    setIsolated((prev) => (prev === pickedId ? null : pickedId));
+    const next = isolated === pickedId ? null : pickedId;
+    setIsolated(next);
+    if (next === null) viewerRef.current?.fit();
+    else viewerRef.current?.focusPart(next);
   };
 
   const pickedEntry =
@@ -158,6 +189,7 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
   };
 
   const showAll = () => {
+    if (isolated !== null) viewerRef.current?.fit();
     setIsolated(null);
     setHiddenKeys(new Set());
   };
@@ -184,8 +216,6 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     doc.picked && selectedLabel
       ? {
           label: selectedLabel,
-          typeId: String(doc.picked.typeId ?? "–"),
-          objectId: String(doc.picked.objectId ?? "–"),
           hasObject: doc.picked.objectId !== undefined,
           hasBridge: !!bridgeTarget,
           isolated: isolated !== null && isolated === pickedId,
