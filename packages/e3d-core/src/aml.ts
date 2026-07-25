@@ -20,6 +20,16 @@ export type AmlMultiText = Record<string, string>;
 /** Posición de un elemento: [x, y, z, rx, ry, rz] (mm y grados). */
 export type AmlFrame = [number, number, number, number, number, number];
 
+/**
+ * Superficie de montaje de ProPanel (placa, puerta, lateral...): el rectángulo
+ * real sobre el que se mecaniza, con su origen y su tamaño en mm, ambos en el
+ * sistema de coordenadas de la propia superficie.
+ */
+export interface AmlSurface {
+  start: [number, number, number];
+  size: [number, number];
+}
+
 export interface AmlElement {
   /** ID CAEX (GUID). */
   id: string;
@@ -40,6 +50,10 @@ export interface AmlElement {
   /** Object identification EPLAN ("253/180/49623/0"). */
   objectId: string | null;
   frame: AmlFrame | null;
+  /** Geometría de la superficie de montaje, si el elemento lo es. */
+  surface: AmlSurface | null;
+  /** Designación completa ("S1:Frontal de placa de montaje"). */
+  itemDesignation: string | null;
   /** Diámetro (mm) en taladros. */
   diameter: number | null;
   /** Nombre de espacio de montaje (Layout space name) si el elemento lo es. */
@@ -80,6 +94,9 @@ const INTERFACE_KEEP = new Set([
 
 /** Atributos cuyo valor multiidioma se conserva. */
 const TEXT_ATTRS = new Set(["Function text (of main function)", "Project description"]);
+
+/** Atributos con hijos X/Y/Z que describen la superficie de montaje. */
+const SURFACE_ATTRS = new Set(["Startpoint of mounting surface", "Size of mounting surface"]);
 
 const ENTITY_MAP: Record<string, string> = {
   amp: "&",
@@ -184,8 +201,26 @@ export function parseAml(xml: string): AmlProject {
       }
       return;
     }
+    // Geometría de la superficie de montaje: atributos con hijos X/Y/Z.
+    if (element && attrStack.length >= 2) {
+      const group = attrStack[attrStack.length - 2].name;
+      const axis = ["X", "Y", "Z"].indexOf(attr);
+      if (axis >= 0 && SURFACE_ATTRS.has(group)) {
+        const surface = (element.surface ??= { start: [0, 0, 0], size: [0, 0] });
+        const value = Number(raw) || 0;
+        if (group === "Size of mounting surface") {
+          if (axis < 2) surface.size[axis] = value;
+        } else {
+          surface.start[axis] = value;
+        }
+        return;
+      }
+    }
     if (!element || attrStack.length !== 1) return;
     switch (attr) {
+      case "Full item designation":
+        element.itemDesignation = raw;
+        break;
       case "ClassificationClass":
         element.classCode = raw;
         break;
@@ -246,6 +281,8 @@ export function parseAml(xml: string): AmlProject {
           partNumber: null,
           objectId: null,
           frame: null,
+          surface: null,
+          itemDesignation: null,
           diameter: null,
           layoutSpace: null,
           functionText: null,

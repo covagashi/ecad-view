@@ -364,6 +364,10 @@
   margin-left: auto;
 }
 
+.data-legend .mono {
+  font-size: 11px;
+}
+
 .data-legend .dot {
   display: inline-block;
   width: 9px;
@@ -434,8 +438,22 @@
   color: var(--accent);
 }
 
+.strip-item .row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+}
+
 .strip-item .name {
   font-size: 12.5px;
+}
+
+.strip-item .badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
 }
 
 .strip-item .meta {

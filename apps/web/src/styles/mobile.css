@@ -310,8 +310,8 @@
     height: clamp(130px, 30vh, 240px);
   }
 
-  /* Mecanizado: cabecera compacta y plano acotado para que quepa entero sin
-     desplazar la página. */
+  /* Mecanizado: pastillas en una fila y plano acotado para que la ficha quepa
+     entera sin desplazar la página. */
   .data-chiprow {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -320,11 +320,6 @@
 
   .data-chiprow .data-chip {
     flex: none;
-  }
-
-  /* El recuento de taladros ya está en la pastilla de cada espacio. */
-  .data-kpis {
-    display: none;
   }
 
   .strip-list {
@@ -339,10 +334,12 @@
     padding: 8px;
   }
 
-  /* De la leyenda solo se conserva la medida del panel: los colores se
-     entienden en el propio plano y la fila estorba al botón flotante. */
-  .data-legend span:not(.mono) {
-    display: none;
+  /* El cuadro de taladros va en una fila desplazable. */
+  .data-legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    white-space: nowrap;
   }
 
   .data-body {
