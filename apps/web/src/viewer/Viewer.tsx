@@ -178,27 +178,43 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     if (controls) controls.enabled = interactive;
   }, [interactive]);
 
+  /**
+   * Distancia a la que la esfera envolvente de `box` entra en el encuadre, con
+   * el campo de visión y la relación de aspecto reales del lienzo: si no, un
+   * objeto pequeño en un panel ancho y bajo se ve diminuto y lejos.
+   */
+  const fitDistance = (box: THREE.Box3, margin: number): number => {
+    const camera = handlesRef.current!.camera;
+    const radius = Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 0.5);
+    const vFov = THREE.MathUtils.degToRad(camera.fov);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(camera.aspect, 0.01));
+    return (radius / Math.sin(Math.min(vFov, hFov) / 2)) * margin;
+  };
+
+  /** Sitúa la cámara a `distance` del centro, en la dirección dada. */
+  const placeCamera = (
+    center: THREE.Vector3,
+    direction: THREE.Vector3,
+    distance: number
+  ) => {
+    const handles = handlesRef.current!;
+    handles.controls.target.copy(center);
+    handles.camera.position.copy(center).addScaledVector(direction.normalize(), distance);
+    handles.camera.near = distance / 1000;
+    handles.camera.far = distance * 100;
+    handles.camera.updateProjectionMatrix();
+    handles.controls.update();
+  };
+
   /** Coloca la cámara para encuadrar `box` mirando desde `direction`. */
   const frameBox3 = (box: THREE.Box3, direction: [number, number, number]) => {
     const handles = handlesRef.current;
     if (!handles || box.isEmpty()) return;
-    const center = box.getCenter(new THREE.Vector3());
-    // Distancia mínima para que la esfera envolvente entre en el encuadre, con
-    // el campo de visión y la relación de aspecto reales del lienzo: si no, un
-    // objeto pequeño en un panel ancho y bajo se ve diminuto y lejos.
-    const radius = Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 0.5);
-    const camera = handles.camera;
-    const vFov = THREE.MathUtils.degToRad(camera.fov);
-    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(camera.aspect, 0.01));
-    const distance = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.05;
-    handles.controls.target.copy(center);
-    camera.position
-      .copy(center)
-      .addScaledVector(new THREE.Vector3(...direction).normalize(), distance);
-    camera.near = distance / 1000;
-    camera.far = distance * 100;
-    camera.updateProjectionMatrix();
-    handles.controls.update();
+    placeCamera(
+      box.getCenter(new THREE.Vector3()),
+      new THREE.Vector3(...direction),
+      fitDistance(box, 1.05)
+    );
   };
 
   /** Encuadra el modelo con la cámara mirando desde `direction`. */
@@ -274,13 +290,10 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       if (!handles || !part) return;
       const box = new THREE.Box3().setFromObject(part);
       if (box.isEmpty()) return;
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3()).length();
-      const distance = Math.max(size * 2.2, 5);
-      const direction = handles.camera.position.clone().sub(handles.controls.target).normalize();
-      handles.controls.target.copy(center);
-      handles.camera.position.copy(center).addScaledVector(direction, distance);
-      handles.controls.update();
+      // Se conserva la dirección de vista actual: solo se acerca.
+      const direction = handles.camera.position.clone().sub(handles.controls.target);
+      if (direction.lengthSq() === 0) direction.set(0.6, 0.5, 0.6);
+      placeCamera(box.getCenter(new THREE.Vector3()), direction, fitDistance(box, 1.25));
     },
     clearSelection() {
       const handles = handlesRef.current;

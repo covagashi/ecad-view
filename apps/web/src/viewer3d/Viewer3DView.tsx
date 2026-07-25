@@ -155,9 +155,17 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     dispatch({ type: "SET_PICKED", id: doc.id, picked: null });
   };
 
+  /*
+   * Aislar sin mover la cámara deja la pieza perdida en medio del armario: al
+   * separarla se acerca a ella, y al volver a mostrarlo todo se reencuadra el
+   * modelo completo.
+   */
   const toggleIsolate = () => {
     if (pickedId === undefined) return;
-    setIsolated((prev) => (prev === pickedId ? null : pickedId));
+    const next = isolated === pickedId ? null : pickedId;
+    setIsolated(next);
+    if (next === null) viewerRef.current?.fit();
+    else viewerRef.current?.focusPart(next);
   };
 
   const pickedEntry =
@@ -181,6 +189,7 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
   };
 
   const showAll = () => {
+    if (isolated !== null) viewerRef.current?.fit();
     setIsolated(null);
     setHiddenKeys(new Set());
   };
