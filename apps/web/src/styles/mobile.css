@@ -261,14 +261,6 @@
     padding: 12px 20px calc(20px + max(48px, env(safe-area-inset-bottom)));
   }
 
-  .part-card {
-    left: 16px;
-    right: 16px;
-    max-width: none;
-    top: auto;
-    bottom: 64px;
-  }
-
   /* Presets de cámara del 3D: abajo a la izquierda, sin invadir el carril
      central que ocupa el botón flotante. */
   .view-presets {

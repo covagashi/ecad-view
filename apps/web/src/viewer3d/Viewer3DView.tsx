@@ -216,8 +216,6 @@ export function Viewer3DView({ scene }: { scene: E3dScene | null }) {
     doc.picked && selectedLabel
       ? {
           label: selectedLabel,
-          typeId: String(doc.picked.typeId ?? "–"),
-          objectId: String(doc.picked.objectId ?? "–"),
           hasObject: doc.picked.objectId !== undefined,
           hasBridge: !!bridgeTarget,
           isolated: isolated !== null && isolated === pickedId,
