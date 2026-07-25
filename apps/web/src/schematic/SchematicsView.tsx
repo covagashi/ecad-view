@@ -14,9 +14,10 @@ import { BreadcrumbChip } from "./BreadcrumbChip";
 import { EdgeTabs } from "./EdgeTabs";
 import { PagesPanel, type PanelTab } from "./PagesPanel";
 import { ZoomToolbar } from "./ZoomToolbar";
-import { IconChevronRight } from "../shell/icons";
+import { IconFit, IconList, IconSchematic, IconSearch } from "../shell/icons";
 import { useI18n } from "../i18n";
 import { useIsMobile } from "../mobile/query";
+import { useProvideMobileActions, type MobileAction } from "../mobile/actions";
 
 const PIN_KEY = "covaga.pagesPanel.pinned";
 
@@ -91,6 +92,51 @@ export function SchematicsView() {
     [doc?.deviceIndex, doc?.manifest, partLocations]
   );
   const resolvable3d = useMemo(() => new Set(deviceTo3d.keys()), [deviceTo3d]);
+
+  /*
+   * En móvil el lienzo no lleva nada encima: las pestañas del panel (páginas,
+   * dispositivos, piezas) y el encuadre se ofrecen en el menú del botón
+   * flotante. La ubicación de montaje (GB1 › A1) no se repite como chip: el
+   * árbol de "Páginas" ya agrupa por ella.
+   */
+  const deviceCount = doc?.deviceIndex.devices.length ?? 0;
+  const pageCount = doc?.pages.length ?? 0;
+  const mobileActions = useMemo<MobileAction[]>(() => {
+    if (!isMobile) return [];
+    const open = (next: PanelTab) => () => {
+      setTab(next);
+      setOverlayOpen(true);
+    };
+    const list: MobileAction[] = [
+      { id: "pages", label: t("panel.pages"), icon: IconSchematic, count: pageCount, onSelect: open("pages") },
+    ];
+    if (deviceCount > 0) {
+      list.push({
+        id: "devices",
+        label: t("panel.devices"),
+        icon: IconSearch,
+        count: deviceCount,
+        onSelect: open("devices"),
+      });
+    }
+    if (articles.length > 0) {
+      list.push({
+        id: "bom",
+        label: t("panel.bom"),
+        icon: IconList,
+        count: articles.length,
+        onSelect: open("bom"),
+      });
+    }
+    list.push({
+      id: "fit",
+      label: t("zoom.fit"),
+      icon: IconFit,
+      onSelect: () => viewerRef.current?.fit(),
+    });
+    return list;
+  }, [isMobile, t, pageCount, deviceCount, articles.length]);
+  useProvideMobileActions(mobileActions);
 
   const setPinnedPersist = useCallback((next: boolean) => {
     setPinned(next);
@@ -235,38 +281,19 @@ export function SchematicsView() {
           onNavigate={onNavigate}
           onViewChange={setZoomPercent}
         />
-        <BreadcrumbChip breadcrumb={currentPage.breadcrumb} />
-        <ZoomToolbar
-          percent={zoomPercent}
-          onZoomIn={() => viewerRef.current?.zoomIn()}
-          onZoomOut={() => viewerRef.current?.zoomOut()}
-          onFit={() => viewerRef.current?.fit()}
-        />
-
-        {/* En móvil no hay RePág/AvPág: paginador flotante junto al zoom. */}
-        {isMobile && doc.pages.length > 1 && (
-          <div className="page-nav">
-            <button
-              aria-label={t("panel.prev")}
-              disabled={doc.pageIndex === 0}
-              onClick={() => selectPage(doc.pageIndex - 1)}
-            >
-              <IconChevronRight size={14} className="flip" />
-            </button>
-            <span className="mono">
-              {doc.pageIndex + 1}/{doc.pages.length}
-            </span>
-            <button
-              aria-label={t("panel.next")}
-              disabled={doc.pageIndex >= doc.pages.length - 1}
-              onClick={() => selectPage(doc.pageIndex + 1)}
-            >
-              <IconChevronRight size={14} />
-            </button>
-          </div>
+        {!isMobile && (
+          <>
+            <BreadcrumbChip breadcrumb={currentPage.breadcrumb} />
+            <ZoomToolbar
+              percent={zoomPercent}
+              onZoomIn={() => viewerRef.current?.zoomIn()}
+              onZoomOut={() => viewerRef.current?.zoomOut()}
+              onFit={() => viewerRef.current?.fit()}
+            />
+          </>
         )}
 
-        {!inlinePanel && !showOverlay && (
+        {!isMobile && !inlinePanel && !showOverlay && (
           <EdgeTabs
             pageIndex={doc.pageIndex}
             pageCount={doc.pages.length}

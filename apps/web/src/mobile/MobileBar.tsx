@@ -11,18 +11,20 @@ import {
   IconList,
   IconSchematic,
 } from "../shell/icons";
+import { useMobileActions } from "./actions";
 import type { ProjectView } from "../state/types";
 
 /**
- * Navegación móvil al estilo EPLAN Smart Wiring: en lugar del navbar típico de
- * app, una barra inferior fina ‹ vista › que cicla entre las vistas
- * disponibles; tocar el centro abre un modal con la lista de vistas y los
- * ajustes. Así el lienzo (3D/esquemas) conserva casi toda la pantalla y las
- * barras flotantes de las vistas no compiten con una botonera permanente.
+ * Navegación móvil: un único botón flotante sobre el lienzo (estilo Vercel /
+ * Cloudflare) en lugar de barras fijas y pestañas en los bordes. Muestra la
+ * vista actual, pasa página con las flechas en esquemas y, al tocarlo, abre un
+ * menú con las vistas del proyecto, las acciones que publique la vista activa
+ * (páginas, dispositivos, piezas…) y los ajustes.
  */
 export function MobileBar() {
   const { state, dispatch, active: doc } = useProjects();
   const { t } = useI18n();
+  const extras = useMobileActions();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -45,60 +47,62 @@ export function MobileBar() {
   }, [doc, t]);
 
   const onHome = state.activeId === HOME_ID;
-  const currentIndex = doc ? views.findIndex((entry) => entry.view === doc.view) : -1;
-  const current = currentIndex >= 0 ? views[currentIndex] : null;
+  const current = doc ? views.find((entry) => entry.view === doc.view) ?? null : null;
 
   const go = (view: ProjectView) => {
     if (doc) dispatch({ type: "SET_VIEW", id: doc.id, view });
     setMenuOpen(false);
   };
-  const step = (delta: number) => {
-    if (views.length === 0 || currentIndex < 0) return;
-    const next = (currentIndex + delta + views.length) % views.length;
-    go(views[next].view);
+
+  // En esquemas las flechas del botón pasan de página (la acción más frecuente).
+  const pageCount = doc && doc.view === "pages" ? doc.pages.length : 0;
+  const canPage = pageCount > 1;
+  const stepPage = (delta: number) => {
+    if (!doc) return;
+    const next = Math.min(Math.max(doc.pageIndex + delta, 0), doc.pages.length - 1);
+    if (next !== doc.pageIndex) dispatch({ type: "SET_PAGE", id: doc.id, pageIndex: next });
   };
+
+  const Icon = current?.icon ?? IconGear;
+  const label = onHome || !current ? t("rail.settings") : current.label;
 
   return (
     <>
-      {/* En Inicio no hay vistas que ciclar: solo el acceso a ajustes. */}
-      <div className="mobile-bar">
-        {onHome || !current ? (
-          <button className="mobile-bar-center" onClick={() => setSettingsOpen(true)}>
-            <IconGear size={14} />
-            <span>{t("rail.settings")}</span>
+      <div className="mobile-fab">
+        {canPage && (
+          <button
+            className="mobile-fab-arrow"
+            aria-label={t("panel.prev")}
+            disabled={doc!.pageIndex === 0}
+            onClick={() => stepPage(-1)}
+          >
+            <IconChevronRight size={15} className="flip" />
           </button>
-        ) : (
-          <>
-            <button
-              className="mobile-bar-arrow"
-              aria-label={t("panel.prev")}
-              disabled={views.length < 2}
-              onClick={() => step(-1)}
-            >
-              <IconChevronRight size={15} className="flip" />
-            </button>
-            <button
-              className="mobile-bar-center"
-              aria-haspopup="dialog"
-              onClick={() => setMenuOpen(true)}
-            >
-              <current.icon size={14} />
-              <span>{current.label}</span>
-              {views.length > 1 && (
-                <span className="mono dim">
-                  {currentIndex + 1}/{views.length}
-                </span>
-              )}
-            </button>
-            <button
-              className="mobile-bar-arrow"
-              aria-label={t("panel.next")}
-              disabled={views.length < 2}
-              onClick={() => step(1)}
-            >
-              <IconChevronRight size={15} />
-            </button>
-          </>
+        )}
+
+        <button
+          className="mobile-fab-main"
+          aria-haspopup="dialog"
+          onClick={() => (onHome || !current ? setSettingsOpen(true) : setMenuOpen(true))}
+        >
+          <Icon size={14} />
+          <span>{label}</span>
+          {canPage && (
+            <span className="mono dim">
+              {doc!.pageIndex + 1}/{pageCount}
+            </span>
+          )}
+        </button>
+
+        {canPage && (
+          <button
+            className="mobile-fab-arrow"
+            aria-label={t("panel.next")}
+            disabled={doc!.pageIndex >= pageCount - 1}
+            onClick={() => stepPage(1)}
+          >
+            <IconChevronRight size={15} />
+          </button>
         )}
       </div>
 
@@ -106,16 +110,30 @@ export function MobileBar() {
         <div className="mobile-menu-wrap" role="dialog" aria-modal onClick={() => setMenuOpen(false)}>
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-grab" aria-hidden />
-            <button
-              className="mobile-menu-item"
-              onClick={() => {
-                dispatch({ type: "SET_ACTIVE", id: HOME_ID });
-                setMenuOpen(false);
-              }}
-            >
-              <IconHome size={16} />
-              <span>{t("rail.home")}</span>
-            </button>
+
+            {/* Acciones de la vista activa: lo que antes eran pestañas laterales. */}
+            {extras.length > 0 && (
+              <>
+                {extras.map((action) => (
+                  <button
+                    key={action.id}
+                    className="mobile-menu-item"
+                    onClick={() => {
+                      action.onSelect();
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <action.icon size={16} />
+                    <span>{action.label}</span>
+                    {action.count !== undefined && (
+                      <span className="mono count">{action.count}</span>
+                    )}
+                  </button>
+                ))}
+                <div className="mobile-menu-sep" />
+              </>
+            )}
+
             {views.map((entry) => (
               <button
                 key={entry.view}
@@ -126,7 +144,18 @@ export function MobileBar() {
                 <span>{entry.label}</span>
               </button>
             ))}
+
             <div className="mobile-menu-sep" />
+            <button
+              className="mobile-menu-item"
+              onClick={() => {
+                dispatch({ type: "SET_ACTIVE", id: HOME_ID });
+                setMenuOpen(false);
+              }}
+            >
+              <IconHome size={16} />
+              <span>{t("rail.home")}</span>
+            </button>
             <button
               className="mobile-menu-item"
               onClick={() => {

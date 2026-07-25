@@ -12,6 +12,7 @@ import { useSessionRestore } from "./library/useSessionRestore";
 import { SchematicsView } from "./schematic/SchematicsView";
 import { DataView } from "./data/DataView";
 import { MobileBar } from "./mobile/MobileBar";
+import { MobileActionsProvider } from "./mobile/actions";
 import { useDeepLink } from "./state/useDeepLink";
 import { useI18n } from "./i18n";
 
@@ -39,64 +40,66 @@ export function App() {
   }, [doc?.id, doc?.loading, doc?.modelIndex, doc?.epdzModels]);
 
   return (
-    <div
-      className="app"
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragging(false);
-        void openFiles(e.dataTransfer.files);
-      }}
-    >
-      <TabStrip />
+    <MobileActionsProvider>
+      <div
+        className="app"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          void openFiles(e.dataTransfer.files);
+        }}
+      >
+        <TabStrip />
 
-      <div className="app-body">
-        <Rail />
+        <div className="app-body">
+          <Rail />
 
-        <main className="main">
-          {state.activeId === HOME_ID && <LibraryView dragging={dragging} />}
+          <main className="main">
+            {state.activeId === HOME_ID && <LibraryView dragging={dragging} />}
 
-          {doc?.loading && (
-            <div className="empty">
-              <div className="dropzone">
-                <p>{state.status ? t(state.status.key, state.status.params) : "…"}</p>
+            {doc?.loading && (
+              <div className="empty">
+                <div className="dropzone">
+                  <p>{state.status ? t(state.status.key, state.status.params) : "…"}</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {doc?.error && (
-            <div className="empty">
-              <div className="dropzone">
-                <h1>{doc.fileName}</h1>
-                <p>{doc.error}</p>
+            {doc?.error && (
+              <div className="empty">
+                <div className="dropzone">
+                  <h1>{doc.fileName}</h1>
+                  <p>{doc.error}</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {doc && !doc.loading && !doc.error && doc.view === "3d" && (
-            <Viewer3DView scene={scene} />
-          )}
+            {doc && !doc.loading && !doc.error && doc.view === "3d" && (
+              <Viewer3DView scene={scene} />
+            )}
 
-          {doc && !doc.loading && !doc.error && doc.view === "pages" && <SchematicsView />}
+            {doc && !doc.loading && !doc.error && doc.view === "pages" && <SchematicsView />}
 
-          {doc && !doc.loading && !doc.error && doc.view === "project" && doc.manifest && (
-            <ProjectView />
-          )}
+            {doc && !doc.loading && !doc.error && doc.view === "project" && doc.manifest && (
+              <ProjectView />
+            )}
 
-          {doc &&
-            !doc.loading &&
-            !doc.error &&
-            doc.view === "data" &&
-            (doc.manifest || doc.amlEntry) && <DataView />}
-        </main>
+            {doc &&
+              !doc.loading &&
+              !doc.error &&
+              doc.view === "data" &&
+              (doc.manifest || doc.amlEntry) && <DataView />}
+          </main>
+        </div>
+
+        <StatusBar />
+        <MobileBar />
       </div>
-
-      <StatusBar />
-      <MobileBar />
-    </div>
+    </MobileActionsProvider>
   );
 }
