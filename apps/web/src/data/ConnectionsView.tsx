@@ -2,20 +2,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AmlProject } from "@covaga/e3d-core/aml";
 import type { EplanManifest } from "@covaga/e3d-core/manifest";
 import type { EpdzEntry } from "@covaga/e3d-core/epdz";
-import { Viewer, type ViewerHandle, type ViewPreset } from "../viewer/Viewer";
-import { ViewPresets } from "../viewer3d/ViewPresets";
+import { Viewer, type ViewerHandle } from "../viewer/Viewer";
 import { getScene } from "../state/sceneCache";
 import { useI18n } from "../i18n";
+import { useIsMobile } from "../mobile/query";
 import { IconSearch } from "../shell/icons";
 import { buildConnections, type ConnectionRow } from "./derive";
 import type { PartBoxIndex, PartBox } from "./partBoxes";
 import type { DataNav } from "./DataView";
 
 /**
- * Lista de conexiones de cableado al estilo EPLAN Smart Wiring: tabla con
- * origen/destino/sección/color y, para la conexión seleccionada, el 3D real
- * del armario con el cable enrutado encuadrado y resaltado. Origen y destino
- * saltan a su aparición en el esquema.
+ * Lista de conexiones de cableado al estilo EPLAN Smart Wiring: tabla de
+ * origen/destino y, para la conexión seleccionada, un alzado fijo del cable
+ * enrutado con sus dos aparatos, aislado del resto del armario. Origen y
+ * destino saltan a su aparición en el esquema.
  */
 export function ConnectionsView({
   manifest,
@@ -33,6 +33,7 @@ export function ConnectionsView({
   nav: DataNav;
 }) {
   const { t } = useI18n();
+  const isMobile = useIsMobile();
   const [filter, setFilter] = useState("");
   const connections = useMemo(() => buildConnections(manifest, aml), [manifest, aml]);
 
@@ -80,8 +81,8 @@ export function ConnectionsView({
               <tr>
                 <th>{t("data.col.source")}</th>
                 <th>{t("data.col.target")}</th>
-                <th>{t("data.col.section")}</th>
-                <th>{t("data.col.color")}</th>
+                {!isMobile && <th>{t("data.col.section")}</th>}
+                {!isMobile && <th>{t("data.col.color")}</th>}
               </tr>
             </thead>
             <tbody>
@@ -96,8 +97,8 @@ export function ConnectionsView({
                     {row.target}
                     {row.bridge && <span className="data-pill">{t("data.bridge")}</span>}
                   </td>
-                  <td>{row.crossSection ?? "—"}</td>
-                  <td className="mono">{row.color ?? "—"}</td>
+                  {!isMobile && <td>{row.crossSection ?? "—"}</td>}
+                  {!isMobile && <td className="mono">{row.color ?? "—"}</td>}
                 </tr>
               ))}
             </tbody>
@@ -136,7 +137,6 @@ function ConnectionDetail({
 }) {
   const { t } = useI18n();
   const viewerRef = useRef<ViewerHandle>(null);
-  const [wireOnly, setWireOnly] = useState(false);
 
   const scene = useMemo(() => {
     if (!box) return null;
@@ -144,41 +144,23 @@ function ConnectionDetail({
     return entry ? getScene(projectId, box.modelIndex, entry) : null;
   }, [box, projectId, models]);
 
-  // Encuadre sobre el cable con aire alrededor para ver por dónde va la ruta.
-  const frameWire = (preset: ViewPreset) => {
-    if (!box) return;
-    const pad = (axis: number) => Math.max((box.max[axis] - box.min[axis]) * 0.25, 80);
-    viewerRef.current?.frameBox(
-      [box.min[0] - pad(0), box.min[1] - pad(1), box.min[2] - pad(2)],
-      [box.max[0] + pad(0), box.max[1] + pad(1), box.max[2] + pad(2)],
-      preset
-    );
-  };
-
-  // Tras montar la escena: resaltar el cable (recuadro acento) y encuadrarlo.
-  useEffect(() => {
-    if (!scene || connection.objectId === null) return;
-    viewerRef.current?.selectPart(connection.objectId);
-    frameWire("front");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, connection.objectId]);
-
-  // Modo aislar: deja visibles el hilo y los dispositivos de origen y destino
-  // (como Smart Wiring al separar la conexión del resto de la construcción).
+  /*
+   * La conexión se muestra siempre aislada, como en Smart Wiring: el hilo y
+   * los aparatos de origen y destino, sin el resto del armario, en alzado fijo
+   * y encuadrado sobre ellos (no hay nada que orbitar ni que aislar a mano).
+   */
   useEffect(() => {
     if (!scene || connection.objectId === null || !box) return;
-    if (!wireOnly) {
-      viewerRef.current?.applyVisibility(new Set(), null);
-      return;
-    }
     const visible = new Set<number>([connection.objectId]);
     for (const designation of [connection.source, connection.target]) {
       const target = nav.resolve3d(designation.replace(/:[^:]*$/, ""));
       if (target && target.modelIndex === box.modelIndex) visible.add(target.objectId);
     }
-    viewerRef.current?.applyVisibility(new Set(), visible);
+    const viewer = viewerRef.current;
+    viewer?.applyVisibility(new Set(), visible);
+    viewer?.frameParts(visible, "front");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scene, connection, wireOnly]);
+  }, [scene, connection]);
 
   const endpoint = (designation: string) =>
     nav.hasDevice(designation.replace(/:[^:]*$/, "")) ? (
@@ -222,14 +204,7 @@ function ConnectionDetail({
 
       {scene ? (
         <div className="strip-3d">
-          <Viewer ref={viewerRef} scene={scene} initialPreset="front" />
-          <ViewPresets initial="front" onPreset={frameWire} />
-          <button
-            className={`data-chip wire-only${wireOnly ? " active" : ""}`}
-            onClick={() => setWireOnly((value) => !value)}
-          >
-            {t("data.isolateWire")}
-          </button>
+          <Viewer ref={viewerRef} scene={scene} initialPreset="front" interactive={false} />
         </div>
       ) : (
         <div className="data-note">{t("data.connNo3d")}</div>

@@ -278,23 +278,36 @@
     overflow-x: auto;
   }
 
-  /* Vista "Datos" en pantalla completa, con cabecera compacta (el alto es
-     escaso en horizontal). */
+  /* Vista "Datos" en pantalla completa: el nombre y la descripción del
+     proyecto ya están en la vista Proyecto, así que aquí sobran y se empieza
+     directamente por las pestañas. */
   .data-head {
-    padding: 10px 16px 0;
-  }
-
-  .data-head .eyebrow {
     display: none;
-  }
-
-  .data-head h1 {
-    font-size: 17px;
-    margin: 0 0 2px;
   }
 
   .data-tabs {
     padding: 10px 16px 0;
+  }
+
+  /* Conexiones: la ficha de la conexión, compacta; solo origen/destino en la
+     lista (sección y color están en la ficha) y 3D bajo. */
+  .conn-list .data-table {
+    min-width: 0;
+  }
+
+  .conn-facts {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    font-size: 11.5px;
+  }
+
+  .conn-fact {
+    white-space: nowrap;
+  }
+
+  .strip-3d {
+    height: clamp(130px, 30vh, 240px);
   }
 
   .data-body {

@@ -513,13 +513,6 @@
   background: var(--canvas);
 }
 
-.strip-3d .view-presets {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-}
-
-
 /* Mecanizado: pieza seleccionada (banda), taladros propios y cotas. */
 .plan-part {
   fill: color-mix(in srgb, var(--danger) 16%, transparent);
@@ -548,8 +541,3 @@
 }
 
 /* Toggle "solo el cable" del visor de conexiones. */
-.strip-3d .wire-only {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}

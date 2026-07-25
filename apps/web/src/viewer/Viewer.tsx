@@ -12,11 +12,6 @@ export interface ViewerHandle {
   fit(): void;
   setPreset(preset: ViewPreset): void;
   /**
-   * Encuadra una caja en coordenadas EPLAN (Z-up, mm) mirando desde `preset`.
-   * Sirve para enfocar una región concreta (p. ej. una regleta de bornes).
-   */
-  frameBox(min: [number, number, number], max: [number, number, number], preset: ViewPreset): void;
-  /**
    * Aplica la visibilidad por pieza: con `isolated` solo se muestran esas
    * partes (un objectId o un conjunto); si no, se ocultan los de `hidden`.
    */
@@ -24,6 +19,11 @@ export interface ViewerHandle {
     hidden: ReadonlySet<number>,
     isolated: number | ReadonlySet<number> | null
   ): void;
+  /**
+   * Encuadra el conjunto de piezas indicadas (por objectId) mirando desde
+   * `preset`, ajustando la distancia al campo de visión real del lienzo.
+   */
+  frameParts(objectIds: Iterable<number>, preset: ViewPreset): void;
   /** Selecciona la parte (recuadro) y devuelve su userData, o null si no existe. */
   selectPart(objectId: number): Record<string, unknown> | null;
   /** Acerca la cámara a la parte manteniendo la dirección de vista. */
@@ -38,6 +38,8 @@ export interface ViewerProps {
   onPickPart?: (info: Record<string, unknown> | null) => void;
   /** Preset con el que se encuadra la escena al cargarla (iso por defecto). */
   initialPreset?: ViewPreset;
+  /** false = vista fija: ni órbita, ni desplazamiento, ni zoom (previsualización). */
+  interactive?: boolean;
 }
 
 interface ViewerHandles {
@@ -59,7 +61,7 @@ const PRESET_DIRECTIONS: Record<ViewPreset, [number, number, number]> = {
 };
 
 export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
-  { scene, onPickPart, initialPreset = "iso" },
+  { scene, onPickPart, initialPreset = "iso", interactive = true },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -170,20 +172,32 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     };
   }, []);
 
+  // Vista fija (p. ej. la previsualización de una conexión): sin controles.
+  useEffect(() => {
+    const controls = handlesRef.current?.controls;
+    if (controls) controls.enabled = interactive;
+  }, [interactive]);
+
   /** Coloca la cámara para encuadrar `box` mirando desde `direction`. */
   const frameBox3 = (box: THREE.Box3, direction: [number, number, number]) => {
     const handles = handlesRef.current;
     if (!handles || box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3()).length();
-    const distance = Math.max(size, 1) * 1.2;
+    // Distancia mínima para que la esfera envolvente entre en el encuadre, con
+    // el campo de visión y la relación de aspecto reales del lienzo: si no, un
+    // objeto pequeño en un panel ancho y bajo se ve diminuto y lejos.
+    const radius = Math.max(box.getBoundingSphere(new THREE.Sphere()).radius, 0.5);
+    const camera = handles.camera;
+    const vFov = THREE.MathUtils.degToRad(camera.fov);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(camera.aspect, 0.01));
+    const distance = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.05;
     handles.controls.target.copy(center);
-    handles.camera.position
+    camera.position
       .copy(center)
       .addScaledVector(new THREE.Vector3(...direction).normalize(), distance);
-    handles.camera.near = distance / 1000;
-    handles.camera.far = distance * 100;
-    handles.camera.updateProjectionMatrix();
+    camera.near = distance / 1000;
+    camera.far = distance * 100;
+    camera.updateProjectionMatrix();
     handles.controls.update();
   };
 
@@ -210,14 +224,6 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
   useImperativeHandle(ref, () => ({
     fit: () => frame(PRESET_DIRECTIONS.iso),
     setPreset: (preset) => frame(PRESET_DIRECTIONS[preset]),
-    frameBox(min, max, preset) {
-      // EPLAN es Z-up y el builder rota a Y-up de three: (x, y, z) -> (x, z, -y).
-      const box = new THREE.Box3(
-        new THREE.Vector3(min[0], min[2], -max[1]),
-        new THREE.Vector3(max[0], max[2], -min[1])
-      );
-      frameBox3(box, PRESET_DIRECTIONS[preset]);
-    },
     applyVisibility(hidden, isolated) {
       const handles = handlesRef.current;
       if (!handles?.modelRoot) return;
@@ -231,6 +237,17 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
               : objectId === undefined || !hidden.has(objectId);
         }
       });
+    },
+    frameParts(objectIds, preset) {
+      const handles = handlesRef.current;
+      if (!handles?.modelRoot) return;
+      const box = new THREE.Box3();
+      for (const objectId of objectIds) {
+        const part = findPart(objectId);
+        if (part) box.union(new THREE.Box3().setFromObject(part));
+      }
+      if (box.isEmpty()) return;
+      frameBox3(box, PRESET_DIRECTIONS[preset]);
     },
     selectPart(objectId) {
       const handles = handlesRef.current;
