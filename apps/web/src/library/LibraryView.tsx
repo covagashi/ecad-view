@@ -90,6 +90,7 @@ export function LibraryView({ dragging }: LibraryViewProps) {
             <IconSearch size={13} />
             <input
               type="search"
+              aria-label={t("library.searchPlaceholder", { count: allFiles.length })}
               placeholder={t("library.searchPlaceholder", { count: allFiles.length })}
               value={query}
               onChange={(e) => setQuery(e.target.value)}

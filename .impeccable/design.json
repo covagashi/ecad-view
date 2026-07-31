@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T10:38:22Z",
+  "title": "Design System: Covaga ECAD Project Viewer",
+  "extensions": {
+    "colorMeta": {
+      "ink-blue": {
+        "role": "primary",
+        "displayName": "Azul de tinta técnica",
+        "canonical": "#5b9dff",
+        "lightThemeValue": "#2e6be6",
+        "tonalRamp": ["#0a1729", "#122a4d", "#1b3f75", "#2555a0", "#3a74c9", "#5b9dff", "#8dbaff", "#c4dbff"]
+      },
+      "table": {
+        "role": "neutral",
+        "displayName": "Mesa",
+        "canonical": "#0b0d11",
+        "lightThemeValue": "#f5f6f3",
+        "tonalRamp": ["#05070a", "#0b0d11", "#12151b", "#1a1e25", "#2a2f38", "#454b56", "#8b94a3", "#e6eaf0"]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "#0e1116",
+        "lightThemeValue": "#e9ebe6",
+        "tonalRamp": ["#05070a", "#0b0d11", "#0e1116", "#12151b", "#1a1e25", "#2a2f38", "#5c6470", "#c9d0da"]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Panel elevado",
+        "canonical": "#12151b",
+        "lightThemeValue": "#ffffff",
+        "tonalRamp": ["#07090c", "#0e1116", "#12151b", "#1a1e25", "#242932", "#343a45", "#6b7381", "#d5dae2"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Lienzo",
+        "canonical": "#1a1e25",
+        "lightThemeValue": "#e2e5df",
+        "tonalRamp": ["#0b0d11", "#12151b", "#1a1e25", "#252a33", "#333a45", "#4a5260", "#7b8494", "#dfe4eb"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#e6eaf0",
+        "lightThemeValue": "#1a222e",
+        "tonalRamp": ["#1a222e", "#2b3542", "#3f4a58", "#5c6470", "#8b94a3", "#b4bcc7", "#e6eaf0", "#f7f9fc"]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Tinta apagada",
+        "canonical": "#8b94a3",
+        "lightThemeValue": "#5b6572",
+        "tonalRamp": ["#171b21", "#242a33", "#353c47", "#4a525f", "#6b7482", "#8b94a3", "#b2b9c4", "#d9dde3"]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Tinta tenue",
+        "canonical": "#5c6470",
+        "lightThemeValue": "#8a93a0",
+        "tonalRamp": ["#0f1216", "#191d23", "#252a32", "#333944", "#454c58", "#5c6470", "#8a93a0", "#c2c8d1"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Rojo de fallo",
+        "canonical": "#e5534b",
+        "tonalRamp": ["#2b0d0b", "#471513", "#661d19", "#8c2822", "#b8362e", "#e5534b", "#f08b85", "#fbc9c6"]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Verde de conformidad",
+        "canonical": "#4ade80",
+        "lightThemeValue": "#16a34a",
+        "tonalRamp": ["#041c0e", "#0a3019", "#0f4a26", "#146633", "#188b44", "#22b45c", "#4ade80", "#a6f4c5"]
+      }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Título de la biblioteca de proyectos. Un solo uso por pantalla." },
+      "title": { "displayName": "Title", "purpose": "Cabecera de vista de datos, panel de proyecto y cifras de estadística." },
+      "subtitle": { "displayName": "Subtitle", "purpose": "Zonas de arrastre y estados vacíos." },
+      "body": { "displayName": "Body", "purpose": "Tamaño base de la aplicación: párrafo, valores, contenido de panel." },
+      "body-compact": { "displayName": "Body compact", "purpose": "Pestañas, subtítulos y filas densas de tabla." },
+      "label": { "displayName": "Label", "purpose": "Rótulo de sección en mayúsculas con tracking. Máximo cuatro palabras. Suelo de tamaño del sistema." },
+      "data": { "displayName": "Data (mono)", "purpose": "Cadenas literales del proyecto: designaciones de dispositivo, nombres de página, propiedades del manifest.db." }
+    },
+    "shadows": [
+      { "name": "shadow-float", "value": "0 2px 10px rgba(0,0,0,0.35)", "purpose": "Controles superpuestos al lienzo del plano (presets de vista 3D). En tema claro: 0 2px 10px rgba(15,23,42,0.08)." },
+      { "name": "shadow-card", "value": "0 8px 30px rgba(0,0,0,0.4)", "purpose": "Superficies que se abren sobre el contenido: rail expandido, hojas móviles, botón flotante. En tema claro: 0 8px 30px rgba(15,23,42,0.12)." },
+      { "name": "focus-ring", "value": "0 0 0 3px var(--accent-dim)", "purpose": "Estado, no elevación. Marca foco de teclado y selección activa. Obligatorio allí donde hoy hay outline: none." }
+    ],
+    "motion": [
+      { "name": "state", "value": "0.12s ease-out", "purpose": "Cambios de color, borde y opacidad en controles: botones, chips, filas, herramientas." },
+      { "name": "layout", "value": "0.16s ease-out", "purpose": "Expansión del rail y del interruptor de ajustes. El rail añade transition-delay de 0.15s en hover para no dispararse al cruzar el ratón." },
+      { "name": "sheet", "value": "0.22s cubic-bezier(0.32, 0.72, 0.24, 1)", "purpose": "Entrada de las hojas modales móviles desde el borde inferior." },
+      { "name": "sheet-fade", "value": "0.16s ease-out", "purpose": "Fundido del fondo bajo la hoja modal." },
+      { "name": "highlight-pulse", "value": "1.2s ease-out 2", "purpose": "Único movimiento del lienzo: anillo de acento sobre el destino de una referencia cruzada. Termina solo." }
+    ],
+    "breakpoints": [
+      { "name": "dense", "value": "620px" },
+      { "name": "mobile", "value": "760px" },
+      { "name": "landscape-short", "value": "500px (max-height)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón por defecto",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Acción secundaria. Silencioso en reposo, contorno de 1px como toda decoración.",
+      "html": "<button class=\"ds-btn\">Abrir proyecto</button>",
+      "css": ".ds-btn { appearance: none; border: 1px solid var(--border-strong, #ffffff24); border-radius: 8px; background: transparent; color: var(--text, #e6eaf0); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.45; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: background 0.12s ease-out, border-color 0.12s ease-out, color 0.12s ease-out; } .ds-btn:hover { background: var(--panel-2, #12151b); } .ds-btn:focus-visible { outline: none; border-color: var(--accent, #5b9dff); box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); } .ds-btn:disabled { opacity: 0.45; cursor: default; }"
+    },
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Una sola acción primaria por vista. Es el único relleno pleno de acento del sistema.",
+      "html": "<button class=\"ds-btn-primary\">Abrir .epdz</button>",
+      "css": ".ds-btn-primary { appearance: none; border: 1px solid var(--accent, #5b9dff); border-radius: 8px; background: var(--accent, #5b9dff); color: var(--on-accent, #07090c); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.45; padding: 5px 12px; cursor: pointer; white-space: nowrap; transition: filter 0.12s ease-out; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); } .ds-btn-primary:disabled { opacity: 0.45; cursor: default; filter: none; }"
+    },
+    {
+      "name": "Botón silencioso",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Acción terciaria dentro de barras densas. Sin borde; sube a tinta plena al pasar por encima.",
+      "html": "<button class=\"ds-btn-quiet\">Cancelar</button>",
+      "css": ".ds-btn-quiet { appearance: none; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted, #8b94a3); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.45; padding: 5px 12px; cursor: pointer; transition: color 0.12s ease-out; } .ds-btn-quiet:hover { color: var(--text, #e6eaf0); } .ds-btn-quiet:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); }"
+    },
+    {
+      "name": "Elemento del rail",
+      "kind": "nav",
+      "refersTo": "rail-item",
+      "description": "Navegación principal de escritorio. 38px de alto, icono más etiqueta que aparece al expandirse el rail.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-rail-item ds-rail-item--active\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><rect x=\"2\" y=\"2\" width=\"12\" height=\"12\" rx=\"1.5\"/><path d=\"M2 6h12M6 6v8\"/></svg><span>Esquemas</span></button><button class=\"ds-rail-item\"><svg viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M8 1.5l6 3.2v6.6L8 14.5l-6-3.2V4.7z\"/><path d=\"M2 4.7l6 3.2 6-3.2M8 7.9v6.6\"/></svg><span>Modelo 3D</span></button></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 2px; width: 220px; padding: 8px; background: var(--panel, #0e1116); border-right: 1px solid var(--border, #ffffff12); } .ds-rail-item { appearance: none; border: none; background: transparent; color: var(--text-muted, #8b94a3); display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; cursor: pointer; white-space: nowrap; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; transition: background 0.12s ease-out, color 0.12s ease-out; } .ds-rail-item:hover { background: var(--panel-2, #12151b); color: var(--text, #e6eaf0); } .ds-rail-item--active { background: var(--accent-dim, rgba(91,157,255,0.14)); color: var(--accent, #5b9dff); } .ds-rail-item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); }"
+    },
+    {
+      "name": "Campo de búsqueda",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Búsqueda de dispositivo y de proyecto. El contenedor es lo visible; el input interno es transparente.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 16 16\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><circle cx=\"7\" cy=\"7\" r=\"4.5\"/><path d=\"M10.5 10.5L14 14\"/></svg><input type=\"search\" placeholder=\"Buscar dispositivo\" /></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 8px; width: 300px; background: var(--panel-2, #12151b); border: 1px solid var(--border, #ffffff12); border-radius: 10px; padding: 8px 12px; color: var(--text-muted, #8b94a3); transition: border-color 0.12s ease-out, box-shadow 0.12s ease-out; } .ds-search:focus-within { border-color: var(--accent, #5b9dff); box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); } .ds-search input { flex: 1; min-width: 0; border: none; background: transparent; outline: none; color: var(--text, #e6eaf0); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; } .ds-search input::placeholder { color: var(--text-muted, #8b94a3); }"
+    },
+    {
+      "name": "Chip de filtro",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filtros de mecanizado y agrupadores. Píldora con borde; el estado activo invierte a acento tenue.",
+      "html": "<div class=\"ds-chiprow\"><button class=\"ds-chip ds-chip--on\">Taladros</button><button class=\"ds-chip\">Fresados</button><button class=\"ds-chip\">Roscas</button></div>",
+      "css": ".ds-chiprow { display: flex; gap: 6px; flex-wrap: wrap; } .ds-chip { appearance: none; display: inline-flex; align-items: center; gap: 7px; background: var(--panel, #0e1116); border: 1px solid var(--border-strong, #ffffff24); border-radius: 999px; color: var(--text-muted, #8b94a3); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12.5px; padding: 5px 12px; cursor: pointer; transition: background 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out; } .ds-chip:hover { color: var(--text, #e6eaf0); border-color: var(--accent-strong, rgba(91,157,255,0.35)); } .ds-chip--on { background: var(--accent-dim, rgba(91,157,255,0.14)); border-color: var(--accent-strong, rgba(91,157,255,0.35)); color: var(--accent, #5b9dff); } .ds-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); }"
+    },
+    {
+      "name": "Pill de dato",
+      "kind": "chip",
+      "refersTo": "pill",
+      "description": "Etiqueta informativa no interactiva sobre valores del proyecto. Variantes semánticas warn y ok.",
+      "html": "<span class=\"ds-pill\">M6</span><span class=\"ds-pill ds-pill--ok\">Validado</span><span class=\"ds-pill ds-pill--warn\">Sin AML</span>",
+      "css": ".ds-pill { display: inline-block; background: var(--accent-dim, rgba(91,157,255,0.14)); color: var(--accent, #5b9dff); border-radius: 999px; padding: 2px 8px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 1px 4px 1px 0; white-space: nowrap; } .ds-pill--warn { background: color-mix(in srgb, var(--danger, #e5534b) 14%, transparent); color: var(--danger, #e5534b); } .ds-pill--ok { background: color-mix(in srgb, var(--ok, #4ade80) 14%, transparent); color: var(--ok, #4ade80); }"
+    },
+    {
+      "name": "Tarjeta de proyecto",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Entrada de la biblioteca. Miniatura a sangre sobre lienzo, sin sombra; el estado activo se marca con borde de acento y anillo.",
+      "html": "<button class=\"ds-card\"><span class=\"ds-card-thumb\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\"><path d=\"M12 2l9 5v10l-9 5-9-5V7z\"/><path d=\"M3 7l9 5 9-5M12 12v10\"/></svg></span><span class=\"ds-card-body\"><span class=\"ds-card-title\">Armario principal</span><span class=\"ds-card-meta\">=A1+B2 · 34 páginas</span></span></button>",
+      "css": ".ds-card { appearance: none; border: 1px solid var(--border, #ffffff12); background: var(--panel-2, #12151b); border-radius: 12px; overflow: hidden; cursor: pointer; padding: 0; text-align: left; color: var(--text, #e6eaf0); display: flex; flex-direction: column; width: 240px; transition: border-color 0.12s ease-out; } .ds-card:hover { border-color: var(--border-strong, #ffffff24); } .ds-card:focus-visible { outline: none; border-color: var(--accent-strong, rgba(91,157,255,0.35)); box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); } .ds-card-thumb { height: 120px; background: var(--canvas, #1a1e25); display: grid; place-items: center; color: var(--text-faint, #5c6470); } .ds-card-body { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; } .ds-card-title { font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; font-weight: 600; } .ds-card-meta { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: var(--text-muted, #8b94a3); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Pestaña de proyecto",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Tira superior de proyectos abiertos. La activa se cose visualmente al contenido de abajo.",
+      "html": "<div class=\"ds-tabstrip\"><button class=\"ds-tab ds-tab--active\">Armario principal</button><button class=\"ds-tab\">Línea de montaje</button></div>",
+      "css": ".ds-tabstrip { display: flex; align-items: stretch; height: 42px; background: var(--bg, #0b0d11); border-bottom: 1px solid var(--border, #ffffff12); padding: 0 8px; } .ds-tab { display: flex; align-items: center; gap: 8px; padding: 0 12px; margin: 6px 2px 0 0; border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; background: transparent; color: var(--text-muted, #8b94a3); cursor: pointer; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12.5px; white-space: nowrap; appearance: none; transition: color 0.12s ease-out; } .ds-tab:hover { color: var(--text, #e6eaf0); } .ds-tab--active { background: var(--panel-2, #12151b); border-color: var(--border, #ffffff12); color: var(--text, #e6eaf0); font-weight: 600; } .ds-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-dim, rgba(91,157,255,0.14)); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La mesa de luz",
+    "overview": "El fondo oscuro es la mesa. El plano, el esquema SVG o el modelo 3D, es la lámina iluminada que se apoya encima. Todo lo demás (rail, pestañas, paneles, barra de estado) es el marco de la mesa: está ahí, se usa constantemente, y nunca compite con la lámina por la atención. Esta metáfora explica de una vez por qué el tema oscuro es el predeterminado, por qué el cromo vive en grises casi sin croma, y por qué existe un único color de acento en todo el sistema.\n\nLa densidad es deliberada. Un ingeniero delante de un armario quiere ver la lista de dispositivos, el árbol del proyecto y la página abierta a la vez, no descubrirlos de tres clics. El sistema resuelve la carga con jerarquía (peso tipográfico, agrupación, alineación, capas tonales) y no con espacio en blanco. Las superficies se apilan en tres tonos casi contiguos separados por bordes de 1px, sin sombra entre ellos.\n\nEl sistema rechaza explícitamente cuatro cosas: el CAD legado, el SaaS genérico, la estética de juguete y el minimalismo vacío. Como el uso real es en taller y a distancia de brazo, el listón de legibilidad y de tamaño de target manda sobre cualquier decisión estética.",
+    "keyCharacteristics": [
+      "Sigue la preferencia del sistema y cae a oscuro cuando no hay ninguna; el tema claro (data-theme=\"light\") es paritario, no un modo de segunda.",
+      "Un solo acento en todo el sistema; el resto es neutro frío casi sin croma.",
+      "Profundidad por tono y borde de 1px, no por sombra.",
+      "IBM Plex Sans en toda la interfaz, IBM Plex Mono reservado a identificadores y cifras.",
+      "Controles compactos en reposo, pero con mínimos de tamaño que crecen antes que encoger.",
+      "Autoalojado y offline: fuentes, iconos y assets viajan con la app."
+    ],
+    "rules": [
+      { "name": "La Regla de la Lámina", "body": "El lienzo del plano nunca lleva encima color de marca. Ningún acento, gradiente ni tinte se superpone al SVG del esquema ni al render 3D salvo para señalar un objetivo concreto que el usuario acaba de pedir. El color en el lienzo es información, jamás decoración.", "section": "colors" },
+      { "name": "La Regla de la Voz Única", "body": "Hay un solo acento. Si una pantalla necesita un segundo color para distinguir dos cosas, el problema es de jerarquía, no de paleta. Rojo y verde son semánticos, no acentos disponibles.", "section": "colors" },
+      { "name": "La Regla de la Tinta Tenue", "body": "ink-faint está prohibido en cualquier texto que el usuario necesite leer. Su sitio son placeholders, iconos inactivos y glifos decorativos.", "section": "colors" },
+      { "name": "La Regla del Suelo de 11px", "body": "11px es el tamaño mínimo del sistema, y solo para etiquetas en mayúsculas con tracking. Cualquier cosa por debajo es deriva y debe subir.", "section": "typography" },
+      { "name": "La Regla de la Mono Literal", "body": "Si la cadena viene del archivo del proyecto, va en mono. Si la ha escrito la interfaz, va en sans.", "section": "typography" },
+      { "name": "La Regla de los Siete Peldaños", "body": "El sistema tiene siete roles tipográficos y ni uno más. Un tamaño nuevo a mitad de camino entre dos existentes no es jerarquía, es ruido.", "section": "typography" },
+      { "name": "La Regla de la Sombra que se Gana", "body": "Una superficie solo lleva sombra si puede desaparecer: si flota, se abre, o tapa algo. Prueba de auditoría: si el elemento sigue en pantalla después de pulsar Escape, no debe llevar sombra.", "section": "elevation" },
+      { "name": "La Regla del Foco Visible", "body": "outline: none sin sustituto está prohibido. Cada sitio donde aparece hoy debe llevar el anillo de acento de 3px.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar el suelo de 11px como mínimo absoluto de tamaño de texto, y solo para etiquetas en mayúsculas.",
+      "Do llevar cada identificador que venga del proyecto a IBM Plex Mono con tabular-nums.",
+      "Do dar al usuario de taller targets de 44px como mínimo en móvil, aunque cueste densidad.",
+      "Do construir profundidad con los tres tonos de superficie y bordes de 1px antes de pensar en una sombra.",
+      "Do sustituir todo outline: none por el anillo de acento de 3px.",
+      "Do mantener la paridad del tema claro: cualquier regla nueva se comprueba en data-theme=\"light\".",
+      "Do limitar las transiciones a 120-220ms con salida suave, y solo sobre cambio de estado.",
+      "Do dejar sitio a cadenas largas: la interfaz tiene ocho idiomas."
+    ],
+    "donts": [
+      "Don't reproducir el CAD legado: nada de biseles 3D, iconografía de los 2000, ni barras de herramientas apiladas sin jerarquía.",
+      "Don't caer en el SaaS genérico: sin gradientes, sin rejillas de cards redondeadas repetidas, sin hero de métricas, sin ilustraciones flat de stock.",
+      "Don't usar estética de juguete: sin animaciones exageradas, sin colores saturados decorativos, sin emojis, sin radios por encima de 16px salvo píldoras.",
+      "Don't resolver 'está muy cargado' con minimalismo vacío. Se arregla con jerarquía, no escondiendo datos.",
+      "Don't introducir un segundo color de acento.",
+      "Don't poner texto informativo en ink-faint ni gris claro 'para que respire'.",
+      "Don't inventar radios nuevos. La escala es 6 / 8 / 10 / 12 / 16 / 999.",
+      "Don't escribir sombras a mano. Solo shadow-float, shadow-card y el anillo de foco.",
+      "Don't animar sin alternativa: toda animación nueva necesita su @media (prefers-reduced-motion: reduce).",
+      "Don't sacar identificadores internos (typeId, objectId, rutas del archivo) a la superficie.",
+      "Don't poner cromo de marca encima del lienzo del plano."
+    ]
+  }
+}

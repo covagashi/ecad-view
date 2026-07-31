@@ -112,6 +112,11 @@
   color: var(--text-faint);
 }
 
+.panel-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
 .panel-search input {
   flex: 1;
   min-width: 0;
@@ -121,8 +126,9 @@
   font-size: 12.5px;
 }
 
+/* El placeholder es texto que hay que leer: --text-faint se queda en 3.1:1. */
 .panel-search input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .panel-scroll {

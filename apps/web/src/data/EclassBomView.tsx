@@ -42,6 +42,7 @@ export function EclassBomView({
         <IconSearch size={13} />
         <input
           type="search"
+          aria-label={t("data.search")}
           placeholder={t("data.search")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}

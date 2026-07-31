@@ -155,6 +155,7 @@ export function PartsPanel({
         <IconSearch size={13} />
         <input
           type="search"
+          aria-label={t("parts.filter", { count: parts.length })}
           placeholder={t("parts.filter", { count: parts.length })}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}

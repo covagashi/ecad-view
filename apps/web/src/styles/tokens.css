@@ -49,6 +49,8 @@
   --accent-strong: rgba(46, 107, 230, 0.35);
   --on-accent: #ffffff;
   --canvas: #e2e5df;
+  /* El rojo del tema oscuro solo llega a 3.4:1 sobre fondo claro. */
+  --danger: #c0342b;
   --ok: #16a34a;
   --shadow-float: 0 2px 10px rgba(15, 23, 42, 0.08);
   --shadow-card: 0 8px 30px rgba(15, 23, 42, 0.12);

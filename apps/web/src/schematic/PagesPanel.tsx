@@ -238,6 +238,7 @@ export function PagesPanel({
             <IconSearch size={13} />
             <input
               type="search"
+              aria-label={t("filter.placeholder", { count: pages.length })}
               placeholder={t("filter.placeholder", { count: pages.length })}
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -298,6 +299,7 @@ export function PagesPanel({
             <IconSearch size={13} />
             <input
               type="search"
+              aria-label={t("devices.placeholder", { count: devices.length })}
               placeholder={t("devices.placeholder", { count: devices.length })}
               value={deviceFilter}
               onChange={(e) => setDeviceFilter(e.target.value)}

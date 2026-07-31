@@ -84,3 +84,59 @@ select {
 .btn.quiet:hover:not(:disabled) {
   color: var(--text);
 }
+
+/*
+ * Foco de teclado. El visor se recorre a menudo con Tab entre página,
+ * dispositivo y pieza: el anillo de acento es la única señal de dónde está el
+ * cursor, así que va en el nivel base y no componente a componente.
+ */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/*
+ * Uso en taller: con puntero grueso los controles crecen al mínimo táctil
+ * aunque cueste densidad. En escritorio se mantienen compactos.
+ */
+@media (pointer: coarse) {
+  .btn,
+  .data-tool,
+  .panel-head .panel-tool,
+  .zoom-toolbar button,
+  .part-action.icon,
+  .part-row-eye {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Filas y campos a ancho completo: solo la altura necesita el mínimo. */
+  .rail-pop-action,
+  .rail-pop-row,
+  .mobile-menu-item,
+  .library-search,
+  .panel-search,
+  .model-card select {
+    min-height: 44px;
+  }
+}
+
+/*
+ * Sin movimiento: hojas móviles, pulsos de referencia cruzada y expansión del
+ * rail pasan a instantáneos. Importante también por batería, con three.js
+ * renderizando en paralelo.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

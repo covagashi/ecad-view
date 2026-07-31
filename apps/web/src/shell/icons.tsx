@@ -8,7 +8,16 @@ import type { SVGProps } from "react";
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
 
 function base({ size = 16, ...props }: IconProps): SVGProps<SVGSVGElement> {
-  return { width: size, height: size, viewBox: "0 0 16 16", fill: "none", ...props };
+  return {
+    width: size,
+    height: size,
+    viewBox: "0 0 16 16",
+    fill: "none",
+    // Decorativos: el nombre accesible lo pone el botón que los contiene.
+    "aria-hidden": true,
+    focusable: false,
+    ...props,
+  };
 }
 
 /** Rayo de la marca (relleno, se usa sobre fondo acento). */

@@ -1,0 +1,14 @@
+{
+  "files": ["apps/web/index.html"],
+  "exclude": [
+    "apps/web/dist/**",
+    "apps/*/dist/**",
+    "dist-packages/**",
+    "reference/**",
+    "docs/**",
+    "wiki/**"
+  ],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

@@ -64,9 +64,10 @@
     border-radius: 999px;
   }
 
+  /* Navegación principal en taller: mínimo táctil, no el compacto de escritorio. */
   .mobile-fab-arrow {
-    width: 42px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
   }
@@ -80,7 +81,7 @@
   }
 
   .mobile-fab-main {
-    height: 38px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -281,6 +281,11 @@
   max-width: 280px;
   text-overflow: ellipsis;
   cursor: pointer;
+  border-radius: 6px;
+}
+
+.model-card select:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .model-card .count {

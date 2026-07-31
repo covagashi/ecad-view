@@ -293,6 +293,11 @@
   outline: none;
 }
 
+.rail-pop-row select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
 .rail-pop-sep {
   height: 1px;
   background: var(--border);

@@ -208,6 +208,11 @@
   color: var(--text-faint);
 }
 
+.library-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
 .library-search input {
   flex: 1;
   min-width: 0;
@@ -217,8 +222,9 @@
   font-size: 13px;
 }
 
+/* El placeholder es texto que hay que leer: --text-faint se queda en 3.1:1. */
 .library-search input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .library-section {
