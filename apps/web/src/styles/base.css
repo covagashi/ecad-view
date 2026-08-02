@@ -19,6 +19,34 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Iconos SVG inline: sin caja de fondo y sin inversión de "forced colors"
+ * (Android WebView / alto contraste). El trazo sigue currentColor del botón.
+ */
+svg {
+  background: transparent !important;
+  forced-color-adjust: none;
+  -webkit-backface-visibility: hidden;
+}
+
+button svg,
+.rail-icon svg,
+.rail-logo-mark svg,
+.data-tool svg,
+.panel-tool svg,
+.mobile-fab svg,
+.mobile-menu-item svg {
+  display: block;
+  flex: none;
+  background: transparent !important;
+}
+
+/* El rayo de marca lleva relleno explícito. */
+.rail-logo-mark svg path[fill],
+.rail-logo-mark svg path:not([stroke]) {
+  fill: currentColor;
+}
+
 button,
 input,
 select {
@@ -95,7 +123,7 @@ select:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 /*
@@ -108,9 +136,23 @@ input:focus-visible,
   .panel-head .panel-tool,
   .zoom-toolbar button,
   .part-action.icon,
-  .part-row-eye {
+  .part-row-eye,
+  .tab-close,
+  .tab-new {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  /* Pestañas y campos: altura mínima de taller. */
+  .tab,
+  .tab-new {
+    min-height: 44px;
+    margin-top: 0;
+  }
+
+  .tabstrip {
+    height: auto;
+    min-height: 48px;
   }
 
   /* Filas y campos a ancho completo: solo la altura necesita el mínimo. */

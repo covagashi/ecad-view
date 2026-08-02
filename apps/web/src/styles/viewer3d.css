@@ -53,7 +53,7 @@
   color: var(--text-faint);
   cursor: pointer;
   padding: 3px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   flex: none;
   display: grid;
   place-items: center;
@@ -74,7 +74,7 @@
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-muted);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   padding: 5px 10px;
   font-size: 11.5px;
   font-weight: 500;
@@ -129,7 +129,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
 }
 
 .part-row-main {
@@ -158,7 +158,7 @@
 
 .part-row-main .badge {
   flex: none;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
   font-family: var(--font-mono);
 }
@@ -197,7 +197,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-right: 6px;
   transition: opacity 0.12s ease;
 }
@@ -231,7 +231,7 @@
   border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-muted);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 10px;
   font-size: 11.5px;
   cursor: pointer;
@@ -258,7 +258,7 @@
   gap: 8px;
   background: color-mix(in srgb, var(--panel) 92%, transparent);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 7px 12px;
   color: var(--text);
   font-size: 12.5px;
@@ -281,11 +281,11 @@
   max-width: 280px;
   text-overflow: ellipsis;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .model-card select:focus-visible {
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .model-card .count {
@@ -306,7 +306,7 @@
   gap: 2px;
   background: color-mix(in srgb, var(--panel) 92%, transparent);
   border: 1px solid var(--border-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   padding: 4px;
   backdrop-filter: blur(6px);
   font-size: 11.5px;
@@ -321,7 +321,7 @@
   color: inherit;
   font: inherit;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 

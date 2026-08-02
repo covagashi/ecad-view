@@ -35,15 +35,20 @@ export function PositionsView({
 
   return (
     <div className="data-section">
-      <div className="panel-search data-search">
-        <IconSearch size={13} />
-        <input
-          type="search"
-          aria-label={t("data.search")}
-          placeholder={t("data.search")}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+      <div className="data-toolbar">
+        <div className="panel-search data-search">
+          <IconSearch size={14} />
+          <input
+            type="search"
+            aria-label={t("data.search")}
+            placeholder={t("data.search")}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
+        <div className="data-count mono" aria-live="polite">
+          {filtered.length}
+        </div>
       </div>
       <div className="data-table-wrap">
         <table className="data-table">

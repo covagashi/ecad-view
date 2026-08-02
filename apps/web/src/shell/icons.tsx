@@ -137,6 +137,28 @@ export function IconList(props: IconProps) {
   );
 }
 
+/** Cable / datos de cableado: dos bornes unidos por un hilo. */
+export function IconWire(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="3.2" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="12.8" cy="8" r="1.6" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M4.8 8h6.4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7.2 5.5v5M8.8 5.5v5"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Descargar (exportar CSV). */
 export function IconDownload(props: IconProps) {
   return (

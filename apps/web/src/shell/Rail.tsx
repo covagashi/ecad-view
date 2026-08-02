@@ -4,7 +4,7 @@ import { useI18n } from "../i18n";
 import { useTheme } from "../theme";
 import type { ProjectView } from "../state/types";
 import { SettingsPanel } from "./SettingsPanel";
-import { IconBolt, IconCube, IconGear, IconHome, IconInfo, IconList, IconMoon, IconSchematic, IconSun } from "./icons";
+import { IconBolt, IconCube, IconGear, IconHome, IconInfo, IconMoon, IconSchematic, IconSun, IconWire } from "./icons";
 
 /**
  * Rail izquierdo de navegación: 56 px de ancho en el flujo; al pasar el ratón
@@ -49,7 +49,7 @@ export function Rail() {
     {
       view: "data",
       label: t("rail.data"),
-      icon: IconList,
+      icon: IconWire,
       enabled: !!doc && (!!doc.manifest || !!doc.amlEntry),
     },
   ];

@@ -1,6 +1,6 @@
 [package]
 name = "covaga-desktop"
-version = "0.4.0"
+version = "0.5.0"
 description = "Tauri desktop shell wrapping the Covaga ECAD web viewer"
 license = "MIT"
 edition = "2021"

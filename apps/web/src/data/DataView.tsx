@@ -15,7 +15,7 @@ import { NetworkView } from "./NetworkView";
 import { PositionsView } from "./PositionsView";
 import { InterruptionView } from "./InterruptionView";
 
-export type DataTab = "bom" | "panel" | "connections" | "network" | "positions" | "ipoints";
+export type DataTab = "connections" | "panel" | "network" | "bom" | "positions" | "ipoints";
 
 /** Acciones de navegación que las pestañas usan para saltar a esquemas/3D. */
 export interface DataNav {
@@ -31,34 +31,39 @@ export interface DataNav {
   resolve3d: (designation: string) => { modelIndex: number; objectId: number } | null;
 }
 
+function defaultTab(doc: {
+  aml: unknown;
+  amlEntry: unknown;
+  manifest: { connections: unknown[]; interruptionPoints: unknown[] } | null;
+}): DataTab {
+  // En taller el hilo manda: conexiones primero si hay lista de cableado.
+  if ((doc.manifest?.connections.length ?? 0) > 0) return "connections";
+  if (doc.aml || doc.amlEntry) return "panel";
+  if ((doc.manifest?.interruptionPoints.length ?? 0) > 0) return "ipoints";
+  return "connections";
+}
+
 /**
- * Vista "Datos": lo que el AutomationML y el manifest.db saben del proyecto
- * más allá de páginas y modelos — BOM por clase eCl@ss, mecanizado del armario
- * (ProPanel), conexiones de cableado con su cable en 3D, dispositivos de
- * red/PLC, posiciones de montaje y validación de puntos de interrupción.
- * Se usa como vista completa (escritorio) y dentro del modal móvil.
+ * Vista "Datos": lo que el montador necesita delante del armario —
+ * conexiones de cableado, mecanizado, red/PLC, BOM, posiciones y puntos
+ * de interrupción. Escritorio a pantalla completa; en móvil, dentro del modal.
  */
 export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
   const { dispatch, active: doc } = useProjects();
   const { t, locale } = useI18n();
-  const [tab, setTab] = useState<DataTab>(() =>
-    doc?.aml || doc?.amlEntry ? "bom" : "connections"
-  );
+  const [tab, setTab] = useState<DataTab>(() => (doc ? defaultTab(doc) : "connections"));
   const nonceRef = useRef(0);
 
-  // Parseo perezoso del AutomationML al entrar por primera vez.
   useAml(doc ?? null);
 
   const aml = doc?.aml ?? null;
   const manifest = doc?.manifest ?? null;
 
-  // Idioma de proyecto: se elige en Ajustes; aquí solo se resuelve.
   const lang = useMemo(
     () => resolveAmlLang(aml, doc?.amlLang, locale),
     [aml, doc?.amlLang, locale]
   );
 
-  // Índice esquema→3D (mismo mecanismo que la vista de esquemas).
   const partLocations = useMemo(
     () => (doc?.manifest ? getPartLocations(doc.id, doc.epdzModels) : new Map<string, number>()),
     [doc?.id, doc?.manifest, doc?.epdzModels]
@@ -68,7 +73,6 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
     [doc?.deviceIndex, manifest, partLocations]
   );
 
-  // Cajas 3D por pieza para localizar el cable de cada conexión; bajo demanda.
   const partBoxes = useMemo<PartBoxIndex>(
     () =>
       tab === "connections" && doc && doc.epdzModels.length > 0
@@ -128,15 +132,16 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
     },
   };
 
+  // Orden de taller: cableado → placa → red → lista de material → resto.
   const tabs: { key: DataTab; label: string; enabled: boolean }[] = [
-    { key: "bom", label: t("data.tab.bom"), enabled: doc.amlEntry !== null },
-    { key: "panel", label: t("data.tab.panel"), enabled: doc.amlEntry !== null },
     {
       key: "connections",
       label: t("data.tab.connections"),
       enabled: (manifest?.connections.length ?? 0) > 0,
     },
+    { key: "panel", label: t("data.tab.panel"), enabled: doc.amlEntry !== null },
     { key: "network", label: t("data.tab.network"), enabled: doc.amlEntry !== null },
+    { key: "bom", label: t("data.tab.bom"), enabled: doc.amlEntry !== null },
     { key: "positions", label: t("data.tab.positions"), enabled: doc.amlEntry !== null },
     {
       key: "ipoints",
@@ -144,34 +149,42 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
       enabled: (manifest?.interruptionPoints.length ?? 0) > 0,
     },
   ];
-  const needsAml = tab === "bom" || tab === "panel" || tab === "network" || tab === "positions";
+  const visibleTabs = tabs.filter((entry) => entry.enabled);
+  const activeTab = visibleTabs.some((entry) => entry.key === tab)
+    ? tab
+    : (visibleTabs[0]?.key ?? "connections");
+
+  const needsAml =
+    activeTab === "bom" ||
+    activeTab === "panel" ||
+    activeTab === "network" ||
+    activeTab === "positions";
 
   const description = pickText(aml?.description ?? null, lang);
+  const projectName = manifest?.projectName ?? aml?.name ?? doc.fileName;
 
   return (
     <div className="data-view">
       <header className="data-head">
         <div className="data-title">
-          <div className="eyebrow">{t("data.title")}</div>
-          <h1>{manifest?.projectName ?? aml?.name ?? doc.fileName}</h1>
+          <h1 className="mono">{projectName}</h1>
           {description && <p className="sub">{description}</p>}
         </div>
       </header>
 
-      <nav className="data-tabs" role="tablist">
-        {tabs
-          .filter((entry) => entry.enabled)
-          .map((entry) => (
-            <button
-              key={entry.key}
-              role="tab"
-              aria-selected={tab === entry.key}
-              className={tab === entry.key ? "active" : ""}
-              onClick={() => setTab(entry.key)}
-            >
-              {entry.label}
-            </button>
-          ))}
+      <nav className="data-tabs" role="tablist" aria-label={t("rail.data")}>
+        {visibleTabs.map((entry) => (
+          <button
+            key={entry.key}
+            role="tab"
+            type="button"
+            aria-selected={activeTab === entry.key}
+            className={activeTab === entry.key ? "active" : ""}
+            onClick={() => setTab(entry.key)}
+          >
+            {entry.label}
+          </button>
+        ))}
       </nav>
 
       <div className="data-body">
@@ -181,9 +194,7 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
           </div>
         ) : (
           <>
-            {tab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
-            {tab === "panel" && aml && <PanelView aml={aml} />}
-            {tab === "connections" && (
+            {activeTab === "connections" && (
               <ConnectionsView
                 manifest={manifest}
                 aml={aml}
@@ -193,13 +204,14 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
                 nav={nav}
               />
             )}
-            {tab === "network" && aml && <NetworkView aml={aml} nav={nav} />}
-            {tab === "positions" && aml && <PositionsView aml={aml} lang={lang} nav={nav} />}
-            {tab === "ipoints" && <InterruptionView manifest={manifest} nav={nav} />}
+            {activeTab === "panel" && aml && <PanelView aml={aml} />}
+            {activeTab === "network" && aml && <NetworkView aml={aml} nav={nav} />}
+            {activeTab === "bom" && aml && <EclassBomView aml={aml} lang={lang} nav={nav} />}
+            {activeTab === "positions" && aml && <PositionsView aml={aml} lang={lang} nav={nav} />}
+            {activeTab === "ipoints" && <InterruptionView manifest={manifest} nav={nav} />}
           </>
         )}
       </div>
     </div>
   );
 }
-

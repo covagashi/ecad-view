@@ -36,23 +36,32 @@ export function EclassBomView({
       .filter((group) => group.articles.length > 0 || group.label.toLowerCase().includes(q));
   }, [groups, filter, lang]);
 
+  const totalArticles = filtered.reduce((sum, g) => sum + g.articles.length, 0);
+  const totalQty = filtered.reduce((sum, g) => sum + g.total, 0);
+
   return (
-    <div className="data-section">
-      <div className="panel-search data-search">
-        <IconSearch size={13} />
-        <input
-          type="search"
-          aria-label={t("data.search")}
-          placeholder={t("data.search")}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+    <div className="data-section data-section--scroll">
+      <div className="data-toolbar bom-toolbar">
+        <div className="panel-search data-search">
+          <IconSearch size={14} />
+          <input
+            type="search"
+            aria-label={t("data.search")}
+            placeholder={t("data.search")}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
+        <div className="data-count mono" aria-live="polite">
+          {filtered.length} · {totalArticles} · Σ{totalQty}
+        </div>
       </div>
 
       {filtered.map((group) => (
         <section key={group.code} className="data-card">
           <header className="data-card-head">
             <span className="data-class">{group.label}</span>
+            <span className="mono data-class-code">{group.code}</span>
             <span className="badge">{group.total}×</span>
           </header>
           <div className="data-table-wrap">
@@ -76,6 +85,7 @@ export function EclassBomView({
                         nav.hasDevice(designation) ? (
                           <button
                             key={designation}
+                            type="button"
                             className="data-link mono"
                             title={t("data.viewInSchematic")}
                             onClick={() => nav.toDevice(designation)}

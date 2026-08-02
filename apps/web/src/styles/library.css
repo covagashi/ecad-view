@@ -33,7 +33,7 @@
   padding: 12px 14px;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -103,7 +103,7 @@
   color: var(--text-muted);
   text-align: left;
   padding: 7px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 13px;
 }
@@ -148,7 +148,7 @@
   background: transparent;
   color: var(--text-faint);
   border: 1px dashed var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   padding: 9px 10px;
   margin-top: 8px;
   cursor: pointer;
@@ -203,23 +203,26 @@
   width: 300px;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   padding: 8px 12px;
-  color: var(--text-faint);
+  /* Icono + placeholder: legibles (ink-muted), no ink-faint. */
+  color: var(--text-muted);
 }
 
 .library-search:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .library-search input {
   flex: 1;
   min-width: 0;
+  align-self: stretch;
   border: none;
   background: transparent;
   outline: none;
   font-size: 13px;
+  color: var(--text);
 }
 
 /* El placeholder es texto que hay que leer: --text-faint se queda en 3.1:1. */
@@ -264,7 +267,7 @@
   appearance: none;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px 14px;
   cursor: pointer;
   text-align: left;
@@ -318,7 +321,7 @@
   appearance: none;
   border: 1px solid var(--border);
   background: var(--panel-2);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   padding: 0;
@@ -334,7 +337,7 @@
 
 .project-card.active {
   border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .card-thumb {
@@ -362,9 +365,9 @@
   top: 10px;
   background: var(--accent-dim);
   color: var(--accent);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   padding: 2px 7px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-family: var(--font-mono);
 }
 
@@ -384,18 +387,19 @@
 }
 
 .card-meta {
-  color: var(--text-faint);
-  font-size: 11.5px;
+  color: var(--text-muted);
+  font-size: 12px;
   font-family: var(--font-mono);
 }
 
 .drop-cell {
   border: 1px dashed var(--border-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: grid;
   place-items: center;
   min-height: 178px;
-  color: var(--text-faint);
+  /* CTA de vacío: hay que leerlo a distancia de brazo. */
+  color: var(--text-muted);
 }
 
 .drop-cell.dragging {
@@ -420,7 +424,7 @@
 .library-fallback-note {
   margin: 0;
   padding: 0 32px 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 12px;
   flex: none;
 }
@@ -440,8 +444,8 @@
 }
 
 .library-foot .privacy {
-  color: var(--text-faint);
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 /* ---------- Estado de carga / error de pestaña ---------- */
@@ -457,7 +461,7 @@
 .dropzone {
   width: min(440px, 100%);
   border: 1px dashed var(--border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--panel);
   padding: 36px 32px;
   text-align: center;

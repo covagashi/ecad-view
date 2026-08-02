@@ -18,6 +18,8 @@ function detectTheme(): Theme {
 
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
+  /* color-scheme en el elemento html evita cajas blancas en SVG del WebView. */
+  document.documentElement.style.colorScheme = theme;
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", META_COLORS[theme]);

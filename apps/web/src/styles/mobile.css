@@ -44,7 +44,7 @@
     padding: 3px;
     background: color-mix(in srgb, var(--panel-2) 92%, transparent);
     border: 1px solid var(--border-strong);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     box-shadow: var(--shadow-card);
     backdrop-filter: blur(10px);
   }
@@ -61,7 +61,7 @@
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
 
   /* Navegación principal en taller: mínimo táctil, no el compacto de escritorio. */
@@ -115,7 +115,7 @@
     bottom: 0;
     background: var(--panel-2);
     border-top: 1px solid var(--border-strong);
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
     padding: 20px 14px max(14px, env(safe-area-inset-bottom));
     max-height: 88vh;
     overflow-y: auto;
@@ -143,7 +143,7 @@
     transform: translateX(-50%);
     width: 40px;
     height: 4px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--border-strong);
   }
 
@@ -155,7 +155,7 @@
     gap: 12px;
     background: transparent;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     color: var(--text);
     font: inherit;
     font-size: 14px;
@@ -216,7 +216,7 @@
     bottom: 0;
     background: var(--panel-2);
     border-top: 1px solid var(--border-strong);
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
     padding: 18px 20px max(18px, env(safe-area-inset-bottom));
     max-height: 75vh;
     overflow-y: auto;
@@ -243,6 +243,48 @@
   .library-search {
     width: 100%;
     order: 3;
+    min-height: 44px;
+  }
+
+  /*
+   * Targets de taller en el breakpoint móvil (no solo pointer: coarse).
+   * En tablets con stylus o emuladores el media de puntero no basta.
+   */
+  .tab,
+  .tab-home,
+  .tab-new {
+    min-height: 44px;
+    min-width: 44px;
+    margin-top: 0;
+  }
+
+  .tab-new,
+  .tab-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .tabstrip {
+    height: auto;
+    min-height: 48px;
+  }
+
+  .btn.primary,
+  .library-head .btn {
+    min-height: 44px;
+  }
+
+  .mobile-menu-item {
+    min-height: 44px;
+  }
+
+  .mobile-menu-item .count {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .mobile-fab-main .dim {
+    color: var(--text-muted);
   }
 
   .library-section,

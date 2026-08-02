@@ -216,8 +216,8 @@ donde hay acción o selección.
 - **Tinta apagada** (`#8b94a3` oscuro, `#5b6572` claro): etiquetas, cabeceras de
   columna, texto secundario. Es el tono más claro admitido para texto que el
   usuario tiene que leer.
-- **Tinta tenue** (`#5c6470` oscuro, `#8a93a0` claro): iconografía inactiva,
-  placeholders, texto decorativo. Nunca información necesaria.
+- **Tinta tenue** (`#5c6470` oscuro, `#8a93a0` claro): iconografía inactiva y
+  glifos decorativos. Nunca información necesaria ni placeholders legibles.
 - **Bordes** (blanco al 7% y al 14% en oscuro; `#0f172a` al 10% y al 16% en claro):
   el separador por defecto es el de 1px al 7%; el fuerte marca contornos de
   control interactivo.
@@ -242,9 +242,9 @@ paleta: resuélvase con peso, agrupación o posición. Rojo y verde son semánti
 no acentos disponibles.
 
 **La Regla de la Tinta Tenue.** `ink-faint` está prohibido en cualquier texto que
-el usuario necesite leer. Su sitio son placeholders, iconos inactivos y glifos
-decorativos. En el momento en que una etiqueta pasa a ser información, sube a
-`ink-muted` como mínimo.
+el usuario necesite leer (incluido el placeholder de un campo de búsqueda). Su
+sitio son iconos inactivos y glifos decorativos. En el momento en que una etiqueta
+pasa a ser información, sube a `ink-muted` como mínimo.
 
 ## 3. Typography
 
@@ -294,14 +294,14 @@ Un panel lateral, una tarjeta o una fila seleccionada no llevan sombra: se
 distinguen por tono y contorno. La sombra queda reservada a lo que de verdad se
 despega del plano de la mesa y flota temporalmente sobre otro contenido.
 
-Hoy conviven sombras ad-hoc fuera de los tokens (en `schematic.css` y
-`shell.css`). Son deriva: toda sombra nueva debe salir del vocabulario de abajo,
-y las existentes se consolidan ahí cuando se toquen esos archivos.
+Los radios y las sombras del cromo viven en `apps/web/src/styles/tokens.css`.
+Los nombres de trabajo del CSS (`--bg`, `--text`, `--panel-2`) conviven con
+alias canónicos de este documento (`--table`, `--ink`, `--panel-raised`).
 
 ### Shadow Vocabulary
-- **Flotante** (`box-shadow: 0 2px 10px rgba(0,0,0,0.35)`, token `--shadow-float`): controles que se superponen al lienzo, como el bloque de presets de vista del visor 3D.
-- **Tarjeta** (`box-shadow: 0 8px 30px rgba(0,0,0,0.4)`, token `--shadow-card`): superficies que se abren sobre el contenido y lo bloquean: panel del rail expandido, hojas móviles, botón de acción flotante.
-- **Anillo de foco** (`box-shadow: 0 0 0 3px var(--accent-dim)`): no es elevación, es estado. Marca el elemento seleccionado o enfocado por teclado.
+- **Flotante** (token `--shadow-float`): controles que se superponen al lienzo, como el bloque de presets de vista del visor 3D.
+- **Tarjeta** (token `--shadow-card`): superficies que se abren sobre el contenido y lo bloquean: panel del rail expandido, hojas móviles, botón de acción flotante.
+- **Anillo de foco** (token `--focus-ring`): no es elevación, es estado. Marca el elemento seleccionado o enfocado por teclado.
 
 ### Named Rules
 
@@ -346,9 +346,9 @@ pieza no puede perder el cursor de foco.
 - **Grid:** `repeat(auto-fill, minmax(210px, 1fr))` con separación de 16px, sin breakpoints.
 
 ### Inputs / Fields
-- **Style:** contenedor sobre `panel-raised` con borde de 1px, 10px de radio y relleno `8px 12px`. El `<input>` interno es transparente y sin borde; el contenedor es lo que se ve. Icono a la izquierda en `ink-faint`.
-- **Focus:** el borde pasa a acento y aparece el anillo de 3px en `accent-dim`. El `outline: none` actual sin sustituto es un defecto pendiente, no el patrón.
-- **Placeholder:** hoy en `ink-faint`; debe cumplir el mismo listón de contraste que el texto de cuerpo, así que sube a `ink-muted`.
+- **Style:** contenedor sobre `panel-raised` con borde de 1px, 10px de radio (`--radius-lg`) y relleno `8px 12px`. El `<input>` interno es transparente y sin borde; el contenedor es lo que se ve. Icono a la izquierda en `ink-faint`.
+- **Focus:** el borde pasa a acento y aparece `--focus-ring` (anillo de 3px en `accent-dim`). El `outline: none` solo se usa junto a ese anillo (`:focus-visible` en base y en campos compuestos).
+- **Placeholder:** `ink-muted` (no `ink-faint`): el placeholder es texto que hay que leer, con el mismo listón de contraste que el cuerpo.
 
 ### Navigation
 - **Rail (escritorio):** columna de 56px que se expande a 220px al pasar por encima o al recibir foco, con transición de 160ms y retardo de 150ms para no dispararse al cruzar el ratón. Cada elemento mide 38px de alto, 10px de radio, icono más etiqueta con separación de 12px. Reposo en `ink-muted`; hover pinta `panel-raised`; activo pinta `accent-dim` con texto en acento. El panel expandido flota con sombra de tarjeta.
@@ -372,10 +372,11 @@ solo y no deja rastro.
 - **Do** llevar cada identificador que venga del proyecto (`manifest.db`, binario E3D, nombres de página) a IBM Plex Mono con `tabular-nums`.
 - **Do** dar al usuario de taller targets de 44px como mínimo en móvil, aunque cueste densidad. Si algo tiene que ceder, cede el espacio del cromo, nunca el tamaño del control.
 - **Do** construir profundidad con los tres tonos de superficie y bordes de 1px antes de pensar en una sombra.
-- **Do** sustituir todo `outline: none` por el anillo de acento de 3px (`box-shadow: 0 0 0 3px var(--accent-dim)`).
+- **Do** usar el anillo de foco canónico: `box-shadow: var(--focus-ring)` (3px en `accent-dim`) en `:focus-visible`. Nunca `outline: none` sin ese anillo.
 - **Do** mantener la paridad del tema claro: cualquier regla nueva se comprueba en `data-theme="light"` antes de darse por hecha.
 - **Do** limitar las transiciones a 120-220ms con salida suave, y solo sobre cambio de estado.
 - **Do** dejar sitio a cadenas largas: la interfaz tiene ocho idiomas y el alemán ocupa un 35% más que el español.
+- **Do** tomar radios solo de la escala en `tokens.css`: `--radius-sm` (6) / `--radius-md` (8) / `--radius-lg` (10) / `--radius-xl` (12) / `--radius-sheet` (16) / `--radius-pill` (999). Círculos verdaderos usan `50%`.
 
 ### Don't:
 - **Don't** reproducir el **CAD legado**: nada de biseles 3D, iconografía de los 2000, ni barras de herramientas apiladas sin jerarquía.
@@ -384,8 +385,8 @@ solo y no deja rastro.
 - **Don't** resolver "está muy cargado" con **minimalismo vacío**. Si una pantalla agobia, se arregla con jerarquía; esconder datos detrás de un clic más es empeorarla.
 - **Don't** introducir un segundo color de acento. Rojo y verde son semánticos y no cuentan como paleta disponible.
 - **Don't** poner texto informativo en `ink-faint` ni gris claro "para que respire". Ante la duda, el texto sube hacia tinta.
-- **Don't** inventar radios nuevos. La escala es 6 / 8 / 10 / 12 / 16 / 999. Los 4px, 5px, 7px y 9px que quedan en el CSS son deriva a consolidar, no precedentes.
-- **Don't** escribir sombras a mano. Solo `--shadow-float`, `--shadow-card` y el anillo de foco.
-- **Don't** animar sin alternativa: hoy no hay ni un `@media (prefers-reduced-motion: reduce)` en el proyecto y toda animación nueva debe traer el suyo, sobre todo con three.js activo en móvil.
+- **Don't** inventar radios nuevos ni escribir píxeles a mano. La escala es 6 / 8 / 10 / 12 / 16 / 999 vía variables CSS; cualquier valor fuera de esa lista es un defecto.
+- **Don't** escribir sombras a mano. Solo `--shadow-float`, `--shadow-card` y `--focus-ring`.
+- **Don't** añadir animaciones sin respetar el `@media (prefers-reduced-motion: reduce)` global de `base.css` (y el suyo propio si hace falta), sobre todo con three.js activo en móvil.
 - **Don't** sacar identificadores internos (`typeId`, `objectId`, rutas dentro del archivo) a la superficie. Son depuración, no interfaz.
 - **Don't** poner cromo de marca encima del lienzo del plano. El color ahí es información.

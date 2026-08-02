@@ -71,7 +71,33 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
 
   useEffect(() => {
     const container = containerRef.current!;
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Comprobar GL antes de construir el renderer: en headless/WebView el
+    // constructor de three.js puede lanzar y tumbar el árbol de React.
+    const probe = document.createElement("canvas");
+    const gl =
+      probe.getContext("webgl", { failIfMajorPerformanceCaveat: false }) ||
+      probe.getContext("experimental-webgl", { failIfMajorPerformanceCaveat: false });
+    if (!gl) {
+      container.replaceChildren();
+      const note = document.createElement("div");
+      note.className = "data-note";
+      note.style.padding = "24px";
+      note.textContent = "3D no disponible en este dispositivo.";
+      container.appendChild(note);
+      return;
+    }
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.createElement("canvas") });
+    } catch {
+      container.replaceChildren();
+      const note = document.createElement("div");
+      note.className = "data-note";
+      note.style.padding = "24px";
+      note.textContent = "3D no disponible en este dispositivo.";
+      container.appendChild(note);
+      return;
+    }
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 

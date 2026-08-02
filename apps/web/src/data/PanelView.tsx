@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { AmlProject } from "@covaga/e3d-core/aml";
 import { useI18n } from "../i18n";
-import { useIsMobile } from "../mobile/query";
 import { buildMountingSurfaces, buildPositions, type PanelHole, type PanelSurface } from "./derive";
 
 /** Pieza montada en la superficie: agrupa los taladros de un mismo propietario. */
@@ -17,11 +16,8 @@ interface PanelPart {
 }
 
 /**
- * Mecanizado del armario al estilo EPLAN ProPanel: se elige una superficie de
- * montaje (placa, puerta, lateral...) y se ve su alzado real -- el rectángulo y
- * las medidas salen del AML, no de la nube de taladros -- con los agujeros que
- * lleva. Al seleccionar una pieza el plano se encuadra sobre su zona y las
- * cotas dan la distancia real de sus taladros a los bordes de la superficie.
+ * Mecanizado del armario (ProPanel): elige placa/puerta/lateral, ve el alzado
+ * real con taladros y filtra por pieza. Orientado a taller.
  */
 export function PanelView({ aml }: { aml: AmlProject }) {
   const { t } = useI18n();
@@ -29,12 +25,9 @@ export function PanelView({ aml }: { aml: AmlProject }) {
   const positions = useMemo(() => buildPositions(aml), [aml]);
   const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [showDims, setShowDims] = useState(false);
 
   const surface = surfaces[Math.min(active, surfaces.length - 1)];
 
-  // Piezas de la superficie activa: taladros agrupados por propietario, con su
-  // clase eCl@ss y número de artículo.
   const parts = useMemo(() => {
     if (!surface) return [];
     const byDesignation = new Map(positions.map((row) => [row.designation, row]));
@@ -72,125 +65,131 @@ export function PanelView({ aml }: { aml: AmlProject }) {
   const selectedPart = parts.find((part) => part.designation === selected) ?? null;
 
   return (
-    <div className="data-section">
-      <div className="terminals-layout">
-        {/* Superficies mecanizadas del proyecto: la unidad de trabajo del taller. */}
-        <div className="strip-list">
-          {surfaces.map((entry, index) => (
-            <button
-              key={`${entry.space}|${entry.label}|${index}`}
-              className={`strip-item${index === active ? " active" : ""}`}
-              onClick={() => {
-                setActive(index);
-                setSelected(null);
-              }}
-            >
-              <span className="row">
-                <span className="name">{surfaceName(entry)}</span>
-                <span className="badge">{entry.holes.length}</span>
+    <div className="data-section machining">
+      <div className="machining-layout">
+        <aside className="machining-plates" aria-label={t("data.tab.panel")}>
+          <div className="machining-col-head">{t("data.tab.panel")}</div>
+          <div className="machining-plate-list">
+            {surfaces.map((entry, index) => {
+              const name = surfaceName(entry);
+              const activePlate = index === active;
+              return (
+                <button
+                  key={`${entry.space}|${entry.label}|${index}`}
+                  type="button"
+                  className={`machining-plate${activePlate ? " active" : ""}`}
+                  onClick={() => {
+                    setActive(index);
+                    setSelected(null);
+                  }}
+                >
+                  <span className="machining-plate-icon" aria-hidden="true" />
+                  <span className="machining-plate-body">
+                    <span className="machining-plate-name">{name}</span>
+                    <span className="machining-plate-meta mono">
+                      {entry.space} · {Math.round(entry.width)}×{Math.round(entry.height)} mm
+                    </span>
+                  </span>
+                  <span className="machining-plate-count mono">
+                    <span className="machining-plate-count-n">{entry.holes.length}</span>
+                    <span className="machining-plate-count-u">⌀</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="machining-stage">
+          <header className="machining-stage-bar">
+            <div className="machining-stage-title">
+              <span className="machining-stage-name">{surfaceName(surface)}</span>
+              <span className="machining-stage-size mono">
+                {Math.round(surface.width)} × {Math.round(surface.height)} mm
               </span>
-              <span className="meta">
-                <span className="mono">{entry.space}</span> · {Math.round(entry.width)} ×{" "}
-                {Math.round(entry.height)} mm
-              </span>
-            </button>
-          ))}
+              <span className="machining-stage-holes mono">⌀ × {surface.holes.length}</span>
+            </div>
+            {selectedPart && (
+              <div className="machining-stage-actions">
+                <button
+                  type="button"
+                  className="machining-toggle"
+                  onClick={() => setSelected(null)}
+                >
+                  × {selectedPart.designation}
+                </button>
+              </div>
+            )}
+          </header>
+
+          <DrillPlan surface={surface} selected={selectedPart} />
         </div>
 
-        <div className="strip-detail">
-          <div className="data-chiprow">
-            {/* Elegir pieza solo tiene sentido si la superficie la mecanizan varias. */}
-            {parts.length > 1 &&
-              parts.map((part) => (
-                <button
-                  key={part.designation}
-                  className={`data-chip${selectedPart === part ? " active" : ""}`}
-                  onClick={() => setSelected(selectedPart === part ? null : part.designation)}
-                  title={[part.partNumber, part.classLabel].filter(Boolean).join(" · ")}
-                >
-                  <span className="mono">{part.designation}</span>
-                  <span className="badge">{part.holes.length}</span>
-                </button>
-              ))}
-            <button
-              className={`data-chip${showDims ? " active" : ""}`}
-              onClick={() => setShowDims((value) => !value)}
-            >
-              {t("data.dimensions")}
-            </button>
+        <aside className="machining-parts" aria-label="parts">
+          <div className="machining-col-head">
+            <span className="mono">{parts.length}</span>
+            <span className="machining-col-head-dim"> · devices</span>
           </div>
-          <DrillPlan surface={surface} selected={selectedPart} showDims={showDims} />
-        </div>
+          <div className="machining-part-list">
+            {parts.length === 0 ? (
+              <div className="machining-empty">{t("data.empty")}</div>
+            ) : (
+              parts.map((part) => {
+                const on = selectedPart === part;
+                return (
+                  <button
+                    key={part.designation}
+                    type="button"
+                    className={`machining-part${on ? " active" : ""}`}
+                    onClick={() => setSelected(on ? null : part.designation)}
+                    title={[part.partNumber, part.classLabel].filter(Boolean).join(" · ")}
+                  >
+                    <span className="machining-part-des mono">{part.designation}</span>
+                    <span className="machining-part-meta">
+                      {part.partNumber && (
+                        <span className="mono machining-part-art">{part.partNumber}</span>
+                      )}
+                      {part.classLabel && (
+                        <span className="machining-part-class">{part.classLabel}</span>
+                      )}
+                    </span>
+                    <span className="machining-part-holes mono">{part.holes.length}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );
 }
 
-/** Caja envolvente de un conjunto de taladros, o null si no hay ninguno. */
-function holesBox(holes: PanelHole[]): Box | null {
-  if (holes.length === 0) return null;
-  const box: Box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
-  for (const hole of holes) {
-    box.minX = Math.min(box.minX, hole.x);
-    box.maxX = Math.max(box.maxX, hole.x);
-    box.minY = Math.min(box.minY, hole.y);
-    box.maxY = Math.max(box.maxY, hole.y);
-  }
-  return box;
-}
-
-interface Box {
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
-}
-
-const midX = (box: Box) => (box.minX + box.maxX) / 2;
-const midY = (box: Box) => (box.minY + box.maxY) / 2;
-
-/** Milímetros sin decimales inútiles: 6 y no 6,0; 6,5 tal cual. */
 function formatMm(value: number): string {
   return value ? String(Math.round(value * 10) / 10) : "?";
 }
 
-/** Nombre de la superficie sin el prefijo de espacio ("S2:Puerta" → "Puerta"). */
 function surfaceName(surface: PanelSurface): string {
   const colon = surface.label.indexOf(":");
   return colon === -1 ? surface.label : surface.label.slice(colon + 1);
 }
 
-/**
- * Alzado de la superficie: su rectángulo real (origen abajo-izquierda, como
- * ProPanel) con los taladros que lleva.
- */
 function DrillPlan({
   surface,
   selected,
-  showDims,
 }: {
   surface: PanelSurface;
   selected: PanelPart | null;
-  showDims: boolean;
 }) {
   const { t } = useI18n();
-  const isMobile = useIsMobile();
-  /*
-   * Las cotas dibujadas obligan a encuadrar la superficie entera, donde en un
-   * teléfono no se lee ni el número ni el taladro: ahí se dan como texto y el
-   * plano sigue sobre la pieza.
-   */
-  const drawDims = showDims && !isMobile;
 
   const width = Math.max(surface.width, 1);
   const height = Math.max(surface.height, 1);
-  const margin = Math.max(width, height) * 0.04;
+  const margin = Math.max(width, height) * 0.06;
 
-  // Con pieza seleccionada el plano se encuadra sobre su zona a mecanizar;
-  // con las cotas dibujadas se vuelve a la superficie entera.
   let view = { x: -margin, y: -margin, w: width + margin * 2, h: height + margin * 2 };
-  if (selected && !drawDims) {
-    const zoom = Math.max(selected.maxX - selected.minX, selected.maxY - selected.minY, 60) * 0.35;
+  if (selected) {
+    const zoom = Math.max(selected.maxX - selected.minX, selected.maxY - selected.minY, 60) * 0.4;
     view = {
       x: selected.minX - zoom,
       y: selected.minY - zoom,
@@ -198,15 +197,9 @@ function DrillPlan({
       h: selected.maxY - selected.minY + zoom * 2,
     };
   }
-  // El SVG crece hacia abajo y la superficie hacia arriba: se invierte la Y.
   const viewBox = `${view.x} ${height - view.y - view.h} ${view.w} ${view.h}`;
   const flip = (y: number) => height - y;
 
-  /*
-   * Milímetros por píxel del dibujo: el plano puede abarcar dos metros o el
-   * hueco de una pieza, así que taladros y cotas se calculan contra el tamaño
-   * real en pantalla; si no, o son de una fracción de píxel o gigantes.
-   */
   const svgRef = useRef<SVGSVGElement>(null);
   const [rendered, setRendered] = useState({ w: 0, h: 0 });
   useEffect(() => {
@@ -222,12 +215,10 @@ function DrillPlan({
     rendered.w > 0 && rendered.h > 0
       ? Math.max(view.w / rendered.w, view.h / rendered.h)
       : Math.max(view.w, view.h) / 320;
-  // Radio mínimo modesto: con cien taladros en el encuadre general, un punto
-  // más gordo los convierte en una mancha.
-  const minRadius = 1.5 * mmPerPx;
+  const minRadius = 1.8 * mmPerPx;
   const fontSize = 11 * mmPerPx;
+  const gridStep = pickGridStep(Math.max(view.w, view.h));
 
-  /** Taladros agrupados por diámetro y tipo (roscado o pasante). */
   const schedule = useMemo(() => {
     const groups = new Map<string, { d: number; threaded: boolean; count: number }>();
     for (const hole of surface.holes) {
@@ -239,122 +230,115 @@ function DrillPlan({
     return [...groups.values()].sort((a, b) => a.d - b.d || Number(a.threaded) - Number(b.threaded));
   }, [surface]);
 
-  /*
-   * Cotas de la pieza elegida o, si no hay ninguna, de todo el patrón de
-   * taladros de la superficie: distancias reales a los bordes de la placa.
-   */
-  const box = selected ?? holesBox(surface.holes);
-  const gaps = box
-    ? {
-        left: box.minX,
-        right: width - box.maxX,
-        bottom: box.minY,
-        top: height - box.maxY,
-      }
-    : null;
-
-  /** Línea de cota con su etiqueta en mm. */
-  const dim = (x1: number, y1: number, x2: number, y2: number, label: string, key: string) => {
-    const vertical = x1 === x2;
-    return (
-      <g key={key} className="plan-dim">
-        <line x1={x1} y1={flip(y1)} x2={x2} y2={flip(y2)} />
-        <text
-          x={(x1 + x2) / 2 + (vertical ? fontSize * 0.45 : 0)}
-          y={flip((y1 + y2) / 2) - (vertical ? 0 : fontSize * 0.45)}
-          textAnchor="middle"
-          dominantBaseline={vertical ? "central" : "auto"}
-          style={{ fontSize }}
-          transform={
-            vertical
-              ? `rotate(-90 ${(x1 + x2) / 2 + fontSize * 0.45} ${flip((y1 + y2) / 2)})`
-              : undefined
-          }
-        >
-          {label}
-        </text>
-      </g>
-    );
-  };
+  const gridLines: { key: string; x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let x = 0; x <= width + 0.01; x += gridStep) {
+    gridLines.push({ key: `vx${x}`, x1: x, y1: 0, x2: x, y2: height });
+  }
+  for (let y = 0; y <= height + 0.01; y += gridStep) {
+    gridLines.push({ key: `hy${y}`, x1: 0, y1: y, x2: width, y2: y });
+  }
 
   return (
-    <div className="data-plan-wrap">
-      <svg
-        ref={svgRef}
-        className="data-plan"
-        viewBox={viewBox}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label={surface.label}
-      >
-        {/* Rectángulo real de la superficie, con las medidas del AML. */}
-        <rect className="plan-outline" x={0} y={0} width={width} height={height} rx={4} />
-        {selected && (
+    <div className="machining-plan">
+      <div className="machining-plan-canvas">
+        <svg
+          ref={svgRef}
+          className="data-plan"
+          viewBox={viewBox}
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label={surface.label}
+        >
           <rect
-            className="plan-part"
-            x={selected.minX}
-            y={flip(selected.maxY)}
-            width={Math.max(selected.maxX - selected.minX, minRadius * 2)}
-            height={Math.max(selected.maxY - selected.minY, minRadius * 2)}
-            rx={3}
+            className="plan-backdrop"
+            x={view.x}
+            y={height - view.y - view.h}
+            width={view.w}
+            height={view.h}
           />
-        )}
-        {surface.holes.map((hole, i) => {
-          const owned = selected !== null && hole.owner === selected.designation;
-          const dimmed = selected !== null && !owned;
-          return (
-            <circle
-              key={i}
-              className={
-                (hole.threaded ? "plan-hole threaded" : "plan-hole") +
-                (owned ? " owned" : dimmed ? " dimmed" : "")
-              }
-              cx={hole.x}
-              cy={flip(hole.y)}
-              r={Math.max(hole.d / 2, minRadius)}
-            >
-              <title>
-                {(hole.owner ? `${hole.owner} · ` : "") +
-                  `⌀${hole.d || "?"} mm (${hole.x.toFixed(1)}, ${hole.y.toFixed(1)})` +
-                  (hole.threaded ? ` · ${t("data.threaded")}` : "")}
-              </title>
-            </circle>
-          );
-        })}
-        {drawDims && box && gaps && (
-          <>
-            {dim(0, midY(box), box.minX, midY(box), `${Math.round(gaps.left)} mm`, "left")}
-            {dim(box.maxX, midY(box), width, midY(box), `${Math.round(gaps.right)} mm`, "right")}
-            {dim(midX(box), 0, midX(box), box.minY, `${Math.round(gaps.bottom)} mm`, "bottom")}
-            {dim(midX(box), box.maxY, midX(box), height, `${Math.round(gaps.top)} mm`, "top")}
-          </>
-        )}
-      </svg>
-
-      {showDims && gaps && (
-        <div className="plan-dims mono">
-          <span>← {Math.round(gaps.left)} mm</span>
-          <span>{Math.round(gaps.right)} mm →</span>
-          <span>↓ {Math.round(gaps.bottom)} mm</span>
-          <span>↑ {Math.round(gaps.top)} mm</span>
-        </div>
-      )}
-
-      {/* Cuadro de taladros: cuántos de cada diámetro, como en una hoja de taller. */}
-      <div className="data-legend">
-        {schedule.map((group) => (
-          <span key={`${group.threaded}|${group.d}`}>
-            <i className={group.threaded ? "dot threaded" : "dot drill"} />
-            <span className="mono">
-              {group.threaded ? "M" : "⌀"}
-              {formatMm(group.d)} × {group.count}
-            </span>
-          </span>
-        ))}
-        <span className="mono">
-          {Math.round(surface.width)} × {Math.round(surface.height)} mm
-        </span>
+          <g className="plan-grid">
+            {gridLines.map((line) => (
+              <line
+                key={line.key}
+                x1={line.x1}
+                y1={flip(line.y1)}
+                x2={line.x2}
+                y2={flip(line.y2)}
+              />
+            ))}
+          </g>
+          <rect className="plan-plate" x={0} y={0} width={width} height={height} rx={2} />
+          <rect className="plan-outline" x={0} y={0} width={width} height={height} rx={2} />
+          <g className="plan-origin">
+            <line x1={0} y1={flip(0)} x2={gridStep * 0.35} y2={flip(0)} />
+            <line x1={0} y1={flip(0)} x2={0} y2={flip(gridStep * 0.35)} />
+            <text x={gridStep * 0.08} y={flip(gridStep * 0.12)} style={{ fontSize: fontSize * 0.85 }}>
+              0
+            </text>
+          </g>
+          {selected && (
+            <rect
+              className="plan-part"
+              x={selected.minX}
+              y={flip(selected.maxY)}
+              width={Math.max(selected.maxX - selected.minX, minRadius * 2)}
+              height={Math.max(selected.maxY - selected.minY, minRadius * 2)}
+              rx={2}
+            />
+          )}
+          {surface.holes.map((hole, i) => {
+            const owned = selected !== null && hole.owner === selected.designation;
+            const dimmed = selected !== null && !owned;
+            return (
+              <circle
+                key={i}
+                className={
+                  (hole.threaded ? "plan-hole threaded" : "plan-hole") +
+                  (owned ? " owned" : dimmed ? " dimmed" : "")
+                }
+                cx={hole.x}
+                cy={flip(hole.y)}
+                r={Math.max(hole.d / 2, minRadius)}
+              >
+                <title>
+                  {(hole.owner ? `${hole.owner} · ` : "") +
+                    `⌀${hole.d || "?"} mm (${hole.x.toFixed(1)}, ${hole.y.toFixed(1)})` +
+                    (hole.threaded ? ` · ${t("data.threaded")}` : "")}
+                </title>
+              </circle>
+            );
+          })}
+        </svg>
       </div>
+
+      <footer className="machining-plan-foot">
+        <div className="machining-schedule">
+          {schedule.map((group) => (
+            <span
+              key={`${group.threaded}|${group.d}`}
+              className={`machining-sched-item${group.threaded ? " threaded" : ""}`}
+            >
+              <i className={group.threaded ? "dot threaded" : "dot drill"} aria-hidden="true" />
+              <span className="mono">
+                {group.threaded ? "M" : "⌀"}
+                {formatMm(group.d)}
+              </span>
+              <span className="machining-sched-count mono">×{group.count}</span>
+            </span>
+          ))}
+          <span className="machining-sched-size mono">
+            {Math.round(surface.width)}×{Math.round(surface.height)} mm
+          </span>
+        </div>
+      </footer>
     </div>
   );
+}
+
+/** Paso de rejilla legible según el encuadre (50 / 100 / 200 mm…). */
+function pickGridStep(spanMm: number): number {
+  if (spanMm <= 400) return 50;
+  if (spanMm <= 900) return 100;
+  if (spanMm <= 1800) return 200;
+  return 250;
 }

@@ -10,12 +10,11 @@ import { IconSearch } from "../shell/icons";
 import { buildConnections, type ConnectionRow } from "./derive";
 import type { PartBoxIndex, PartBox } from "./partBoxes";
 import type { DataNav } from "./DataView";
+import { isPeWire, wireColorHex } from "./wireColor";
 
 /**
- * Lista de conexiones de cableado al estilo EPLAN Smart Wiring: tabla de
- * origen/destino y, para la conexión seleccionada, un alzado fijo del cable
- * enrutado con sus dos aparatos, aislado del resto del armario. Origen y
- * destino saltan a su aparición en el esquema.
+ * Lista de cableado al estilo Smart Wiring: origen → destino, sección y color
+ * del hilo, y alzado 3D del cable con sus dos aparatos aislados del armario.
  */
 export function ConnectionsView({
   manifest,
@@ -49,7 +48,6 @@ export function ConnectionsView({
     );
   }, [connections, filter]);
 
-  // Selección: la primera conexión con cable 3D localizable.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selected =
     (selectedIndex !== null ? filtered[selectedIndex] : undefined) ??
@@ -60,50 +58,79 @@ export function ConnectionsView({
   if (connections.length === 0) return <div className="data-note">{t("data.empty")}</div>;
 
   return (
-    <div className="data-section">
-      <div className="panel-search data-search">
-        <IconSearch size={13} />
-        <input
-          type="search"
-          aria-label={t("data.search")}
-          placeholder={t("data.search")}
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setSelectedIndex(null);
-          }}
-        />
+    <div className="data-section data-section--wide">
+      <div className="data-toolbar">
+        <div className="panel-search data-search">
+          <IconSearch size={14} />
+          <input
+            type="search"
+            aria-label={t("data.search")}
+            placeholder={t("data.search")}
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setSelectedIndex(null);
+            }}
+          />
+        </div>
+        <div className="data-count mono" aria-live="polite">
+          {t("data.connCount", { count: filtered.length })}
+        </div>
       </div>
 
       <div className="connections-layout">
-        <div className="data-table-wrap conn-list">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>{t("data.col.source")}</th>
-                <th>{t("data.col.target")}</th>
-                {!isMobile && <th>{t("data.col.section")}</th>}
-                {!isMobile && <th>{t("data.col.color")}</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row, index) => (
-                <tr
-                  key={index}
-                  className={`conn-row${row === selected ? " active" : ""}`}
-                  onClick={() => setSelectedIndex(index)}
-                >
-                  <td className="mono">{row.source}</td>
-                  <td className="mono">
-                    {row.target}
-                    {row.bridge && <span className="data-pill">{t("data.bridge")}</span>}
-                  </td>
-                  {!isMobile && <td>{row.crossSection ?? "—"}</td>}
-                  {!isMobile && <td className="mono">{row.color ?? "—"}</td>}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="conn-list" role="listbox" aria-label={t("data.tab.connections")}>
+          {filtered.map((row, index) => {
+            const active = row === selected;
+            const hex = wireColorHex(row.color);
+            const pe = isPeWire(row.color);
+            return (
+              <button
+                key={`${row.source}|${row.target}|${index}`}
+                type="button"
+                role="option"
+                aria-selected={active}
+                className={`conn-item${active ? " active" : ""}`}
+                style={
+                  pe
+                    ? { borderLeftColor: "#2f9e44" }
+                    : hex
+                      ? { borderLeftColor: hex }
+                      : undefined
+                }
+                onClick={() => setSelectedIndex(index)}
+              >
+                <span className="conn-item-ends">
+                  <span className="conn-end">{row.source}</span>
+                  <span className="conn-arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="conn-end">{row.target}</span>
+                  {row.bridge && <span className="data-pill">{t("data.bridge")}</span>}
+                </span>
+                {row.crossSection && (
+                  <span className="wire-section">{row.crossSection}</span>
+                )}
+                <span className="conn-item-meta">
+                  {(hex || pe) && (
+                    <span
+                      className={`wire-swatch${pe ? " pe" : ""}`}
+                      style={hex && !pe ? { background: hex } : undefined}
+                      title={row.color ?? undefined}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {row.color && <span className="wire-color-label">{row.color}</span>}
+                  {row.potential && (
+                    <span className="wire-color-label">{row.potential}</span>
+                  )}
+                  {row.length && !isMobile && (
+                    <span className="wire-length">{row.length}</span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
           {filtered.length === 0 && <div className="data-note">{t("data.empty")}</div>}
         </div>
 
@@ -117,8 +144,6 @@ export function ConnectionsView({
           />
         )}
       </div>
-
-      <div className="data-note">{t("data.connCount", { count: filtered.length })}</div>
     </div>
   );
 }
@@ -138,6 +163,8 @@ function ConnectionDetail({
 }) {
   const { t } = useI18n();
   const viewerRef = useRef<ViewerHandle>(null);
+  const hex = wireColorHex(connection.color);
+  const pe = isPeWire(connection.color);
 
   const scene = useMemo(() => {
     if (!box) return null;
@@ -145,11 +172,6 @@ function ConnectionDetail({
     return entry ? getScene(projectId, box.modelIndex, entry) : null;
   }, [box, projectId, models]);
 
-  /*
-   * La conexión se muestra siempre aislada, como en Smart Wiring: el hilo y
-   * los aparatos de origen y destino, sin el resto del armario, en alzado fijo
-   * y encuadrado sobre ellos (no hay nada que orbitar ni que aislar a mano).
-   */
   useEffect(() => {
     if (!scene || connection.objectId === null || !box) return;
     const visible = new Set<number>([connection.objectId]);
@@ -163,18 +185,21 @@ function ConnectionDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, connection]);
 
-  const endpoint = (designation: string) =>
-    nav.hasDevice(designation.replace(/:[^:]*$/, "")) ? (
+  const endpoint = (designation: string) => {
+    const device = designation.replace(/:[^:]*$/, "");
+    return nav.hasDevice(device) ? (
       <button
+        type="button"
         className="data-link mono"
         title={t("data.viewInSchematic")}
-        onClick={() => nav.toDevice(designation.replace(/:[^:]*$/, ""))}
+        onClick={() => nav.toDevice(device)}
       >
         {designation}
       </button>
     ) : (
       <span className="mono">{designation}</span>
     );
+  };
 
   const facts: [string, string | null][] = [
     [t("data.col.section"), connection.crossSection],
@@ -186,22 +211,41 @@ function ConnectionDetail({
 
   return (
     <div className="conn-detail">
-      <header className="data-card-head strip-detail-head">
-        <span className="conn-ends">
+      <header className="conn-detail-head">
+        <div className="conn-ends">
           {endpoint(connection.source)}
-          <span aria-hidden="true" className="off"> → </span>
+          <span aria-hidden="true" className="conn-arrow">
+            →
+          </span>
           {endpoint(connection.target)}
-        </span>
+        </div>
+        {(hex || pe || connection.crossSection) && (
+          <div className="conn-wire-badge">
+            {(hex || pe) && (
+              <span
+                className={`wire-swatch lg${pe ? " pe" : ""}`}
+                style={hex && !pe ? { background: hex } : undefined}
+                aria-hidden="true"
+              />
+            )}
+            {connection.crossSection && (
+              <span className="mono wire-section">{connection.crossSection}</span>
+            )}
+            {connection.color && <span className="mono">{connection.color}</span>}
+          </div>
+        )}
       </header>
-      <div className="conn-facts">
+
+      <dl className="conn-facts">
         {facts
           .filter(([, value]) => value)
           .map(([label, value]) => (
-            <span key={label} className="conn-fact">
-              <span className="off">{label}</span> {value}
-            </span>
+            <div key={label} className="conn-fact">
+              <dt>{label}</dt>
+              <dd className="mono">{value}</dd>
+            </div>
           ))}
-      </div>
+      </dl>
 
       {scene ? (
         <div className="strip-3d">

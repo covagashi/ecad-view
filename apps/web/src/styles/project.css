@@ -45,7 +45,7 @@
 
 .stat {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px 14px;
   background: var(--panel);
 }
@@ -57,7 +57,7 @@
 }
 
 .stat .lbl {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -103,7 +103,7 @@
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
 }
 
 /* --- Modelos 3D vinculados --- */
@@ -121,7 +121,7 @@
   appearance: none;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   padding: 9px 12px;
   cursor: pointer;
   color: var(--text-muted);
@@ -152,7 +152,7 @@
 
 .model-link .file {
   flex: none;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-faint);
   max-width: 40%;
   overflow: hidden;

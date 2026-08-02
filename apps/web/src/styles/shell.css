@@ -35,7 +35,7 @@
   margin: 6px 2px 0 0;
   border: 1px solid transparent;
   border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -97,7 +97,7 @@
   color: var(--text-faint);
   cursor: pointer;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   flex: none;
@@ -112,13 +112,13 @@
   appearance: none;
   border: none;
   background: transparent;
-  color: var(--text-faint);
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0 10px;
   margin: 6px 0 0 2px;
   display: grid;
   place-items: center;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   flex: none;
 }
 
@@ -140,7 +140,9 @@
   flex: none;
   width: var(--rail-w);
   position: relative;
-  z-index: 60;
+  /* Por encima del contenido, pero el panel expandido no debe robar clics
+     al cuerpo salvo en su propia franja. */
+  z-index: 40;
 }
 
 .rail-panel {
@@ -167,7 +169,7 @@
   .rail:focus-within .rail-panel,
   .rail-panel.open {
     width: var(--rail-w-expanded);
-    box-shadow: 12px 0 34px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-card);
     transition-delay: 0.15s;
   }
 }
@@ -185,11 +187,19 @@
   width: 32px;
   height: 32px;
   flex: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--accent);
   color: var(--on-accent);
   display: grid;
   place-items: center;
+  /* Sin caja blanca si el WebView intenta invertir el SVG. */
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.rail-logo-mark svg {
+  background: transparent !important;
+  color: inherit;
 }
 
 .rail-logo-label {
@@ -212,7 +222,7 @@
   gap: 12px;
   height: 38px;
   flex: none;
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   padding: 0;
   white-space: nowrap;
@@ -239,6 +249,15 @@
   flex: none;
   display: grid;
   place-items: center;
+  background: transparent;
+  border-radius: var(--radius-md);
+}
+
+.rail-icon svg {
+  background: transparent !important;
+  color: inherit;
+  /* Evita el rectángulo blanco del modo oscuro forzado en Android. */
+  forced-color-adjust: none;
 }
 
 .rail-label {
@@ -271,7 +290,7 @@
   min-width: 190px;
   background: var(--panel-2);
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 10px 12px;
   z-index: 5;
@@ -295,7 +314,7 @@
 
 .rail-pop-row select:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .rail-pop-sep {
@@ -305,7 +324,7 @@
 }
 
 .rail-pop-title {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -323,7 +342,7 @@
   font-size: 12.5px;
   padding: 6px 8px;
   margin: 0 -8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -343,7 +362,7 @@ button.rail-pop-action {
 
 .rail-pop-action .ext {
   color: var(--text-faint);
-  font-size: 10.5px;
+  font-size: 11px;
   margin-left: 6px;
 }
 
@@ -351,7 +370,7 @@ button.rail-pop-action {
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
 }
 
@@ -366,7 +385,7 @@ button.rail-pop-action {
   margin: 0 -8px;
   padding: 6px 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-size: 12.5px;
@@ -384,7 +403,7 @@ button.rail-pop-action {
   position: relative;
   width: 32px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--border-strong);
   transition: background 0.16s ease;
 }
@@ -401,7 +420,7 @@ button.rail-pop-action {
   height: 14px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-float);
   transition: transform 0.16s ease;
 }
 
@@ -435,8 +454,9 @@ button.rail-pop-action {
   padding: 0 14px;
   background: var(--panel);
   border-top: 1px solid var(--border);
-  font-size: 11px;
-  color: var(--text-faint);
+  /* Cuerpo compacto legible: no ink-faint ni suelo de 11px de etiqueta. */
+  font-size: 12px;
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -460,9 +480,9 @@ button.rail-pop-action {
   gap: 5px;
   padding: 3px 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-faint);
+  color: var(--text-muted);
   font: inherit;
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s, background 0.12s;

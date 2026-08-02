@@ -31,7 +31,7 @@
   right: 0;
   bottom: 0;
   z-index: 5;
-  box-shadow: -18px 0 50px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-card);
 }
 
 .panel-scrim {
@@ -80,7 +80,7 @@
 .panel-head .panel-tool {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   border-bottom: none;
   display: grid;
   place-items: center;
@@ -107,23 +107,26 @@
   gap: 8px;
   background: var(--bg);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 6px 10px;
-  color: var(--text-faint);
+  /* Icono + placeholder: legibles (ink-muted), no ink-faint. */
+  color: var(--text-muted);
 }
 
 .panel-search:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: var(--focus-ring);
 }
 
 .panel-search input {
   flex: 1;
   min-width: 0;
+  align-self: stretch;
   border: none;
   background: transparent;
   outline: none;
   font-size: 12.5px;
+  color: var(--text);
 }
 
 /* El placeholder es texto que hay que leer: --text-faint se queda en 3.1:1. */
@@ -157,7 +160,7 @@
   appearance: none;
   background: transparent;
   border: 1px solid var(--border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   padding: 2px 8px;
   cursor: pointer;
@@ -189,7 +192,7 @@
   padding-bottom: 6px;
   padding-right: 8px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   position: relative;
 }
@@ -203,7 +206,7 @@
   flex: none;
   width: 10px;
   color: var(--text-faint);
-  font-size: 9px;
+  font-size: 11px;
   transition: transform 0.12s ease-out;
   display: inline-block;
 }
@@ -231,7 +234,7 @@
 
 .acc-node .count {
   flex: none;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-faint);
 }
 
@@ -250,10 +253,10 @@
 
 .acc-leaf .badge {
   flex: none;
-  font-size: 9.5px;
+  font-size: 11px;
   color: var(--text-faint);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 0 5px;
   line-height: 15px;
   font-family: var(--font-mono);
@@ -281,7 +284,7 @@
   bottom: 4px;
   width: 2px;
   background: var(--accent);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---------- Lista de dispositivos ---------- */
@@ -292,7 +295,7 @@
   z-index: 1;
   background: var(--panel);
   padding: 9px 14px 4px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -308,7 +311,7 @@
   text-align: left;
   padding: 6px 8px 6px 12px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
 }
 
@@ -334,10 +337,10 @@
 
 .device-item .badge {
   flex: none;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0 5px;
   line-height: 16px;
 }
@@ -373,7 +376,7 @@
   padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .device-3d:hover,
@@ -405,7 +408,7 @@
   text-align: left;
   padding: 7px 8px 7px 8px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
 }
 
@@ -417,7 +420,7 @@
   flex: none;
   width: 10px;
   color: var(--text-faint);
-  font-size: 9px;
+  font-size: 11px;
   transition: transform 0.12s ease-out;
   display: inline-block;
 }
@@ -453,10 +456,10 @@
 
 .bom-head .badge {
   flex: none;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0 5px;
   line-height: 16px;
   font-family: var(--font-mono);
@@ -479,7 +482,7 @@
   background: transparent;
   text-align: left;
   padding: 4px 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
 }
 
@@ -555,7 +558,7 @@ button.bom-device:hover .go {
   background: var(--panel);
   border: 1px solid var(--border);
   border-right: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
   padding: 12px 7px;
   display: flex;
   flex-direction: column;
@@ -568,7 +571,7 @@ button.bom-device:hover .go {
 .edge-tab.primary {
   background: var(--panel-2);
   color: var(--accent);
-  box-shadow: -6px 0 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-float);
 }
 
 .edge-tab:hover {
@@ -590,7 +593,7 @@ button.bom-device:hover .go {
 
 .edge-count {
   writing-mode: vertical-rl;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-faint);
 }
 
@@ -607,7 +610,7 @@ button.bom-device:hover .go {
   gap: 2px 0;
   background: color-mix(in srgb, var(--panel) 90%, transparent);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 7px 12px;
   color: var(--text-muted);
   font-size: 12px;
@@ -635,7 +638,7 @@ button.bom-device:hover .go {
   gap: 2px;
   background: color-mix(in srgb, var(--panel) 90%, transparent);
   border: 1px solid var(--border-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   padding: 4px;
   backdrop-filter: blur(6px);
 }
@@ -651,7 +654,7 @@ button.bom-device:hover .go {
   color: var(--text-muted);
   font-size: 15px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .zoom-toolbar button:hover {
@@ -692,7 +695,7 @@ button.bom-device:hover .go {
   position: relative;
   /* Los SVG de EPLAN presuponen papel blanco, también en tema claro. */
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-card);
   transform-origin: 0 0;
   /* Arrastrar para desplazar no debe seleccionar los textos del SVG. */
   user-select: none;
@@ -719,7 +722,7 @@ button.bom-device:hover .go {
 .schematic .sheet-highlight {
   position: absolute;
   border: 2px solid var(--accent);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   pointer-events: none;
   animation: highlight-pulse 1.2s ease-out 2;
 }
