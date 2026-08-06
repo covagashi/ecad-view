@@ -179,16 +179,66 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Nota breve del marco de referencia (p. ej. unidades de coordenadas). */
+.data-toolbar-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.data-toolbar-hint + .data-count {
+  margin-left: 0;
+}
+
 .data-note {
   color: var(--text-muted);
   font-size: 13px;
   padding: 28px 16px;
 }
 
-.data-note.off {
+.data-note.empty {
+  font-size: 12.5px;
+  max-width: 360px;
+  margin: auto;
+  padding: 36px 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Carga del AutomationML: indicador real en lugar de una línea de texto. */
+.data-load {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 20px;
+}
+
+.data-load-spin {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: data-spin 0.8s linear infinite;
+}
+
+.data-load-title {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.data-load-sub {
+  margin: 2px 0 0;
   font-size: 12px;
   color: var(--text-muted);
-  padding: 4px 0 0;
+}
+
+@keyframes data-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---------- Tarjetas BOM ---------- */
@@ -381,7 +431,7 @@
 .data-link:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .data-table td .data-link + .data-link {
@@ -489,6 +539,12 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Chips de clase (solo visible en móvil) para filtrar piezas de mecanizado. */
+.data-chiprow .badge {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Plano de taladros (base SVG) ---------- */
 
 .data-plan {
@@ -549,46 +605,18 @@
   stroke: var(--danger);
   stroke-width: 2;
 }
-
 .plan-hole.dimmed {
   opacity: 0.18;
 }
 
+/* El recuadro y la selección de pieza son "selección" (acento); el rojo queda
+   solo para los taladros a taladrar (.plan-hole.owned) y los problemas. */
 .plan-part {
-  fill: color-mix(in srgb, var(--danger) 12%, transparent);
-  stroke: color-mix(in srgb, var(--danger) 70%, transparent);
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
-}
-
-.plan-dim line {
-  stroke: var(--accent);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-}
-
-.plan-dim text {
-  fill: var(--accent);
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
-
-.plan-dims {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 0 8px;
-}
-
-.plan-dim-chip {
-  font-size: 12px;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-strong);
-  border-radius: var(--radius-sm);
-  padding: 3px 8px;
-  font-weight: 600;
 }
 
 /* ============================================================
@@ -598,6 +626,18 @@
 .machining {
   height: 100%;
   min-height: 0;
+}
+
+/* Filtro de piezas por clase: solo se muestra en pantallas estrechas, donde
+   la columna `.machining-parts` desaparece. */
+.machining-mobile-parts {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.machining-mobile-parts .data-chip .mono {
+  font-variant-numeric: tabular-nums;
 }
 
 .machining-layout {
@@ -615,8 +655,12 @@
     grid-template-columns: minmax(180px, 220px) 1fr;
   }
 
-  .machining-parts {
+  .machining-layout .machining-parts {
     display: none;
+  }
+
+  .machining-mobile-parts {
+    display: flex;
   }
 }
 
@@ -653,7 +697,7 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .machining-plates {
@@ -708,9 +752,8 @@
   width: 14px;
   height: 18px;
   border: 1.5px solid var(--text-muted);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--canvas) 70%, transparent);
-  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .machining-plate.active .machining-plate-icon {
@@ -762,7 +805,7 @@
 }
 
 .machining-plate-count-u {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -968,7 +1011,7 @@
 
 .machining-part.active {
   background: var(--accent-dim);
-  border-left-color: var(--danger);
+  border-left-color: var(--accent);
 }
 
 .machining-part-des {
@@ -993,7 +1036,7 @@
 }
 
 .machining-part.active .machining-part-holes {
-  color: var(--danger);
+  color: var(--accent);
 }
 
 .machining-part-meta {
@@ -1024,13 +1067,8 @@
   color: var(--text-muted);
 }
 
-/* strip-3d sigue usándose en Conexiones */
-.strip-detail-head {
-  border: none;
-  background: transparent;
-  padding: 0 2px;
-}
-
+/* Alzado 3D del cable real en la ficha de conexión: solo el hilo y sus dos
+   aparatos, encuadrado a los extremos para que no parezca seguir a otro equipo. */
 .strip-3d {
   position: relative;
   flex: 1;
@@ -1039,6 +1077,36 @@
   border-radius: 0;
   overflow: hidden;
   background: var(--canvas);
+}
+
+.strip-3d-badges {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  pointer-events: none;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.45));
+}
+
+.strip-3d-badge {
+  max-width: 45%;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #fff;
+  background: rgba(15, 20, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip-3d-badge.right {
+  text-align: right;
 }
 
 /* ============================================================
@@ -1112,6 +1180,16 @@
   border-left-color: var(--accent) !important;
 }
 
+/* PE (tierra): el borde identidad repite el patrón verde/amarillo de la
+   pastilla, para que no haya dos codificaciones del mismo conductor. */
+.conn-item.pe {
+  border-image: repeating-linear-gradient(-45deg, #2f9e44 0 4px, #d4b000 4px 8px) 1;
+}
+
+.conn-item.pe.active {
+  border-image: none;
+}
+
 .conn-item.active .conn-end {
   color: var(--accent);
 }
@@ -1145,7 +1223,7 @@
   flex: none;
   font-size: 14px;
   font-weight: 400;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .conn-item-meta {
@@ -1170,10 +1248,9 @@
 .wire-swatch {
   width: 16px;
   height: 16px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   flex: none;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .wire-swatch.lg {
@@ -1206,6 +1283,34 @@
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+/* Referencia cruzada a la página del esquema donde vive el tramo. */
+.conn-xref {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 1px 8px;
+  cursor: pointer;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conn-xref:hover {
+  color: var(--accent);
+  border-color: var(--accent-strong);
+}
+
+.conn-xref:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .wire-length {
@@ -1295,7 +1400,7 @@
 
 .conn-fact dt {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1309,22 +1414,6 @@
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
   font-weight: 600;
-}
-
-.strip-detail-head {
-  border: none;
-  background: transparent;
-  padding: 0 2px;
-}
-
-.strip-3d {
-  position: relative;
-  flex: 1;
-  min-height: 220px;
-  border: none;
-  border-radius: 0;
-  overflow: hidden;
-  background: var(--canvas);
 }
 
 /* ---------- Móvil ---------- */

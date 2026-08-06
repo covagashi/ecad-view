@@ -14,7 +14,7 @@ import { isPeWire, wireColorHex } from "./wireColor";
 
 /**
  * Lista de cableado al estilo Smart Wiring: origen → destino, sección y color
- * del hilo, y alzado 3D del cable con sus dos aparatos aislados del armario.
+ * del hilo, y alzado 3D del cable real con sus dos aparatos aislados del armario.
  */
 export function ConnectionsView({
   manifest,
@@ -55,7 +55,8 @@ export function ConnectionsView({
     filtered[0] ??
     null;
 
-  if (connections.length === 0) return <div className="data-note">{t("data.empty")}</div>;
+  if (connections.length === 0)
+    return <div className="data-note empty">{t("data.empty.connections")}</div>;
 
   return (
     <div className="data-section data-section--wide">
@@ -65,7 +66,7 @@ export function ConnectionsView({
           <input
             type="search"
             aria-label={t("data.search")}
-            placeholder={t("data.search")}
+            placeholder={t("data.searchDesignation")}
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -79,7 +80,7 @@ export function ConnectionsView({
       </div>
 
       <div className="connections-layout">
-        <div className="conn-list" role="listbox" aria-label={t("data.tab.connections")}>
+        <div className="conn-list" role="list" aria-label={t("data.tab.connections")}>
           {filtered.map((row, index) => {
             const active = row === selected;
             const hex = wireColorHex(row.color);
@@ -88,16 +89,9 @@ export function ConnectionsView({
               <button
                 key={`${row.source}|${row.target}|${index}`}
                 type="button"
-                role="option"
-                aria-selected={active}
-                className={`conn-item${active ? " active" : ""}`}
-                style={
-                  pe
-                    ? { borderLeftColor: "#2f9e44" }
-                    : hex
-                      ? { borderLeftColor: hex }
-                      : undefined
-                }
+                aria-pressed={active}
+                className={`conn-item${active ? " active" : ""}${pe ? " pe" : ""}`}
+                style={hex && !pe ? { borderLeftColor: hex } : undefined}
                 onClick={() => setSelectedIndex(index)}
               >
                 <span className="conn-item-ends">
@@ -112,6 +106,19 @@ export function ConnectionsView({
                   <span className="wire-section">{row.crossSection}</span>
                 )}
                 <span className="conn-item-meta">
+                  {row.pageId != null && (
+                    <button
+                      type="button"
+                      className="conn-xref mono"
+                      title={t("data.col.xref")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nav.toSchematic(row.pageId, row.elementId);
+                      }}
+                    >
+                      {nav.pageLabel(row.pageId) ?? String(row.pageId)}
+                    </button>
+                  )}
                   {(hex || pe) && (
                     <span
                       className={`wire-swatch${pe ? " pe" : ""}`}
@@ -124,14 +131,12 @@ export function ConnectionsView({
                   {row.potential && (
                     <span className="wire-color-label">{row.potential}</span>
                   )}
-                  {row.length && !isMobile && (
-                    <span className="wire-length">{row.length}</span>
-                  )}
+                  {row.length && <span className="wire-length">{row.length}</span>}
                 </span>
               </button>
             );
           })}
-          {filtered.length === 0 && <div className="data-note">{t("data.empty")}</div>}
+          {filtered.length === 0 && <div className="data-note">{t("data.noMatches")}</div>}
         </div>
 
         {selected && (
@@ -140,6 +145,7 @@ export function ConnectionsView({
             box={selected.partKey ? partBoxes.get(selected.partKey) ?? null : null}
             projectId={projectId}
             models={models}
+            partBoxes={partBoxes}
             nav={nav}
           />
         )}
@@ -153,18 +159,21 @@ function ConnectionDetail({
   box,
   projectId,
   models,
+  partBoxes,
   nav,
 }: {
   connection: ConnectionRow;
   box: PartBox | null;
   projectId: string;
   models: EpdzEntry[];
+  partBoxes: PartBoxIndex;
   nav: DataNav;
 }) {
   const { t } = useI18n();
   const viewerRef = useRef<ViewerHandle>(null);
   const hex = wireColorHex(connection.color);
   const pe = isPeWire(connection.color);
+  const base = (designation: string) => designation.replace(/:[^:]*$/, "");
 
   const scene = useMemo(() => {
     if (!box) return null;
@@ -172,21 +181,47 @@ function ConnectionDetail({
     return entry ? getScene(projectId, box.modelIndex, entry) : null;
   }, [box, projectId, models]);
 
+  // Aparatos en 3D y sus cajas: solo los que viven en el mismo modelo que el
+  // cable (comparten el sistema de mundo EPLAN, así el alzado es coherente).
+  const srcTarget = nav.resolve3d(base(connection.source));
+  const dstTarget = nav.resolve3d(base(connection.target));
+  const modelIndex = box?.modelIndex;
+  const srcBox =
+    srcTarget && srcTarget.modelIndex === modelIndex
+      ? (partBoxes.get(`${srcTarget.typeId}_${srcTarget.objectId}`) ?? null)
+      : null;
+  const dstBox =
+    dstTarget && dstTarget.modelIndex === modelIndex
+      ? (partBoxes.get(`${dstTarget.typeId}_${dstTarget.objectId}`) ?? null)
+      : null;
+
   useEffect(() => {
     if (!scene || connection.objectId === null || !box) return;
+    // Cable real + los dos aparatos, aislados del resto del armario.
     const visible = new Set<number>([connection.objectId]);
+    const devices: number[] = [];
     for (const designation of [connection.source, connection.target]) {
-      const target = nav.resolve3d(designation.replace(/:[^:]*$/, ""));
-      if (target && target.modelIndex === box.modelIndex) visible.add(target.objectId);
+      const target = nav.resolve3d(base(designation));
+      if (target && target.modelIndex === box.modelIndex) {
+        visible.add(target.objectId);
+        devices.push(target.objectId);
+      }
     }
     const viewer = viewerRef.current;
     viewer?.applyVisibility(new Set(), visible);
-    viewer?.frameParts(visible, "front");
+    // Encuadra SOLO los dos aparatos: el tramo real de cable entre ambos queda
+    // a la vista y el resto de la losa queda fuera del encuadre, de modo que el
+    // hilo no parece seguir hacia otro equipo del armario.
+    viewer?.frameParts(devices.length ? devices : [connection.objectId], "front");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene, connection]);
 
+  // Etiquetas origen/destino sobre el visor, ancladas al lado de cada aparato.
+  const srcLeft =
+    srcBox && dstBox ? (srcBox.min[0] + srcBox.max[0]) / 2 < (dstBox.min[0] + dstBox.max[0]) / 2 : null;
+
   const endpoint = (designation: string) => {
-    const device = designation.replace(/:[^:]*$/, "");
+    const device = base(designation);
     return nav.hasDevice(device) ? (
       <button
         type="button"
@@ -250,6 +285,16 @@ function ConnectionDetail({
       {scene ? (
         <div className="strip-3d">
           <Viewer ref={viewerRef} scene={scene} initialPreset="front" interactive={false} />
+          {srcLeft !== null && (
+            <div className="strip-3d-badges mono">
+              <span className={`strip-3d-badge${srcLeft ? "" : " right"}`} title={t("data.col.source")}>
+                {connection.source}
+              </span>
+              <span className={`strip-3d-badge${srcLeft ? " right" : ""}`} title={t("data.col.target")}>
+                {connection.target}
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="data-note">{t("data.connNo3d")}</div>

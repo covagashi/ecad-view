@@ -80,6 +80,8 @@ export interface Part3dTarget {
   modelIndex: number;
   /** objectId de la pieza dentro de ese modelo. */
   objectId: number;
+  /** typeId de la pieza dentro de ese modelo. */
+  typeId: number;
 }
 
 /**
@@ -110,7 +112,11 @@ export function buildDeviceTo3dIndex(
     if (!match) continue;
     const modelIndex = partLocations.get(`${match[1]}_${match[2]}`);
     if (modelIndex === undefined) continue; // La función no tiene pieza 3D.
-    const target: Part3dTarget = { modelIndex, objectId: Number(match[2]) };
+    const target: Part3dTarget = {
+      modelIndex,
+      objectId: Number(match[2]),
+      typeId: Number(match[1]),
+    };
     const key = fn.designation.replace(/:[^:]*$/, "");
     if (!byKey.has(key)) byKey.set(key, target);
     const tail = key.split(/[+=&]+/).pop()?.replace(/^#/, "");

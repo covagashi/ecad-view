@@ -295,6 +295,10 @@ export interface ConnectionRow {
   partType: string | null;
   /** Tipo de puente ("Plug-in bridge"...) si la conexión es un puente de bornes. */
   bridge: string | null;
+  /** packageId de la página del esquema donde vive el tramo (referencia cruzada). */
+  pageId: number | null;
+  /** Id SVG del tramo dentro de esa página, para resaltarlo al saltar. */
+  elementId: string | null;
   /** Clave "{typeId}_{objectId}" de la pieza 3D del cable (índice de cajas). */
   partKey: string | null;
   /** objectId numérico de la pieza del cable, para seleccionarla en el visor. */
@@ -339,6 +343,8 @@ export function buildConnections(
         connection.connectionOids
           .map((oid) => bridgeByOid.get(oid))
           .find((kind) => kind !== undefined) ?? null,
+      pageId: connection.packageId,
+      elementId: connection.svgElementId,
       partKey: match ? `${match[1]}_${match[2]}` : null,
       objectId: match ? Number(match[2]) : null,
     });

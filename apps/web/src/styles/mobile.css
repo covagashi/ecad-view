@@ -331,13 +331,15 @@
   }
 
   .conn-facts {
+    display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
-    gap: 12px;
+    gap: 0;
     font-size: 11.5px;
   }
 
   .conn-fact {
+    flex: none;
     white-space: nowrap;
   }
 
@@ -362,19 +364,8 @@
   }
 
   .data-plan {
-    max-height: clamp(110px, 30vh, 240px);
-  }
-
-  .data-plan-wrap {
-    padding: 8px;
-  }
-
-  /* El cuadro de taladros va en una fila desplazable. */
-  .data-legend {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 12px;
-    white-space: nowrap;
+    height: clamp(110px, 30vh, 240px);
+    min-height: 0;
   }
 
   .data-body {

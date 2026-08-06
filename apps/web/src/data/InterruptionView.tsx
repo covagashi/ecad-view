@@ -20,7 +20,8 @@ export function InterruptionView({
   const groups = useMemo(() => buildInterruptionGroups(manifest), [manifest]);
   const issues = groups.filter((group) => group.lonely || group.unresolved).length;
 
-  if (groups.length === 0) return <div className="data-note">{t("data.empty")}</div>;
+  if (groups.length === 0)
+    return <div className="data-note empty">{t("data.empty.ipoints")}</div>;
 
   return (
     <div className="data-section">
@@ -33,6 +34,7 @@ export function InterruptionView({
             <tr>
               <th>{t("data.col.signal")}</th>
               <th>{t("data.col.status")}</th>
+              <th className="num">{t("data.col.pages")}</th>
               <th>{t("data.col.xref")}</th>
             </tr>
           </thead>
@@ -49,6 +51,7 @@ export function InterruptionView({
                     <span className="data-pill ok">{t("data.status.ok")}</span>
                   )}
                 </td>
+                <td className="num mono">{group.refs.length}</td>
                 <td>
                   {group.refs.length > 0
                     ? group.refs.map((ref) => (

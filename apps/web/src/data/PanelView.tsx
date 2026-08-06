@@ -60,7 +60,8 @@ export function PanelView({ aml }: { aml: AmlProject }) {
     );
   }, [surface, positions]);
 
-  if (surfaces.length === 0) return <div className="data-note">{t("data.empty")}</div>;
+  if (surfaces.length === 0)
+    return <div className="data-note empty">{t("data.empty.panel")}</div>;
 
   const selectedPart = parts.find((part) => part.designation === selected) ?? null;
 
@@ -122,13 +123,35 @@ export function PanelView({ aml }: { aml: AmlProject }) {
             )}
           </header>
 
+          <div className="data-chiprow machining-mobile-parts">
+            {parts.length === 0 ? (
+              <div className="machining-empty">{t("data.empty")}</div>
+            ) : (
+              parts.map((part) => {
+                const on = selectedPart === part;
+                return (
+                  <button
+                    key={part.designation}
+                    type="button"
+                    className={`data-chip${on ? " active" : ""}`}
+                    onClick={() => setSelected(on ? null : part.designation)}
+                    title={[part.partNumber, part.classLabel].filter(Boolean).join(" · ")}
+                  >
+                    <span className="mono">{part.designation}</span>
+                    <span className="badge mono">{part.holes.length}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
           <DrillPlan surface={surface} selected={selectedPart} />
         </div>
 
-        <aside className="machining-parts" aria-label="parts">
+        <aside className="machining-parts" aria-label={t("data.parts")}>
           <div className="machining-col-head">
             <span className="mono">{parts.length}</span>
-            <span className="machining-col-head-dim"> · devices</span>
+            <span className="machining-col-head-dim"> · {t("data.parts")}</span>
           </div>
           <div className="machining-part-list">
             {parts.length === 0 ? (
@@ -267,8 +290,8 @@ function DrillPlan({
               />
             ))}
           </g>
-          <rect className="plan-plate" x={0} y={0} width={width} height={height} rx={2} />
-          <rect className="plan-outline" x={0} y={0} width={width} height={height} rx={2} />
+          <rect className="plan-plate" x={0} y={0} width={width} height={height} rx={0} />
+          <rect className="plan-outline" x={0} y={0} width={width} height={height} rx={0} />
           <g className="plan-origin">
             <line x1={0} y1={flip(0)} x2={gridStep * 0.35} y2={flip(0)} />
             <line x1={0} y1={flip(0)} x2={0} y2={flip(gridStep * 0.35)} />
@@ -283,7 +306,7 @@ function DrillPlan({
               y={flip(selected.maxY)}
               width={Math.max(selected.maxX - selected.minX, minRadius * 2)}
               height={Math.max(selected.maxY - selected.minY, minRadius * 2)}
-              rx={2}
+              rx={0}
             />
           )}
           {surface.holes.map((hole, i) => {

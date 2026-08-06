@@ -29,7 +29,7 @@ export function PositionsView({
     );
   }, [rows, filter]);
 
-  if (rows.length === 0) return <div className="data-note">{t("data.empty")}</div>;
+  if (rows.length === 0) return <div className="data-note empty">{t("data.empty.positions")}</div>;
 
   const mm = (value: number) => value.toFixed(1);
 
@@ -41,11 +41,12 @@ export function PositionsView({
           <input
             type="search"
             aria-label={t("data.search")}
-            placeholder={t("data.search")}
+            placeholder={t("data.searchDesignation")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
+        <div className="data-toolbar-hint">{t("data.positionsUnitHint")}</div>
         <div className="data-count mono" aria-live="polite">
           {filtered.length}
         </div>
@@ -103,7 +104,6 @@ export function PositionsView({
           </tbody>
         </table>
       </div>
-      <div className="data-note off">{t("data.positionsUnit", { count: filtered.length })}</div>
     </div>
   );
 }

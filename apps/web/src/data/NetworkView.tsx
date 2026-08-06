@@ -10,7 +10,7 @@ export function NetworkView({ aml, nav }: { aml: AmlProject; nav: DataNav }) {
   const { t } = useI18n();
   const rows = useMemo(() => buildNetwork(aml), [aml]);
 
-  if (rows.length === 0) return <div className="data-note">{t("data.empty")}</div>;
+  if (rows.length === 0) return <div className="data-note empty">{t("data.empty.network")}</div>;
 
   return (
     <div className="data-section">

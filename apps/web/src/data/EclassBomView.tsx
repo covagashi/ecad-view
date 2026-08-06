@@ -39,6 +39,41 @@ export function EclassBomView({
   const totalArticles = filtered.reduce((sum, g) => sum + g.articles.length, 0);
   const totalQty = filtered.reduce((sum, g) => sum + g.total, 0);
 
+  if (groups.length === 0) return <div className="data-note empty">{t("data.empty.bom")}</div>;
+
+  const exportCsv = () => {
+    const escape = (value: string) =>
+      /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+    const rows: string[][] = [
+      [
+        t("data.col.article"),
+        t("data.col.qty"),
+        t("data.col.description"),
+        t("data.col.devices"),
+        t("data.col.class"),
+      ],
+    ];
+    for (const group of groups) {
+      for (const article of group.articles) {
+        rows.push([
+          article.partNumber ?? "",
+          String(article.quantity),
+          pickText(article.text, lang) ?? "",
+          article.devices.join(" "),
+          group.label,
+        ]);
+      }
+    }
+    const csv = rows.map((row) => row.map(escape).join(",")).join("\r\n");
+    const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "bom.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="data-section data-section--scroll">
       <div className="data-toolbar bom-toolbar">
@@ -55,6 +90,9 @@ export function EclassBomView({
         <div className="data-count mono" aria-live="polite">
           {filtered.length} · {totalArticles} · Σ{totalQty}
         </div>
+        <button type="button" className="data-tool" onClick={exportCsv}>
+          {t("bom.exportCsv")}
+        </button>
       </div>
 
       {filtered.map((group) => (
@@ -109,7 +147,7 @@ export function EclassBomView({
           </div>
         </section>
       ))}
-      {filtered.length === 0 && <div className="data-note">{t("data.empty")}</div>}
+      {filtered.length === 0 && <div className="data-note">{t("data.noMatches")}</div>}
     </div>
   );
 }

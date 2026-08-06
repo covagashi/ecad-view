@@ -4,6 +4,7 @@ import { useI18n } from "../i18n";
 import { useAml } from "../aml/useAml";
 import { buildDeviceTo3dIndex, findDeviceByDesignation } from "../state/bridge";
 import { getPartLocations } from "../state/partLocator";
+import type { Part3dTarget } from "../state/bridge";
 import { stashPendingPick } from "../state/deeplink";
 import { getPartBoxes, type PartBoxIndex } from "./partBoxes";
 import { resolveAmlLang } from "./lang";
@@ -21,6 +22,8 @@ export type DataTab = "connections" | "panel" | "network" | "bom" | "positions" 
 export interface DataNav {
   /** Salta a una página (por packageId del manifest) resaltando un elemento. */
   toSchematic: (pageId: number | null, elementId: string | null) => void;
+  /** Título legible de una página (packageId), para referencias cruzadas. */
+  pageLabel: (pageId: number | null) => string | null;
   /** Salta a la primera aparición de una designación en los esquemas. */
   toDevice: (designation: string) => void;
   hasDevice: (designation: string) => boolean;
@@ -28,7 +31,7 @@ export interface DataNav {
   to3d: (designation: string) => void;
   has3d: (designation: string) => boolean;
   /** Pieza 3D (modelo + objectId) de una designación, si existe. */
-  resolve3d: (designation: string) => { modelIndex: number; objectId: number } | null;
+  resolve3d: (designation: string) => Part3dTarget | null;
 }
 
 function defaultTab(doc: {
@@ -58,6 +61,8 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
 
   const aml = doc?.aml ?? null;
   const manifest = doc?.manifest ?? null;
+  const projectId = doc?.id ?? "";
+  const models = doc?.epdzModels ?? [];
 
   const lang = useMemo(
     () => resolveAmlLang(aml, doc?.amlLang, locale),
@@ -96,6 +101,11 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
         xrefInfo: null,
       });
       onNavigateAway?.();
+    },
+    pageLabel: (pageId) => {
+      if (pageId == null) return null;
+      const page = doc.pages.find((p) => p.packageId === pageId);
+      return page?.title ?? null;
     },
     toDevice: (designation) => {
       const device = findDeviceByDesignation(doc.deviceIndex, designation);
@@ -172,13 +182,12 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
         </div>
       </header>
 
-      <nav className="data-tabs" role="tablist" aria-label={t("rail.data")}>
+      <nav className="data-tabs" aria-label={t("rail.data")}>
         {visibleTabs.map((entry) => (
           <button
             key={entry.key}
-            role="tab"
             type="button"
-            aria-selected={activeTab === entry.key}
+            aria-current={activeTab === entry.key ? "page" : undefined}
             className={activeTab === entry.key ? "active" : ""}
             onClick={() => setTab(entry.key)}
           >
@@ -189,9 +198,17 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
 
       <div className="data-body">
         {needsAml && doc.amlState !== "ready" ? (
-          <div className="data-note">
-            {doc.amlState === "error" || !doc.amlEntry ? t("data.noAml") : t("data.loadingAml")}
-          </div>
+          doc.amlState === "error" || !doc.amlEntry ? (
+            <div className="data-note empty">{t("data.noAml")}</div>
+          ) : (
+            <div className="data-load">
+              <span className="data-load-spin" aria-hidden="true" />
+              <div className="data-load-body">
+                <p className="data-load-title">{t("data.loadingAml")}</p>
+                <p className="data-load-sub mono">{projectName}</p>
+              </div>
+            </div>
+          )
         ) : (
           <>
             {activeTab === "connections" && (
@@ -199,8 +216,8 @@ export function DataView({ onNavigateAway }: { onNavigateAway?: () => void }) {
                 manifest={manifest}
                 aml={aml}
                 partBoxes={partBoxes}
-                projectId={doc.id}
-                models={doc.epdzModels}
+                projectId={projectId}
+                models={models}
                 nav={nav}
               />
             )}

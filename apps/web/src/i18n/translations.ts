@@ -190,7 +190,16 @@ const en = {
   "data.status.ok": "Paired",
   "data.status.lonely": "Unpaired",
   "data.status.unresolved": "No cross-reference",
-  "data.positionsUnit": "{count} components · coordinates in mm relative to the installation space",
+  "data.positionsUnitHint": "Coordinates in mm relative to the installation space",
+  "data.searchDesignation": "Filter by designation…",
+  "data.noMatches": "No matches.",
+  "data.empty.connections": "No wiring list. This .epdz contains no connection table.",
+  "data.empty.panel": "No mounting surfaces. The AutomationML has no machining data.",
+  "data.empty.network": "No networked devices. The AutomationML has no PLC or communication interfaces.",
+  "data.empty.bom": "Empty parts list. No eCl@ss articles were found in this project.",
+  "data.empty.positions": "No 3D positions. No classified components were found in the AutomationML.",
+  "data.empty.ipoints": "No interruption points. This .epdz contains no interruption point table.",
+  "data.parts": "Parts",
 };
 
 export type TranslationKey = keyof typeof en;
@@ -368,7 +377,16 @@ const es: Translation = {
   "data.status.ok": "Emparejado",
   "data.status.lonely": "Suelto",
   "data.status.unresolved": "Sin referencia",
-  "data.positionsUnit": "{count} componentes · coordenadas en mm relativas al espacio de montaje",
+  "data.positionsUnitHint": "Coordenadas en mm relativas al espacio de montaje",
+  "data.searchDesignation": "Filtrar por designación…",
+  "data.noMatches": "Sin coincidencias.",
+  "data.empty.connections": "Sin lista de cableado. Este .epdz no contiene tabla de conexiones.",
+  "data.empty.panel": "Sin superficies de montaje. El AutomationML no trae datos de mecanizado.",
+  "data.empty.network": "Sin dispositivos de red. El AutomationML no trae PLC ni interfaces de comunicación.",
+  "data.empty.bom": "Lista de piezas vacía. No se encontraron artículos eCl@ss en este proyecto.",
+  "data.empty.positions": "Sin posiciones 3D. No se encontraron componentes clasificados en el AutomationML.",
+  "data.empty.ipoints": "Sin puntos de interrupción. Este .epdz no trae tabla de puntos de interrupción.",
+  "data.parts": "Piezas",
 };
 
 const pt: Translation = {
@@ -543,7 +561,16 @@ const pt: Translation = {
   "data.status.ok": "Emparelhado",
   "data.status.lonely": "Solto",
   "data.status.unresolved": "Sem referência",
-  "data.positionsUnit": "{count} componentes · coordenadas em mm relativas ao espaço de montagem",
+  "data.positionsUnitHint": "Coordenadas em mm relativas ao espaço de montagem",
+  "data.searchDesignation": "Filtrar por designação…",
+  "data.noMatches": "Sem correspondências.",
+  "data.empty.connections": "Sem lista de cablagem. Este .epdz não contém tabela de conexões.",
+  "data.empty.panel": "Sem superfícies de montagem. O AutomationML não traz dados de furação.",
+  "data.empty.network": "Sem dispositivos de rede. O AutomationML não traz PLC nem interfaces de comunicação.",
+  "data.empty.bom": "Lista de peças vazia. Não foram encontrados artigos eCl@ss neste projeto.",
+  "data.empty.positions": "Sem posições 3D. Não foram encontrados componentes classificados no AutomationML.",
+  "data.empty.ipoints": "Sem pontos de interrupção. Este .epdz não contém tabela de pontos de interrupção.",
+  "data.parts": "Peças",
 };
 
 const de: Translation = {
@@ -718,7 +745,16 @@ const de: Translation = {
   "data.status.ok": "Gepaart",
   "data.status.lonely": "Ohne Gegenstück",
   "data.status.unresolved": "Ohne Querverweis",
-  "data.positionsUnit": "{count} Komponenten · Koordinaten in mm relativ zum Einbauraum",
+  "data.positionsUnitHint": "Koordinaten in mm relativ zum Einbauraum",
+  "data.searchDesignation": "Nach Kennzeichen filtern…",
+  "data.noMatches": "Keine Treffer.",
+  "data.empty.connections": "Keine Verdrahtungsliste. Dieses .epdz enthält keine Verbindungstabelle.",
+  "data.empty.panel": "Keine Montageflächen. Das AutomationML enthält keine Bohrbild-Daten.",
+  "data.empty.network": "Keine Netzwerkgeräte. Das AutomationML enthält keine SPS- oder Kommunikationsschnittstellen.",
+  "data.empty.bom": "Leere Stückliste. In diesem Projekt wurden keine eCl@ss-Artikel gefunden.",
+  "data.empty.positions": "Keine 3D-Positionen. Im AutomationML wurden keine klassifizierten Komponenten gefunden.",
+  "data.empty.ipoints": "Keine Unterbrechungspunkte. Dieses .epdz enthält keine Unterbrechungspunkt-Tabelle.",
+  "data.parts": "Teile",
 };
 
 const it: Translation = {
@@ -893,7 +929,16 @@ const it: Translation = {
   "data.status.ok": "Accoppiato",
   "data.status.lonely": "Isolato",
   "data.status.unresolved": "Senza riferimento",
-  "data.positionsUnit": "{count} componenti · coordinate in mm relative allo spazio di montaggio",
+  "data.positionsUnitHint": "Coordinate in mm relative allo spazio di montaggio",
+  "data.searchDesignation": "Filtra per sigla…",
+  "data.noMatches": "Nessuna corrispondenza.",
+  "data.empty.connections": "Nessuna lista di cablaggio. Questo .epdz non contiene una tabella di collegamenti.",
+  "data.empty.panel": "Nessuna superficie di montaggio. L'AutomationML non contiene dati di foratura.",
+  "data.empty.network": "Nessun dispositivo di rete. L'AutomationML non contiene PLC né interfacce di comunicazione.",
+  "data.empty.bom": "Distinta vuota. Nessun articolo eCl@ss trovato in questo progetto.",
+  "data.empty.positions": "Nessuna posizione 3D. Nessun componente classificato trovato nell'AutomationML.",
+  "data.empty.ipoints": "Nessun punto di interruzione. Questo .epdz non contiene una tabella di punti di interruzione.",
+  "data.parts": "Parti",
 };
 
 const ja: Translation = {
@@ -1068,7 +1113,16 @@ const ja: Translation = {
   "data.status.ok": "ペア済み",
   "data.status.lonely": "相手なし",
   "data.status.unresolved": "参照なし",
-  "data.positionsUnit": "部品 {count} 点 · 座標は取付スペース基準の mm",
+  "data.positionsUnitHint": "座標は取付スペース基準の mm",
+  "data.searchDesignation": "デバイス名で絞り込む…",
+  "data.noMatches": "一致する項目がありません。",
+  "data.empty.connections": "配線リストがありません。この .epdz には接続テーブルが含まれていません。",
+  "data.empty.panel": "取付面がありません。AutomationML に穴あけ加工データが含まれていません。",
+  "data.empty.network": "ネットワーク機器がありません。AutomationML に PLC や通信インターフェースが含まれていません。",
+  "data.empty.bom": "部品表が空です。このプロジェクトに eCl@ss 品目が見つかりませんでした。",
+  "data.empty.positions": "3D位置がありません。AutomationML に分類されたコンポーネントが見つかりませんでした。",
+  "data.empty.ipoints": "中断点がありません。この .epdz には中断点テーブルが含まれていません。",
+  "data.parts": "部品",
 };
 
 const ko: Translation = {
@@ -1243,7 +1297,16 @@ const ko: Translation = {
   "data.status.ok": "쌍 완료",
   "data.status.lonely": "짝 없음",
   "data.status.unresolved": "참조 없음",
-  "data.positionsUnit": "부품 {count}개 · 좌표는 설치 공간 기준 mm",
+  "data.positionsUnitHint": "좌표는 설치 공간 기준 mm",
+  "data.searchDesignation": "기기 명칭으로 필터링…",
+  "data.noMatches": "일치하는 항목이 없습니다.",
+  "data.empty.connections": "배선 목록이 없습니다. 이 .epdz에는 연결 테이블이 포함되어 있지 않습니다.",
+  "data.empty.panel": "설치 면이 없습니다. AutomationML에 가공 데이터가 포함되어 있지 않습니다.",
+  "data.empty.network": "네트워크 장치가 없습니다. AutomationML에 PLC 또는 통신 인터페이스가 포함되어 있지 않습니다.",
+  "data.empty.bom": "부품 목록이 비어 있습니다. 이 프로젝트에서 eCl@ss 품목을 찾을 수 없습니다.",
+  "data.empty.positions": "3D 위치가 없습니다. AutomationML에서 분류된 구성 요소를 찾을 수 없습니다.",
+  "data.empty.ipoints": "중단점이 없습니다. 이 .epdz에는 중단점 테이블이 포함되어 있지 않습니다.",
+  "data.parts": "부품",
 };
 
 const zh: Translation = {
@@ -1417,7 +1480,16 @@ const zh: Translation = {
   "data.status.ok": "已配对",
   "data.status.lonely": "无配对",
   "data.status.unresolved": "无交叉引用",
-  "data.positionsUnit": "{count} 个部件 · 坐标为相对安装空间的 mm",
+  "data.positionsUnitHint": "坐标为相对安装空间的 mm",
+  "data.searchDesignation": "按设备标识筛选…",
+  "data.noMatches": "无匹配项。",
+  "data.empty.connections": "没有接线表。此 .epdz 不包含连接表。",
+  "data.empty.panel": "没有安装面。AutomationML 中没有钻孔加工数据。",
+  "data.empty.network": "没有网络设备。AutomationML 中没有 PLC 或通信接口。",
+  "data.empty.bom": "物料清单为空。在此项目中未找到 eCl@ss 物料。",
+  "data.empty.positions": "没有 3D 位置。AutomationML 中未找到已分类组件。",
+  "data.empty.ipoints": "没有中断点。此 .epdz 不包含中断点表。",
+  "data.parts": "部件",
 };
 
 export const translations: Record<Locale, Translation> = { en, es, pt, de, it, ja, ko, zh };
