@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ProjectView } from "./project/ProjectView";
 import { getScene } from "./state/sceneCache";
 import { HOME_ID, useProjects } from "./state/ProjectsContext";
-import { Viewer3DView } from "./viewer3d/Viewer3DView";
 import { TabStrip } from "./shell/TabStrip";
 import { Rail } from "./shell/Rail";
 import { StatusBar } from "./shell/StatusBar";
@@ -10,11 +9,17 @@ import { LibraryView } from "./library/LibraryView";
 import { scheduleSessionSave } from "./library/session";
 import { useSessionRestore } from "./library/useSessionRestore";
 import { SchematicsView } from "./schematic/SchematicsView";
-import { DataView } from "./data/DataView";
 import { MobileBar } from "./mobile/MobileBar";
 import { MobileActionsProvider } from "./mobile/actions";
 import { useDeepLink } from "./state/useDeepLink";
 import { useI18n } from "./i18n";
+
+const Viewer3DView = lazy(() =>
+  import("./viewer3d/Viewer3DView").then((mod) => ({ default: mod.Viewer3DView }))
+);
+const DataView = lazy(() =>
+  import("./data/DataView").then((mod) => ({ default: mod.DataView }))
+);
 
 export function App() {
   const { t } = useI18n();
@@ -80,7 +85,9 @@ export function App() {
             )}
 
             {doc && !doc.loading && !doc.error && doc.view === "3d" && (
-              <Viewer3DView scene={scene} />
+              <Suspense fallback={null}>
+                <Viewer3DView scene={scene} />
+              </Suspense>
             )}
 
             {doc && !doc.loading && !doc.error && doc.view === "pages" && <SchematicsView />}
@@ -93,7 +100,11 @@ export function App() {
               !doc.loading &&
               !doc.error &&
               doc.view === "data" &&
-              (doc.manifest || doc.amlEntry) && <DataView />}
+              (doc.manifest || doc.amlEntry) && (
+                <Suspense fallback={null}>
+                  <DataView />
+                </Suspense>
+              )}
           </main>
         </div>
 

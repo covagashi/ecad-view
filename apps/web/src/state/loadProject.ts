@@ -1,7 +1,5 @@
-import { extractEpdz, type EpdzEntry } from "@covaga/e3d-core/epdz";
-import { readManifest, type EplanManifest } from "@covaga/e3d-core/manifest";
-import wasmUrl from "7z-wasm/7zz.wasm?url";
-import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
+import type { EpdzEntry } from "@covaga/e3d-core/epdz";
+import type { EplanManifest } from "@covaga/e3d-core/manifest";
 import { pageTitle } from "../viewer/SchematicViewer";
 import { buildDeviceIndex } from "../devices";
 import type { LoadedPage, LoadedProjectData, StatusMessage } from "./types";
@@ -9,6 +7,10 @@ import type { LoadedPage, LoadedProjectData, StatusMessage } from "./types";
 /**
  * Carga un fichero .epdz o .e3d y devuelve el contenido del documento.
  * `onStatus` informa del progreso (extracción, manifest…) a la barra de estado.
+ *
+ * El AutomationML (.aml) se deja fuera de esta carga: suele ser el fichero más
+ * grande del .epdz y solo lo usa la vista Datos. `extractAmlEntry` lo recoge
+ * después, en segundo plano.
  */
 export async function loadProject(
   name: string,
@@ -30,7 +32,15 @@ export async function loadProject(
   }
 
   onStatus({ key: "status.extracting" });
-  const contents = await extractEpdz(buffer, { wasmUrl });
+  const [{ extractEpdz }, wasmMod] = await Promise.all([
+    import("@covaga/e3d-core/epdz"),
+    import("7z-wasm/7zz.wasm?url"),
+  ]);
+  const contents = await extractEpdz(buffer, {
+    wasmUrl: wasmMod.default,
+    // El .aml (decenas de MB) no hace falta para 3D/esquemas/proyecto.
+    excludeGlobs: ["*.aml"],
+  });
 
   let manifest: EplanManifest | null = null;
   const manifestEntry = contents.databases.find((d) =>
@@ -39,8 +49,15 @@ export async function loadProject(
   if (manifestEntry) {
     onStatus({ key: "status.readingManifest" });
     try {
+      const [{ readManifest }, sqlWasm] = await Promise.all([
+        import("@covaga/e3d-core/manifest"),
+        import("sql.js/dist/sql-wasm.wasm?url"),
+      ]);
       // El visor no debe quedarse bloqueado si sql.js no inicializa.
-      manifest = await withTimeout(readManifest(manifestEntry.data, { wasmUrl: sqlWasmUrl }), 10000);
+      manifest = await withTimeout(
+        readManifest(manifestEntry.data, { wasmUrl: sqlWasm.default }),
+        10000
+      );
     } catch (error) {
       console.warn("No se pudo leer manifest.db:", error);
     }
@@ -69,6 +86,19 @@ export async function loadProject(
     view: contents.models.length > 0 ? "3d" : "pages",
     modelIndex: contents.models.length > 0 ? 0 : -1,
   };
+}
+
+/** Extrae solo el AutomationML de un .epdz (segunda pasada, tras la carga). */
+export async function extractAmlEntry(buffer: ArrayBuffer): Promise<EpdzEntry | null> {
+  const [{ extractEpdz }, wasmMod] = await Promise.all([
+    import("@covaga/e3d-core/epdz"),
+    import("7z-wasm/7zz.wasm?url"),
+  ]);
+  const contents = await extractEpdz(buffer, {
+    wasmUrl: wasmMod.default,
+    includeGlobs: ["*.aml"],
+  });
+  return contents.amls[0] ?? null;
 }
 
 /**
@@ -132,5 +162,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export function toArrayBuffer(data: Uint8Array): ArrayBuffer {
-  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+  const { buffer, byteOffset, byteLength } = data;
+  if (buffer instanceof ArrayBuffer && byteOffset === 0 && byteLength === buffer.byteLength) {
+    return buffer;
+  }
+  if (buffer instanceof ArrayBuffer) {
+    return buffer.slice(byteOffset, byteOffset + byteLength);
+  }
+  const copy = new Uint8Array(byteLength);
+  copy.set(data);
+  return copy.buffer;
 }

@@ -110,6 +110,8 @@ export function projectsReducer(state: AppState, action: Action): AppState {
       return patchProject(state, action.id, { aml: action.aml, amlState: "ready" });
     case "AML_ERROR":
       return patchProject(state, action.id, { amlState: "error" });
+    case "SET_AML_ENTRY":
+      return patchProject(state, action.id, { amlEntry: action.amlEntry });
     case "SET_AML_LANG":
       return patchProject(state, action.id, { amlLang: action.lang });
     case "SET_STATUS":

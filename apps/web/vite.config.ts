@@ -26,4 +26,14 @@ export default defineConfig({
     // 7z-wasm es un módulo emscripten; el pre-bundling de esbuild lo rompe.
     exclude: ["7z-wasm"],
   },
+  build: {
+    target: "es2022",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/three")) return "three";
+        },
+      },
+    },
+  },
 });

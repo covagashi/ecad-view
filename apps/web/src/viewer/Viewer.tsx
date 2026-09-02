@@ -2,7 +2,12 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { E3dScene } from "@covaga/e3d-core";
-import { buildThreeScene } from "@covaga/e3d-core/three";
+import {
+  applySceneVisibility,
+  buildThreeScene,
+  findScenePart,
+  partWorldBox,
+} from "@covaga/e3d-core/three";
 import { cssVar, onThemeChange } from "../theme";
 
 export type ViewPreset = "iso" | "front" | "side" | "top";
@@ -49,6 +54,7 @@ interface ViewerHandles {
   controls: OrbitControls;
   modelRoot: THREE.Group | null;
   selectionBox: THREE.Box3Helper | null;
+  invalidate: () => void;
 }
 
 /** Dirección de cámara de cada preset (espacio Y-arriba de three.js). */
@@ -88,7 +94,11 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     }
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.createElement("canvas") });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        canvas: document.createElement("canvas"),
+        powerPreference: "high-performance",
+      });
     } catch {
       container.replaceChildren();
       const note = document.createElement("div");
@@ -98,15 +108,14 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       container.appendChild(note);
       return;
     }
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // Capar el DPR evita rellenar 3–4× más píxeles en pantallas retina sin
+    // cambiar el aspecto en 1×/2× (el techo coincide con el buffer nativo).
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     container.appendChild(renderer.domElement);
 
     const threeScene = new THREE.Scene();
     // El fondo sigue al tema de la aplicación (variable --canvas).
     threeScene.background = new THREE.Color(cssVar("--canvas") || "#1a1e25");
-    const disposeThemeWatch = onThemeChange(() => {
-      threeScene.background = new THREE.Color(cssVar("--canvas") || "#1a1e25");
-    });
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 10000);
     camera.position.set(200, 200, 200);
@@ -122,11 +131,17 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     // tras soltar, alargando cualquier shimmer de las líneas.
     controls.dampingFactor = 0.12;
 
+    let needsRender = true;
+    const invalidate = () => {
+      needsRender = true;
+    };
+
     const resize = () => {
       const { clientWidth, clientHeight } = container;
       renderer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / Math.max(1, clientHeight);
       camera.updateProjectionMatrix();
+      invalidate();
     };
     resize();
     const resizeObserver = new ResizeObserver(resize);
@@ -147,6 +162,23 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       let pickedObject: THREE.Object3D | null = null;
       for (const hit of hits) {
         if (!hit.object.visible) continue;
+        const batched = hit.object as THREE.BatchedMesh & { isBatchedMesh?: boolean };
+        if (batched.isBatchedMesh) {
+          const batchId = (hit as { batchId?: number }).batchId;
+          const objectId =
+            batchId !== undefined
+              ? (batched.userData.instanceToPart as Array<number | undefined> | undefined)?.[batchId]
+              : undefined;
+          if (objectId === undefined) continue;
+          const part = findScenePart(handles.modelRoot, objectId);
+          if (part?.visible) {
+            picked = part.userData;
+            pickedObject = part;
+            break;
+          }
+          continue;
+        }
+        if (hit.object.userData.kind === "e3d-edges") continue;
         let obj: THREE.Object3D | null = hit.object;
         while (obj && obj.userData.meshId === undefined) obj = obj.parent;
         if (obj && obj.visible) {
@@ -161,7 +193,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
         handles.selectionBox = null;
       }
       if (pickedObject) {
-        const box = new THREE.Box3().setFromObject(pickedObject);
+        const box = partWorldBox(pickedObject);
         handles.selectionBox = new THREE.Box3Helper(
           box,
           new THREE.Color(cssVar("--accent") || "#5b9dff")
@@ -169,12 +201,21 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
         threeScene.add(handles.selectionBox);
       }
       onPickRef.current(picked);
+      handles.invalidate();
     };
     renderer.domElement.addEventListener("click", onClick);
 
+    controls.addEventListener("change", invalidate);
+    const disposeThemeWatch = onThemeChange(() => {
+      threeScene.background = new THREE.Color(cssVar("--canvas") || "#1a1e25");
+      invalidate();
+    });
+
     renderer.setAnimationLoop(() => {
       controls.update();
+      if (!needsRender) return;
       renderer.render(threeScene, camera);
+      needsRender = false;
     });
 
     handlesRef.current = {
@@ -184,10 +225,12 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       controls,
       modelRoot: null,
       selectionBox: null,
+      invalidate,
     };
 
     return () => {
       disposeThemeWatch();
+      controls.removeEventListener("change", invalidate);
       renderer.setAnimationLoop(null);
       renderer.domElement.removeEventListener("click", onClick);
       resizeObserver.disconnect();
@@ -230,6 +273,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     handles.camera.far = distance * 100;
     handles.camera.updateProjectionMatrix();
     handles.controls.update();
+    handles.invalidate();
   };
 
   /** Coloca la cámara para encuadrar `box` mirando desde `direction`. */
@@ -254,13 +298,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
   const findPart = (objectId: number): THREE.Object3D | null => {
     const handles = handlesRef.current;
     if (!handles?.modelRoot) return null;
-    let found: THREE.Object3D | null = null;
-    handles.modelRoot.traverse((obj) => {
-      if (!found && obj.userData.meshId !== undefined && obj.userData.objectId === objectId) {
-        found = obj;
-      }
-    });
-    return found;
+    return findScenePart(handles.modelRoot, objectId);
   };
 
   useImperativeHandle(ref, () => ({
@@ -269,16 +307,8 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
     applyVisibility(hidden, isolated) {
       const handles = handlesRef.current;
       if (!handles?.modelRoot) return;
-      handles.modelRoot.traverse((obj) => {
-        if (obj.userData.meshId !== undefined) {
-          const objectId = obj.userData.objectId as number | undefined;
-          obj.visible =
-            isolated !== null
-              ? objectId !== undefined &&
-                (typeof isolated === "number" ? objectId === isolated : isolated.has(objectId))
-              : objectId === undefined || !hidden.has(objectId);
-        }
-      });
+      applySceneVisibility(handles.modelRoot, hidden, isolated);
+      handles.invalidate();
     },
     frameParts(objectIds, preset) {
       const handles = handlesRef.current;
@@ -286,7 +316,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       const box = new THREE.Box3();
       for (const objectId of objectIds) {
         const part = findPart(objectId);
-        if (part) box.union(new THREE.Box3().setFromObject(part));
+        if (part) box.union(partWorldBox(part));
       }
       if (box.isEmpty()) return;
       frameBox3(box, PRESET_DIRECTIONS[preset]);
@@ -300,7 +330,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       }
       const part = findPart(objectId);
       if (!part) return null;
-      const box = new THREE.Box3().setFromObject(part);
+      const box = partWorldBox(part);
       if (!box.isEmpty()) {
         handles.selectionBox = new THREE.Box3Helper(
           box,
@@ -308,13 +338,14 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
         );
         handles.scene.add(handles.selectionBox);
       }
+      handles.invalidate();
       return part.userData;
     },
     focusPart(objectId) {
       const handles = handlesRef.current;
       const part = findPart(objectId);
       if (!handles || !part) return;
-      const box = new THREE.Box3().setFromObject(part);
+      const box = partWorldBox(part);
       if (box.isEmpty()) return;
       // Se conserva la dirección de vista actual: solo se acerca.
       const direction = handles.camera.position.clone().sub(handles.controls.target);
@@ -326,6 +357,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
       if (handles?.selectionBox) {
         handles.scene.remove(handles.selectionBox);
         handles.selectionBox = null;
+        handles.invalidate();
       }
     },
   }));
@@ -351,6 +383,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
 
     // Encuadra la cámara sobre el modelo.
     frame(PRESET_DIRECTIONS[initialPreset]);
+    handles.invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
@@ -359,10 +392,28 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(function Viewer(
 
 function disposeTree(root: THREE.Object3D) {
   root.traverse((obj) => {
+    const batched = obj as THREE.BatchedMesh & { isBatchedMesh?: boolean };
+    if (batched.isBatchedMesh) {
+      const material = batched.material as THREE.Material | THREE.Material[] | undefined;
+      batched.dispose();
+      const disposeMat = (m: THREE.Material) => {
+        const map = (m as THREE.MeshBasicMaterial).map;
+        map?.dispose();
+        m.dispose();
+      };
+      if (Array.isArray(material)) material.forEach(disposeMat);
+      else if (material) disposeMat(material);
+      return;
+    }
     const mesh = obj as THREE.Mesh;
     if (mesh.geometry) mesh.geometry.dispose();
-    const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
-    if (Array.isArray(material)) material.forEach((m) => m.dispose());
-    else material?.dispose();
+    const material = mesh.material as THREE.MeshBasicMaterial | THREE.Material | THREE.Material[] | undefined;
+    const disposeMat = (m: THREE.Material) => {
+      const map = (m as THREE.MeshBasicMaterial).map;
+      map?.dispose();
+      m.dispose();
+    };
+    if (Array.isArray(material)) material.forEach(disposeMat);
+    else if (material) disposeMat(material);
   });
 }

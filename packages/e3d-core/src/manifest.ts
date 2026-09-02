@@ -1,4 +1,19 @@
 import initSqlJs, { type Database } from "sql.js";
+import { tokenizeStructure } from "./structure.js";
+
+type SqlJsStatic = Awaited<ReturnType<typeof initSqlJs>>;
+
+const sqlByWasmUrl = new Map<string, Promise<SqlJsStatic>>();
+
+function getSql(wasmUrl?: string): Promise<SqlJsStatic> {
+  const key = wasmUrl ?? "";
+  let pending = sqlByWasmUrl.get(key);
+  if (!pending) {
+    pending = initSqlJs(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
+    sqlByWasmUrl.set(key, pending);
+  }
+  return pending;
+}
 
 /** Página del proyecto según manifest.db, con su nombre estructurado EPLAN. */
 export interface ManifestPage {
@@ -157,9 +172,7 @@ export async function readManifest(
   data: Uint8Array,
   options: ManifestOptions = {}
 ): Promise<EplanManifest> {
-  const SQL = await initSqlJs(
-    options.wasmUrl ? { locateFile: () => options.wasmUrl! } : undefined
-  );
+  const SQL = await getSql(options.wasmUrl);
   const db = new SQL.Database(data);
   try {
     const schemaVersion = scalar(db, "SELECT version FROM database LIMIT 1");
@@ -389,20 +402,7 @@ export async function readManifest(
   }
 }
 
-/**
- * Trocea un identificador estructurado EPLAN ("==EES==Page_macros++Infrastructure...")
- * en segmentos legibles, sustituyendo los separadores por espacios en los nombres.
- */
-export function tokenizeStructure(structure: string): string[] {
-  const tokens: string[] = [];
-  const re = /(?:==|=|\+\+|\+|&)([^=+&#]+)/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(structure)) !== null) {
-    const value = match[1].replace(/_/g, " ").trim();
-    if (value) tokens.push(value);
-  }
-  return tokens;
-}
+export { tokenizeStructure } from "./structure.js";
 
 function scalar(db: Database, sql: string): string | null {
   try {
