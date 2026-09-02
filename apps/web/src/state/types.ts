@@ -115,5 +115,6 @@ export type Action =
   | { type: "AML_LOADING"; id: string }
   | { type: "AML_READY"; id: string; aml: AmlProject }
   | { type: "AML_ERROR"; id: string }
+  | { type: "SET_AML_ENTRY"; id: string; amlEntry: EpdzEntry | null }
   | { type: "SET_AML_LANG"; id: string; lang: string }
   | { type: "SET_STATUS"; status: StatusMessage | null };

@@ -33,6 +33,8 @@ const PRIMITIVE_MODES: E3dPrimitiveMode[] = [
   "triangles",
 ];
 
+const UTF16LE = new TextDecoder("utf-16le");
+
 export const E3D_MAX_SUPPORTED_VERSION = 4;
 
 /**
@@ -87,7 +89,7 @@ function readTexture(r: BinaryReader): E3dTexture {
   r.byte(); // formato de píxel, siempre BGRA en la práctica
   const width = r.short();
   const height = r.short();
-  const raw = r.bytes(width * height * 4);
+  const raw = r.bytesView(width * height * 4);
   // BGRA -> RGBA
   const data = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i += 4) {
@@ -267,35 +269,40 @@ class BinaryReader {
     return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 1];
   }
 
+  /** Vista sobre el buffer (sin copiar). El caller no debe mutarla. */
+  bytesView(byteLength: number): Uint8Array {
+    const start = this.advance(byteLength);
+    return new Uint8Array(this.buffer, start, byteLength);
+  }
+
   /** Buffer con prefijo de longitud en bytes. */
   bytes(byteLength: number): Uint8Array {
-    const start = this.advance(byteLength);
-    return new Uint8Array(this.buffer, start, byteLength).slice();
+    return this.bytesView(byteLength).slice();
   }
 
   byteBuffer(): Uint8Array {
-    return this.bytes(this.long());
+    return this.bytesView(this.long());
   }
 
   shortBuffer(): Uint16Array {
     const byteLength = this.long();
     const start = this.advance(byteLength);
-    const count = byteLength >> 1;
-    const out = new Uint16Array(count);
-    for (let i = 0; i < count; i++) {
-      out[i] = this.view.getUint16(start + i * 2, true);
+    if ((start & 1) === 0) {
+      return new Uint16Array(this.buffer, start, byteLength >> 1);
     }
+    const out = new Uint16Array(byteLength >> 1);
+    new Uint8Array(out.buffer).set(new Uint8Array(this.buffer, start, byteLength));
     return out;
   }
 
   floatBuffer(): Float32Array {
     const byteLength = this.long();
     const start = this.advance(byteLength);
-    const count = byteLength >> 2;
-    const out = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      out[i] = this.view.getFloat32(start + i * 4, true);
+    if ((start & 3) === 0) {
+      return new Float32Array(this.buffer, start, byteLength >> 2);
     }
+    const out = new Float32Array(byteLength >> 2);
+    new Uint8Array(out.buffer).set(new Uint8Array(this.buffer, start, byteLength));
     return out;
   }
 
@@ -303,12 +310,8 @@ class BinaryReader {
   string(): string {
     const byteLength = this.long();
     const start = this.advance(byteLength);
-    let out = "";
-    for (let i = 0; i < byteLength >> 1; i++) {
-      const code = this.view.getUint16(start + i * 2, true);
-      if (code !== 0) out += String.fromCharCode(code);
-    }
-    return out;
+    const text = UTF16LE.decode(new Uint8Array(this.buffer, start, byteLength));
+    return text.includes("\0") ? text.replace(/\0/g, "") : text;
   }
 
   /** Array con prefijo de número de elementos. */

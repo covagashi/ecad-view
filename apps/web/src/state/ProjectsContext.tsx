@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { initialState, projectsReducer } from "./projectsReducer";
-import { loadProject } from "./loadProject";
+import { extractAmlEntry, loadProject } from "./loadProject";
 import { evictProject } from "./sceneCache";
 import { evictPartLocations } from "./partLocator";
 import { evictPartBoxes } from "../data/partBoxes";
@@ -48,12 +48,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     async (name: string, buffer: ArrayBuffer, source: ProjectSource): Promise<OpenResult> => {
       const id = crypto.randomUUID();
       markSessionTouched();
+      void import("../viewer3d/Viewer3DView");
       dispatch({ type: "OPEN_START", id, fileName: name, source });
       try {
         const data = await loadProject(name, buffer, (status) =>
           dispatch({ type: "SET_STATUS", status })
         );
         dispatch({ type: "OPEN_SUCCESS", id, data });
+        if (name.toLowerCase().endsWith(".epdz")) {
+          void extractAmlEntry(buffer)
+            .then((amlEntry) => {
+              if (amlEntry) dispatch({ type: "SET_AML_ENTRY", id, amlEntry });
+            })
+            .catch((error) => {
+              console.warn("No se pudo extraer el AutomationML:", error);
+            });
+        }
         return { id, data };
       } catch (error) {
         console.error(error);

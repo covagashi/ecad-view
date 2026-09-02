@@ -1,4 +1,4 @@
-import { tokenizeStructure } from "@covaga/e3d-core/manifest";
+import { tokenizeStructure } from "@covaga/e3d-core";
 import { decodeEntities } from "./viewer/SchematicViewer";
 import type { LoadedPage } from "./state/types";
 

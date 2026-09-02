@@ -28,28 +28,66 @@ export interface ExtractOptions {
    * En Node no suele hacer falta (lo resuelve el propio paquete).
    */
   wasmUrl?: string;
+  /**
+   * Excluye ficheros al extraer (globs 7-zip, p. ej. `"*.aml"`).
+   * Útil para diferir el AutomationML (~decenas de MB) fuera de la carga inicial.
+   */
+  excludeGlobs?: string[];
+  /**
+   * Si se indica, 7-zip solo extrae las entradas que casan (globs recursivos,
+   * p. ej. `"*.aml"`). Se combina con `excludeGlobs`.
+   */
+  includeGlobs?: string[];
 }
 
-/**
- * Extrae el contenido de un fichero .epdz (EPLAN ePLAN Data Portal / eVIEW export).
- * Un .epdz es un archivo 7-zip; dentro, los modelos 3D son ficheros .e3d.
- */
-export async function extractEpdz(
-  epdz: ArrayBuffer | Uint8Array,
-  options: ExtractOptions = {}
-): Promise<EpdzContents> {
-  const seven: SevenZipModule = await SevenZip(
-    options.wasmUrl
-      ? { locateFile: () => options.wasmUrl!, print: () => {}, printErr: () => {} }
-      : { print: () => {}, printErr: () => {} }
-  );
+let cachedWasmUrl: string | undefined;
+let cachedSeven: Promise<SevenZipModule> | null = null;
+let sevenChain: Promise<unknown> = Promise.resolve();
 
-  const input = epdz instanceof Uint8Array ? epdz : new Uint8Array(epdz);
-  seven.FS.mkdir("/in");
-  seven.FS.mkdir("/out");
-  seven.FS.writeFile("/in/archive.epdz", input);
-  seven.callMain(["x", "/in/archive.epdz", "-o/out", "-y", "-bso0", "-bsp0"]);
+function getSeven(wasmUrl?: string): Promise<SevenZipModule> {
+  if (!cachedSeven || cachedWasmUrl !== wasmUrl) {
+    cachedWasmUrl = wasmUrl;
+    cachedSeven = SevenZip(
+      wasmUrl
+        ? { locateFile: () => wasmUrl, print: () => {}, printErr: () => {} }
+        : { print: () => {}, printErr: () => {} }
+    );
+  }
+  return cachedSeven;
+}
 
+function rmrf(seven: SevenZipModule, dir: string) {
+  let names: string[];
+  try {
+    names = seven.FS.readdir(dir);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    if (name === "." || name === "..") continue;
+    const full = `${dir}/${name}`;
+    const stat = seven.FS.stat(full);
+    if (seven.FS.isDir(stat.mode)) {
+      rmrf(seven, full);
+      seven.FS.rmdir(full);
+    } else {
+      seven.FS.unlink(full);
+    }
+  }
+}
+
+function resetWorkDirs(seven: SevenZipModule) {
+  for (const dir of ["/in", "/out"]) {
+    rmrf(seven, dir);
+    try {
+      seven.FS.mkdir(dir);
+    } catch {
+      // Ya existía vacío.
+    }
+  }
+}
+
+function collect(seven: SevenZipModule): EpdzContents {
   const models: EpdzEntry[] = [];
   const pages: EpdzEntry[] = [];
   const images: EpdzEntry[] = [];
@@ -91,4 +129,33 @@ export async function extractEpdz(
   models.sort(naturalByPath);
 
   return { models, pages, images, databases, amls, otherPaths };
+}
+
+/**
+ * Extrae el contenido de un fichero .epdz (EPLAN ePLAN Data Portal / eVIEW export).
+ * Un .epdz es un archivo 7-zip; dentro, los modelos 3D son ficheros .e3d.
+ */
+export async function extractEpdz(
+  epdz: ArrayBuffer | Uint8Array,
+  options: ExtractOptions = {}
+): Promise<EpdzContents> {
+  const run = sevenChain.then(async () => {
+    const seven = await getSeven(options.wasmUrl);
+    resetWorkDirs(seven);
+
+    const input = epdz instanceof Uint8Array ? epdz : new Uint8Array(epdz);
+    seven.FS.writeFile("/in/archive.epdz", input);
+
+    const args = ["x", "/in/archive.epdz", "-o/out", "-y", "-bso0", "-bsp0"];
+    for (const glob of options.excludeGlobs ?? []) args.push(`-xr!${glob}`);
+    for (const glob of options.includeGlobs ?? []) args.push(`-ir!${glob}`);
+    seven.callMain(args);
+
+    return collect(seven);
+  });
+  sevenChain = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
 }
