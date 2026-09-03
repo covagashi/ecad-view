@@ -1,0 +1,17 @@
+{
+  "name": "Covaga ECAD Viewer",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "web-dev-server",
+      "command": "npm run dev",
+      "description": "Builds @covaga/e3d-core (tsc) then serves the web viewer with Vite at http://localhost:5173"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 5173
+    }
+  ]
+}
