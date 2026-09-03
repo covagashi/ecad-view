@@ -10,9 +10,9 @@ rendered locally on your device, on desktop and mobile.
 [![CI](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml/badge.svg)](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml)
 [![Web app](https://img.shields.io/badge/web%20app-view.covaga.dev-5b9dff)](https://view.covaga.dev)
 
-▶ **Try it now — no install:** [view.covaga.dev](https://view.covaga.dev) ·
-📥 **Downloads:** [Releases](https://github.com/covagashi/ecad-view/releases) ·
-📖 **User guide:** [Wiki](https://github.com/covagashi/ecad-view/wiki) ·
+**Web app:** [view.covaga.dev](https://view.covaga.dev) ·
+**Downloads:** [Releases](https://github.com/covagashi/ecad-view/releases) ·
+**User guide:** [Wiki](https://github.com/covagashi/ecad-view/wiki) ·
 **Source:** [github.com/covagashi/ecad-view](https://github.com/covagashi/ecad-view)
 
 > **Disclaimer:** this is an independent community project. It is not
@@ -29,10 +29,9 @@ rendered locally on your device, on desktop and mobile.
 
 ## Install
 
-The easiest way is to **not** install anything: open
-**[view.covaga.dev](https://view.covaga.dev)** in any modern browser (desktop or mobile).
-It's a Progressive Web App, so you can also *Install / Add to Home Screen* for an
-app window and **offline** use.
+Open **[view.covaga.dev](https://view.covaga.dev)** in any modern browser (desktop
+or mobile). It's a Progressive Web App: *Install / Add to Home Screen* gives you
+an app window and **offline** use.
 
 Prefer a native build? Grab one from the
 [**Releases**](https://github.com/covagashi/ecad-view/releases) page:
@@ -76,6 +75,10 @@ EPLAN. Packaging details live in
   and breadcrumbs, project properties (creator, company, EPLAN version…),
   functions, locations, and the mapping from installation spaces to 3D
   models.
+- **Data view** — wiring connections, panel layout, network/PLC, BOM,
+  positions and interruption points from `manifest.db` and AutomationML,
+  with jumps back to the schematic or 3D part.
+- **Library** — a home view with recent files.
 - **Cross-platform by design** — one TypeScript codebase; responsive UI for
   desktop and mobile browsers. The app installs as a **PWA** (offline
   support via service worker), and thin native shells for desktop (Tauri)
@@ -133,8 +136,6 @@ wiki/                User-facing guide (source of the GitHub Wiki).
 scripts/             Development scripts (parser smoke test).
 tools/eplan/         EPLAN-side helper scripts (publish a project as .epdz).
 tools/asset-creator/ Tooling to author .e3d parts (geometry lib, writers).
-reference/           Historical reverse-engineering material and early
-                     prototypes. Not part of the build. See reference/README.md.
 ```
 
 ## File formats
@@ -156,4 +157,5 @@ Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE). 
+[MIT](LICENSE).
+
