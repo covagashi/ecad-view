@@ -9,7 +9,6 @@ rendered locally on your device, on desktop and mobile.
 [![Latest release](https://img.shields.io/github/v/release/covagashi/ecad-view?sort=semver)](https://github.com/covagashi/ecad-view/releases)
 [![CI](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml/badge.svg)](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml)
 
-▶ **Try it now — no install:** [view.covaga.dev](https://view.covaga.dev) ·
 📥 **Downloads:** [Releases](https://github.com/covagashi/ecad-view/releases) ·
 📖 **User guide:** [Wiki](https://github.com/covagashi/ecad-view/wiki) ·
 **Source:** [github.com/covagashi/ecad-view](https://github.com/covagashi/ecad-view)
@@ -28,17 +27,11 @@ rendered locally on your device, on desktop and mobile.
 
 ## Install
 
-The easiest way is to **not** install anything: open
-**[view.covaga.dev](https://view.covaga.dev)** in any modern browser (desktop or mobile).
-It's a Progressive Web App, so you can also *Install / Add to Home Screen* for an
-app window and **offline** use.
-
 Prefer a native build? Grab one from the
 [**Releases**](https://github.com/covagashi/ecad-view/releases) page:
 
 | Platform | Download | Notes |
 | --- | --- | --- |
-| **Web / PWA** | [view.covaga.dev](https://view.covaga.dev) | Recommended. Works everywhere, installable, offline. |
 | **Windows** | `.exe` (portable / NSIS) · `.msi` | Uses the built-in WebView2 (Win 10/11). |
 | **macOS** | PWA, or build from source | No prebuilt `.dmg` yet; install the PWA from Safari or build the Tauri shell locally. |
 | **Android** | `.apk` | Sideload; the release APK is self-signed (not from Play Store). |
