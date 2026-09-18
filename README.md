@@ -8,7 +8,6 @@ rendered locally on your device, on desktop and mobile.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/covagashi/ecad-view?sort=semver)](https://github.com/covagashi/ecad-view/releases)
 [![CI](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml/badge.svg)](https://github.com/covagashi/ecad-view/actions/workflows/ci.yml)
-[![Web app](https://img.shields.io/badge/web%20app-view.covaga.dev-5b9dff)](https://view.covaga.dev)
 
 ▶ **Try it now — no install:** [view.covaga.dev](https://view.covaga.dev) ·
 📥 **Downloads:** [Releases](https://github.com/covagashi/ecad-view/releases) ·
